@@ -1,0 +1,27 @@
+name: Build release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build installable ZIP and checksum
+        run: bash scripts/build-release.sh
+      - name: Verify installable ZIP
+        run: unzip -t dist/llamahire-*.zip
+      - uses: actions/upload-artifact@v5
+        with:
+          name: llamahire-free-release
+          path: |
+            dist/*.zip
+            dist/*.sha256
+          if-no-files-found: error

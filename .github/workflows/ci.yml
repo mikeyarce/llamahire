@@ -13,6 +13,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  package:
+    name: Installable Free package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build installable ZIP and checksum
+        run: bash scripts/build-release.sh
+      - name: Verify installable ZIP
+        run: unzip -t dist/llamahire-*.zip
+
   syntax:
     name: PHP ${{ matrix.php }} syntax
     runs-on: ubuntu-latest

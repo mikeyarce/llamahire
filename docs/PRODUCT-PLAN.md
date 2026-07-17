@@ -651,7 +651,7 @@ Start Milestone 0 with this order:
 7. Completed: add database-enforced duplicate-submission idempotency, channel-level notification state, administrator visibility, and missing-channel retries.
 8. Completed foundation: replace the location/salary fields with structured addresses, remote eligibility, currency/pay unit, stable identifiers, organization defaults/overrides, editor-native readiness guidance, and visible page/schema parity.
 9. Completed harness: authenticated editor behavior, expanded schema fixtures, public submission, admin review, formula-safe CSV, and authorized resume download pass in an isolated WordPress environment and are defined in GitHub Actions. Next confirm the first hosted matrix run; email failure/retry interception already passes.
-10. Add public-Free and private-Pro CI/release scripts only after service and plugin boundaries are tested in the current Free tree.
+10. Completed foundation: the public Free and private Pro repositories independently build deterministic installable ZIPs and checksums. Pro CI verifies missing/old/current/new Free API boundaries and runs Free `main` + Pro inside WordPress; release-version matrix entries will be added when the first Free versions are tagged.
 11. Run the first accessibility/security/SEO review on the stabilized vertical slice.
 12. Re-review Milestone 1 scope using evidence from those tests.
 
