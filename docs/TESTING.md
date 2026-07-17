@@ -44,10 +44,10 @@ The setup command always removes older browser fixtures before creating new ones
 The GitHub Actions workflow runs:
 
 - PHP syntax checks on PHP 7.4, 8.1, 8.3, and 8.5.
-- The 61-check smoke suite on minimum WordPress 6.5/PHP 7.4, latest WordPress on PHP 7.4 and 8.5, and WordPress trunk/PHP 8.5.
+- The 61-check smoke suite on minimum WordPress 6.5/PHP 7.4, latest WordPress on PHP 7.4 and 8.5, and the WordPress development mirror on PHP 8.5.
 - The complete Chromium workflow on latest WordPress/PHP 8.3.
 
-WordPress trunk is informational and allowed to fail so upstream changes are visible without blocking a release. All declared supported versions are blocking. Browser traces, screenshots, video, and the HTML report are retained when a test fails.
+The `WordPress/WordPress#master` development mirror tracks WordPress trunk. That forward-looking job is informational and allowed to fail so upstream changes are visible without blocking a release. All declared supported versions are blocking. Browser traces, screenshots, video, and the HTML report are retained when a test fails.
 
 The browser workflow verifies:
 

@@ -51,8 +51,8 @@ jobs:
             core: ''
             php: '8.5'
             experimental: false
-          - wordpress: trunk
-            core: WordPress/WordPress#trunk
+          - wordpress: development
+            core: WordPress/WordPress#master
             php: '8.5'
             experimental: true
     steps:
@@ -77,6 +77,7 @@ jobs:
         run: npm run test:smoke
       - name: Stop WordPress
         if: always()
+        continue-on-error: true
         run: npm run env:stop
 
   browser:
