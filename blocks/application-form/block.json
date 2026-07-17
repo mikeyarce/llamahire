@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "llamahire/application-form",
+  "version": "0.1.0",
+  "title": "Application Form",
+  "category": "widgets",
+  "icon": "email-alt",
+  "description": "Collect candidate applications for a job.",
+  "textdomain": "llamahire",
+  "attributes": {
+    "jobId": { "type": "number", "default": 0 },
+    "heading": { "type": "string", "default": "Apply for this role" }
+  },
+  "supports": { "html": false, "spacing": { "margin": true, "padding": true } },
+  "editorScript": "llamahire-blocks-editor",
+  "style": "llamahire"
+}

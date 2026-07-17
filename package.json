@@ -1,0 +1,22 @@
+{
+  "name": "llamahire",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Development and integration-test tooling for LlamaHire.",
+  "scripts": {
+    "wp-env": "wp-env --config=.wp-env.ci.json",
+    "env:start": "wp-env --config=.wp-env.ci.json start",
+    "env:stop": "wp-env --config=.wp-env.ci.json stop",
+    "test:smoke": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/smoke.php",
+    "test:e2e:setup": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/e2e/setup.php",
+    "test:e2e": "playwright test",
+    "test:e2e:cleanup": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/e2e/cleanup.php"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.1",
+    "@wordpress/env": "11.11.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "llamahire/jobs-directory",
+  "version": "0.1.0",
+  "title": "Jobs Directory",
+  "category": "widgets",
+  "icon": "businessperson",
+  "description": "Display searchable, filterable open roles.",
+  "textdomain": "llamahire",
+  "attributes": {
+    "perPage": { "type": "number", "default": 12 },
+    "showFilters": { "type": "boolean", "default": true },
+    "featuredOnly": { "type": "boolean", "default": false }
+  },
+  "supports": { "align": ["wide", "full"], "html": false, "spacing": { "margin": true, "padding": true } },
+  "editorScript": "llamahire-blocks-editor",
+  "style": "llamahire"
+}

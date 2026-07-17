@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  syntax:
+    name: PHP ${{ matrix.php }} syntax
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '7.4', '8.1', '8.3', '8.5' ]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Check PHP syntax
+        run: find . -name '*.php' -not -path './node_modules/*' -print0 | xargs -0 -n1 php -l
+      - name: Check editor JavaScript syntax
+        run: node --check assets/js/job-editor.js
+
+  smoke:
+    name: WordPress ${{ matrix.wordpress }} / PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - wordpress: minimum-6.5
+            core: WordPress/WordPress#6.5
+            php: '7.4'
+            experimental: false
+          - wordpress: latest
+            core: ''
+            php: '7.4'
+            experimental: false
+          - wordpress: latest
+            core: ''
+            php: '8.5'
+            experimental: false
+          - wordpress: trunk
+            core: WordPress/WordPress#trunk
+            php: '8.5'
+            experimental: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Start latest WordPress
+        if: matrix.core == ''
+        env:
+          WP_ENV_PHP_VERSION: ${{ matrix.php }}
+        run: npm run env:start
+      - name: Start selected WordPress version
+        if: matrix.core != ''
+        env:
+          WP_ENV_CORE: ${{ matrix.core }}
+          WP_ENV_PHP_VERSION: ${{ matrix.php }}
+        run: npm run env:start
+      - name: Run contract smoke suite
+        run: npm run test:smoke
+      - name: Stop WordPress
+        if: always()
+        run: npm run env:stop
+
+  browser:
+    name: Browser hiring workflow
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start disposable WordPress site
+        env:
+          WP_ENV_PHP_VERSION: '8.3'
+        run: npm run env:start
+      - name: Create browser fixtures
+        run: npm run test:e2e:setup
+      - name: Run browser workflow
+        run: npm run test:e2e
+      - name: Remove browser fixtures
+        if: always()
+        continue-on-error: true
+        run: npm run test:e2e:cleanup
+      - name: Capture WordPress logs
+        if: failure()
+        continue-on-error: true
+        run: npm run wp-env -- logs --watch=false
+      - name: Stop WordPress
+        if: always()
+        continue-on-error: true
+        run: npm run env:stop
+      - name: Upload browser report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
