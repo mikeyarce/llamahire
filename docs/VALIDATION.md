@@ -130,11 +130,10 @@ The resume-storage health check called `realpath()` on a host path blocked by `o
 These checks need purpose-built automated coverage or a final manual release pass:
 
 - Editor behavior across the remaining supported WordPress/browser matrix. The authenticated current-version workflow passes; the native date input still needs a focused manual interaction check because browser automation did not dispatch its React change event reliably.
-- Validate representative publicly reachable local, hybrid, and remote job URLs with Google's Rich Results Test and URL Inspection. A public staging URL is required.
+- During final release testing, validate representative public local, hybrid, and remote staging-job URLs with Google's Rich Results Test and URL Inspection.
 - Actual email delivery through a configured mail transport; current validation reaches `wp_mail()` but does not assert inbox delivery.
 - Apache, Nginx, multisite, Windows/IIS, and hosts where the directory above `ABSPATH` is not writable.
 - Broader accessibility validation with actual screen-reader speech output, supported browser/OS combinations, 320% zoom, reduced motion, and high contrast. The focused core-workflow pass is complete.
 - Theme compatibility across classic, block, and popular third-party themes.
-- Google Rich Results validation against representative complete job data on a public staging site.
 - High-volume application uploads; query benchmarks and the 1,000-application fixture lifecycle pass locally.
 - WordPress Coding Standards and vulnerability scanning. The release-equivalent Plugin Check scan is error-free and the first hosted supported-version matrix passes.

@@ -1,19 +1,19 @@
 # LlamaHire product and execution plan
 
-Status: Milestone 1 and the first hosted compatibility matrix are complete; public Google validation is next
+Status: Milestone 1 and the first hosted compatibility matrix are complete; Milestone 2 block composition is next
 Plan owner: LlamaHire
 Last reviewed: July 20, 2026
 Current version: 0.1.0 foundation
 
 ## 0. Current status and continuation handoff
 
-**Start here after a context reset.** The stabilized Free vertical slice and core Milestone 1 setup/authoring flow are implemented and passing their local release gates. The input, settings, menu, publication/closure, preview/duplicate, contextual-empty-state, repeatable test-site fixture, and focused keyboard/screen-reader passes are complete. Run the first hosted compatibility and Google Jobs validation pass next.
+**Start here after a context reset.** The stabilized Free vertical slice and Milestone 1 setup/authoring flow are implemented and passing local and hosted release gates. The input, settings, menu, publication/closure, preview/duplicate, contextual-empty-state, repeatable test-site fixture, focused keyboard/screen-reader, compatibility-matrix, and automated sitemap-lifecycle passes are complete. Begin Milestone 2 with the block composition/context contract and independent Job Search and Job Filters blocks.
 
 ### Where we are
 
-- Current phase: Milestone 0 is complete enough to advance; Milestone 1 is in progress.
+- Current phase: Milestones 0 and 1 are complete enough to advance; Milestone 2 is next.
 - Repository model: Free is the public `llamahire` repository on `main`; Pro is a separate private add-on repository that depends on Free's versioned API.
-- Working tree: the July 17 hardening, review documentation, and tests are local and uncommitted. Preserve them when resuming; inspect `git status` before making further changes.
+- Working tree: the completed Milestone 1 work is committed on `codex/milestone-1-compatibility` in draft pull request #1. Inspect branch and PR state before making further changes.
 - Test environment: the disposable WordPress site is stopped and its generated candidate/job fixtures have been removed.
 - Installable artifact: `dist/llamahire-0.1.0.zip` was rebuilt deterministically after the fixture-tooling pass and verified to exclude all development tooling and metadata.
 
@@ -35,7 +35,7 @@ Current version: 0.1.0 foundation
 
 Latest local evidence:
 
-- 80 WP-CLI smoke checks passed.
+- 82 WP-CLI smoke checks passed.
 - All four Playwright hiring-workflow stages passed: first-run setup, editor save, candidate submission/schema, and recruiter review/export/download.
 - The fixture lifecycle test passed, every named scenario generated successfully, and the full `large` scenario created 60 jobs plus 1,000 applications in about nine seconds and removed them safely in about three seconds.
 - Release-equivalent Plugin Check completed with no errors. Remaining warnings are reviewed custom-table, read-only request, standard content-filter, and bounded-query cases.
@@ -60,8 +60,9 @@ Latest local evidence:
 5. Completed: finish job-authoring polish with Published versus Closed clarity, an explicit job preview action, duplicate success/error feedback, contextual empty states, and next-action links.
 6. Completed: add repeatable development-only WP-CLI demo-data commands that populate and clean a test site with complete jobs, departments, applications, safe resumes, statuses, notification states, Media Library assets, settings/pages, and deterministic edge-case fixtures. CI verifies ownership-safe cleanup and preservation of unrelated content.
 7. Completed: ran the dedicated keyboard and screen-reader pass for setup, authoring, candidate application, applications list, and recruiter review; fixed the confirmed semantic, announcement, association, ordering, and narrow-layout issues.
-8. Completed hosted and automated portions: the first supported-version CI matrix passed on both push and pull-request runs, and smoke coverage now verifies published, closed, reopened, and deleted job sitemap/schema/application behavior. Next, validate representative publicly reachable job URLs with Google's Rich Results Test and URL Inspection.
-9. Before the Free 1.0 release candidate, complete the broader accessibility validation pass with actual VoiceOver and NVDA screen-reader output, 320% zoom, high-contrast/forced-colors, reduced motion, RTL/localization, and representative classic/block themes. Record evidence and fix confirmed regressions; no Figma deliverable is required.
+8. Completed: the first supported-version CI matrix passed on push and pull-request runs, and smoke coverage verifies published, closed, reopened, and deleted job sitemap/schema/application behavior. Public Google validation is intentionally deferred to the final release-testing pass when a representative staging site is available.
+9. Next: begin Milestone 2 by defining the block composition/context contract, then implement independent Job Search and Job Filters blocks while preserving Jobs Directory as the easy all-in-one variation. Cover progressive enhancement, URL-preserved state, result counts, clear filters, and empty states from the first slice.
+10. Before the Free 1.0 release candidate, validate representative staging job URLs with Google's Rich Results Test and URL Inspection, and complete the broader accessibility pass with actual VoiceOver/NVDA output, 320% zoom, forced colors, reduced motion, RTL/localization, and representative classic/block themes. Store evidence in the repository; no Figma deliverable is required.
 
 ### Known follow-up risks, not blockers to starting Milestone 1
 
@@ -69,9 +70,9 @@ Latest local evidence:
 - Candidate retention periods, scheduled deletion, personal-data export/erasure, and audit history remain Milestone 3 work.
 - Production resume uploads require writable storage outside the web root unless a host explicitly opts into a verified protected fallback.
 - Full WCAG 2.2 AA evidence—including actual VoiceOver/NVDA output, 320% zoom, high contrast, reduced motion, and representative themes—remains a pre-release-candidate gate. RTL/localization, multisite, mail-transport, MySQL/MariaDB, and supported WordPress/PHP matrix evidence is also incomplete.
-- Hosted Google Rich Results/URL Inspection validation and the optional Indexing API boundary remain open. Automated sitemap and closed-job lifecycle verification is complete.
+- Google Rich Results/URL Inspection validation is deliberately scheduled for final release testing on a representative public staging site. The optional Indexing API boundary remains open; automated sitemap and closed-job lifecycle verification is complete.
 
-When resuming: read this section, inspect the current diff, and begin item 8 under “Exact next-task order.” Do not repeat completed setup/authoring, fixture, accessibility, or security/SEO work unless a test exposes a regression.
+When resuming: read this section, inspect the current branch/PR state, and begin item 9 under “Exact next-task order.” Do not repeat completed setup/authoring, fixture, compatibility, accessibility-foundation, or security/SEO work unless a test exposes a regression.
 
 ## 1. Product direction
 
@@ -359,6 +360,7 @@ Work:
 - Run WordPress Coding Standards, Plugin Check, static analysis, JavaScript linting, and vulnerability scanning.
 - Test the supported WordPress/PHP matrix, multisite, common mail transports, and representative hosts.
 - Test classic themes, block themes, RTL, localization, and no-JavaScript behavior.
+- Validate representative public local, hybrid, and remote job URLs with Google's Rich Results Test and URL Inspection after the release-candidate staging site is available.
 - Complete accessibility and performance audits with documented budgets.
 - Add upgrade, rollback, backup, and uninstall test scenarios.
 - Complete readme, screenshots, onboarding copy, privacy documentation, changelog, support policy, and release checklist.
@@ -523,7 +525,7 @@ Official reference: [Google Search Central JobPosting documentation](https://dev
 - Track schema generation errors and Indexing API outcomes without sending candidate data.
 - Recheck the official Google documentation at each release because supported properties and policies can change.
 
-Version 0.1.0 now implements the core structured model, removes the inaccurate “Worldwide” default, supports Google pay units and structured physical/remote locations, and suppresses markup for jobs missing the minimum organization/location data. Remaining release work includes multiple physical locations, exact/no-salary fixtures, expired/closed fixtures, Rich Results validation, sitemap lifecycle checks, and accessibility/theme testing of the editor and public facts panel.
+Version 0.1.0 now implements the core structured model, removes the inaccurate “Worldwide” default, supports Google pay units and structured physical/remote locations, suppresses markup for incomplete/closed/expired jobs, and verifies exact/no-salary plus sitemap lifecycle behavior. Remaining release work includes multiple physical locations, hosted Rich Results/URL Inspection validation, the optional Indexing API boundary, and broader accessibility/theme testing.
 
 ## 8. Post-1.0 product phases
 
@@ -736,7 +738,7 @@ Start Milestone 0 with this order:
 6. Completed initial gate: benchmark application and job queries, remove N+1 behavior, add composite indexes, normalize directory filter metadata, and document remaining MySQL/MariaDB release tests.
 7. Completed: add database-enforced duplicate-submission idempotency, channel-level notification state, administrator visibility, and missing-channel retries.
 8. Completed foundation: replace the location/salary fields with structured addresses, remote eligibility, currency/pay unit, stable identifiers, organization defaults/overrides, editor-native readiness guidance, and visible page/schema parity.
-9. Completed harness: authenticated editor behavior, expanded schema fixtures, public submission, admin review, formula-safe CSV, and authorized resume download pass in an isolated WordPress environment and are defined in GitHub Actions. Next confirm the first hosted matrix run; email failure/retry interception already passes.
+9. Completed harness: authenticated editor behavior, expanded schema fixtures, public submission, admin review, formula-safe CSV, authorized resume download, email failure/retry interception, and the first hosted supported-version matrix pass in GitHub Actions.
 10. Completed foundation: the public Free and private Pro repositories independently build deterministic installable ZIPs and checksums. Pro CI verifies missing/old/current/new Free API boundaries and runs Free `main` + Pro inside WordPress; release-version matrix entries will be added when the first Free versions are tagged.
 11. Completed initial accessibility/security/SEO review and confirmed hardening: strict job-domain validation, fail-safe schema generation, submission throttles, resume content checks, production-safe private storage, expanded CSV protection, privacy copy, and actionable Plugin Check cleanup now pass smoke and browser workflow tests. The one blank-editor audit capture was not reproduced and is deferred. See [the 2026-07-17 release review](audits/2026-07-17-release-review/REVIEW.md).
 12. Re-review Milestone 1 scope using evidence from those tests.
