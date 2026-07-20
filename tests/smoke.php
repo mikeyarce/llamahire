@@ -20,6 +20,7 @@ $assert = static function ( $condition, $label ) use ( &$checks ) {
 global $wpdb;
 $table = $wpdb->prefix . 'llamahire_applications';
 $job_id = 0;
+$sitemap_job_id = 0;
 $application_id = 0;
 $privacy_page_id = 0;
 $original_settings = get_option( \LlamaHire\Settings::OPTION, false );
@@ -128,6 +129,10 @@ try {
 	$assert( false !== strpos( $application_form, 'Candidate data is used only for hiring.' ) && false !== strpos( $application_form, get_permalink( $privacy_page_id ) ), 'Application forms show configured privacy text and the selected policy link' );
 	$assert( ! empty( $job_meta['job_identifier'] ) && 'CA' === $job_meta['address_country'], 'Job model preserves a stable identifier and structured address' );
 	$schema = $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id );
+	$posts_sitemap = wp_sitemaps_get_server()->registry->get_provider( 'posts' );
+	$job_sitemap_urls = $posts_sitemap->get_url_list( 1, \LlamaHire\Jobs::POST_TYPE );
+	$job_sitemap_entry = current( array_filter( $job_sitemap_urls, static function ( $url ) use ( $job_id ) { return get_permalink( $job_id ) === $url['loc']; } ) );
+	$assert( $job_sitemap_entry && get_post_modified_time( DATE_W3C, true, $job_id ) === $job_sitemap_entry['lastmod'], 'Published jobs appear in the XML sitemap with an accurate modification time' );
 	$assert( 'JobPosting' === ( $schema['@type'] ?? '' ) && 90000.0 === ( $schema['baseSalary']['value']['minValue'] ?? null ) && 'YEAR' === ( $schema['baseSalary']['value']['unitText'] ?? '' ), 'Schema builder exposes employer-provided salary range and pay unit' );
 	$assert( 'CA' === ( $schema['jobLocation']['address']['addressCountry'] ?? '' ) && 'Vancouver' === ( $schema['jobLocation']['address']['addressLocality'] ?? '' ), 'Schema builder emits a complete physical location' );
 	$assert( 'LlamaHire Test Employer' === ( $schema['hiringOrganization']['name'] ?? '' ) && $job_meta['job_identifier'] === ( $schema['identifier']['value'] ?? '' ), 'Schema builder emits the hiring organization and stable identifier' );
@@ -159,10 +164,18 @@ try {
 	\LlamaHire\Jobs::set_meta( $job_id, array( 'salary_min' => 90000, 'salary_max' => 110000, 'address_country' => '' ) );
 	$assert( array() === $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id ), 'Incomplete physical location suppresses invalid JobPosting markup' );
 	\LlamaHire\Jobs::set_meta( $job_id, array( 'address_country' => 'CA', 'closed' => '1' ) );
-	$assert( array() === $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id ) && false !== strpos( \LlamaHire\Blocks::render_form( array( 'jobId' => $job_id ) ), 'closed' ), 'Closed jobs suppress schema and applications' );
+	$closed_sitemap_urls = $posts_sitemap->get_url_list( 1, \LlamaHire\Jobs::POST_TYPE );
+	$closed_url_retained = (bool) array_filter( $closed_sitemap_urls, static function ( $url ) use ( $job_id ) { return get_permalink( $job_id ) === $url['loc']; } );
+	$assert( array() === $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id ) && false !== strpos( \LlamaHire\Blocks::render_form( array( 'jobId' => $job_id ) ), 'closed' ) && $closed_url_retained, 'Closed jobs retain their historical sitemap URL while suppressing active schema and applications' );
 	\LlamaHire\Jobs::set_meta( $job_id, array( 'closed' => '0', 'deadline' => gmdate( 'Y-m-d', strtotime( '-1 day' ) ) ) );
 	$assert( ! \LlamaHire\Jobs::is_open( $job_id ) && array() === $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id ), 'Expired jobs suppress active JobPosting markup' );
 	\LlamaHire\Jobs::set_meta( $job_id, array( 'deadline' => gmdate( 'Y-m-d', strtotime( '+30 days' ) ) ) );
+	$sitemap_job_id = wp_insert_post( array( 'post_type' => \LlamaHire\Jobs::POST_TYPE, 'post_status' => 'publish', 'post_title' => 'Disposable Sitemap Role', 'post_content' => 'Temporary sitemap lifecycle fixture.' ) );
+	$sitemap_job_url = get_permalink( $sitemap_job_id );
+	wp_delete_post( $sitemap_job_id, true );
+	$sitemap_job_id = 0;
+	$deleted_sitemap_urls = $posts_sitemap->get_url_list( 1, \LlamaHire\Jobs::POST_TYPE );
+	$assert( ! array_filter( $deleted_sitemap_urls, static function ( $url ) use ( $sitemap_job_url ) { return $sitemap_job_url === $url['loc']; } ), 'Deleted jobs are removed from the XML sitemap' );
 
 	$directory = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":true,"featuredOnly":false,"perPage":12} /-->' );
 	$assert( false !== strpos( $directory, 'LlamaHire Smoke Test Role' ), 'Directory renders the open job' );
@@ -272,6 +285,9 @@ try {
 	}
 	if ( $job_id ) {
 		wp_delete_post( $job_id, true );
+	}
+	if ( $sitemap_job_id ) {
+		wp_delete_post( $sitemap_job_id, true );
 	}
 	if ( $privacy_page_id ) {
 		wp_delete_post( $privacy_page_id, true );

@@ -1,6 +1,6 @@
 # LlamaHire product and execution plan
 
-Status: Milestone 1 core setup, authoring, fixture tooling, and accessibility pass complete; hosted compatibility validation is next
+Status: Milestone 1 and the first hosted compatibility matrix are complete; public Google validation is next
 Plan owner: LlamaHire
 Last reviewed: July 20, 2026
 Current version: 0.1.0 foundation
@@ -60,7 +60,7 @@ Latest local evidence:
 5. Completed: finish job-authoring polish with Published versus Closed clarity, an explicit job preview action, duplicate success/error feedback, contextual empty states, and next-action links.
 6. Completed: add repeatable development-only WP-CLI demo-data commands that populate and clean a test site with complete jobs, departments, applications, safe resumes, statuses, notification states, Media Library assets, settings/pages, and deterministic edge-case fixtures. CI verifies ownership-safe cleanup and preservation of unrelated content.
 7. Completed: ran the dedicated keyboard and screen-reader pass for setup, authoring, candidate application, applications list, and recruiter review; fixed the confirmed semantic, announcement, association, ordering, and narrow-layout issues.
-8. Run the first hosted supported-version CI matrix, then validate representative job URLs with Google's Rich Results Test/URL Inspection and verify sitemap/closed-job lifecycle behavior.
+8. Completed hosted and automated portions: the first supported-version CI matrix passed on both push and pull-request runs, and smoke coverage now verifies published, closed, reopened, and deleted job sitemap/schema/application behavior. Next, validate representative publicly reachable job URLs with Google's Rich Results Test and URL Inspection.
 9. Before the Free 1.0 release candidate, complete the broader accessibility validation pass with actual VoiceOver and NVDA screen-reader output, 320% zoom, high-contrast/forced-colors, reduced motion, RTL/localization, and representative classic/block themes. Record evidence and fix confirmed regressions; no Figma deliverable is required.
 
 ### Known follow-up risks, not blockers to starting Milestone 1
@@ -69,7 +69,7 @@ Latest local evidence:
 - Candidate retention periods, scheduled deletion, personal-data export/erasure, and audit history remain Milestone 3 work.
 - Production resume uploads require writable storage outside the web root unless a host explicitly opts into a verified protected fallback.
 - Full WCAG 2.2 AA evidence—including actual VoiceOver/NVDA output, 320% zoom, high contrast, reduced motion, and representative themes—remains a pre-release-candidate gate. RTL/localization, multisite, mail-transport, MySQL/MariaDB, and supported WordPress/PHP matrix evidence is also incomplete.
-- Hosted Google validation, sitemap verification, and the optional Indexing API boundary remain open.
+- Hosted Google Rich Results/URL Inspection validation and the optional Indexing API boundary remain open. Automated sitemap and closed-job lifecycle verification is complete.
 
 When resuming: read this section, inspect the current diff, and begin item 8 under “Exact next-task order.” Do not repeat completed setup/authoring, fixture, accessibility, or security/SEO work unless a test exposes a regression.
 
@@ -159,7 +159,7 @@ Version 0.1.0 is an installable foundation, not yet a public release candidate.
 - Admin lists are paginated but still need bulk operations, stronger search/filtering, and accessible responsive behavior.
 - Spam protection now includes a honeypot, nonce, idempotency, and baseline throttling; configurable integrations and host/edge enforcement remain.
 - The initial service/hook API exists, but REST resources and broader domain events remain incomplete.
-- Automated coverage includes 80 smoke checks and a complete four-stage browser hiring workflow, but focused unit coverage and the hosted supported-version matrix remain incomplete.
+- Automated coverage includes 82 smoke checks and a complete four-stage browser hiring workflow. The first hosted supported-version matrix passes; focused unit coverage remains incomplete.
 - Plugin Check is error-free for the release-equivalent scan; full internationalization, accessibility, compatibility, and WordPress.org release evidence remains incomplete.
 
 The detailed validation evidence is recorded in [VALIDATION.md](VALIDATION.md).
@@ -198,7 +198,7 @@ Work:
 - Completed: define the private-storage contract, production fail-closed behavior, host opt-in fallback, and Site Health warnings.
 - Add application and job factories for tests.
 - Completed: add supported development-only WP-CLI demo-data generation, status, and ownership-safe cleanup commands for small, large, remote, expired, closed, notification-failure, and edge-case hiring datasets without hand-editing database rows. Application/job factories remain a separate focused-test follow-up.
-- Completed foundation: retain the fast 80-check smoke command and add isolated `wp-env`/Playwright integration coverage for setup and the complete browser hiring workflow. Continue converting domain checks to focused unit/integration tests as the product grows.
+- Completed foundation: retain the fast 82-check smoke command and add isolated `wp-env`/Playwright integration coverage for setup and the complete browser hiring workflow. Continue converting domain checks to focused unit/integration tests as the product grows.
 - Completed: authenticated application review, status, notes, formula-safe CSV, public resume upload, and authorized protected resume download are formalized in GitHub Actions. Confirm the first hosted supported-version matrix run when the repository is connected.
 - Completed baseline: add email failure/success interception and missing-channel retry tests. Subject, recipient, and escaped-content assertions can move into focused notification tests as the template system is built.
 

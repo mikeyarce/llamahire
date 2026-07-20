@@ -16,7 +16,7 @@ Run from the WordPress root:
 wp eval-file wp-content/plugins/llamahire/tests/smoke.php
 ```
 
-The disposable test creates and removes its own records. Eighty checks now pass, covering:
+The disposable test creates and removes its own records. Eighty-two checks now pass, covering:
 
 - Job post type, department taxonomy, blocks, publication, availability, directory, and form rendering.
 - Applications table creation, repository persistence, retrieval, status changes, and private notes.
@@ -44,6 +44,7 @@ The disposable test creates and removes its own records. Eighty checks now pass,
 - Missing-channel retries that preserve a previously successful delivery.
 - Administrator permission to retry missing notifications, with subscriber denial.
 - Candidate form help/privacy associations and assertive application errors.
+- Published-job sitemap inclusion with accurate modification time, historical closed-job URL retention, and deleted-job removal.
 
 A full deactivate/reactivate cycle also completed successfully. Existing schema and capability versions remained current.
 
@@ -91,11 +92,17 @@ The authenticated recruiter workflow was also exercised against disposable appli
 - CSV export included the tested applications and neutralized a formula-like cover-letter value.
 - The disposable applications, jobs, and resume files were removed afterward.
 
-These workflows are now encoded in a repeatable `wp-env` and Playwright integration harness. A clean isolated WordPress 7.0.2 environment passed all 80 smoke checks and all four browser tests in one run. The browser suite covers first-run organization/privacy setup and Careers page creation before creating and removing its own job, application, privacy page, Careers page, and resume fixtures. CI retains failure traces, screenshots, video, and an HTML report. See [TESTING.md](TESTING.md).
+These workflows are now encoded in a repeatable `wp-env` and Playwright integration harness. A clean isolated WordPress 7.0.2 environment passed all 82 smoke checks and all four browser tests in one run. The browser suite covers first-run organization/privacy setup and Careers page creation before creating and removing its own job, application, privacy page, Careers page, and resume fixtures. CI retains failure traces, screenshots, video, and an HTML report. See [TESTING.md](TESTING.md).
 
 ## Focused accessibility review
 
 The July 20 keyboard and screen-reader pass reviewed setup, job authoring, candidate application, the applications list, and recruiter review. It confirmed keyboard activation in the Playwright workflow and fixed progress semantics, unique control IDs, help associations, error/status announcements, filter/table semantics, submenu order, and the narrow recruiter layout. Evidence and limitations are recorded in [the accessibility review](audits/2026-07-20-accessibility-review/REVIEW.md).
+
+## Hosted supported-version matrix
+
+Draft pull request #1 ran the complete CI workflow for both its branch push and pull-request event. Both runs passed packaging, PHP 7.4/8.1/8.3/8.5 syntax, WordPress 6.5 on PHP 7.4, current WordPress on PHP 7.4 and 8.5, WordPress development on PHP 8.5, the browser hiring workflow, and the deterministic WP-CLI fixture lifecycle. The hosted run IDs were `29774431177` and `29774482010`.
+
+The smoke suite also verifies that an open published job appears in WordPress XML sitemaps with the expected modification time; closing it preserves the useful historical URL while removing active `JobPosting` markup and application submission; reopening restores active behavior; and permanent deletion removes the URL from the sitemap.
 
 ## Test-site fixture validation
 
@@ -123,11 +130,11 @@ The resume-storage health check called `realpath()` on a host path blocked by `o
 These checks need purpose-built automated coverage or a final manual release pass:
 
 - Editor behavior across the remaining supported WordPress/browser matrix. The authenticated current-version workflow passes; the native date input still needs a focused manual interaction check because browser automation did not dispatch its React change event reliably.
-- Confirm the new hosted CI workflow across the complete supported WordPress/PHP matrix. The clean local WordPress 7.0.2/Chromium run passes.
+- Validate representative publicly reachable local, hybrid, and remote job URLs with Google's Rich Results Test and URL Inspection. A public staging URL is required.
 - Actual email delivery through a configured mail transport; current validation reaches `wp_mail()` but does not assert inbox delivery.
 - Apache, Nginx, multisite, Windows/IIS, and hosts where the directory above `ABSPATH` is not writable.
 - Broader accessibility validation with actual screen-reader speech output, supported browser/OS combinations, 320% zoom, reduced motion, and high contrast. The focused core-workflow pass is complete.
 - Theme compatibility across classic, block, and popular third-party themes.
-- Google Rich Results validation against representative complete job data.
+- Google Rich Results validation against representative complete job data on a public staging site.
 - High-volume application uploads; query benchmarks and the 1,000-application fixture lifecycle pass locally.
-- WordPress Coding Standards, vulnerability scanning, and the hosted supported-version matrix. The release-equivalent Plugin Check scan is error-free.
+- WordPress Coding Standards and vulnerability scanning. The release-equivalent Plugin Check scan is error-free and the first hosted supported-version matrix passes.
