@@ -13,13 +13,28 @@ final class Resume_Storage implements Resume_Storage_Contract {
 		if ( empty( $file['name'] ) ) {
 			return array( 'token' => '', 'name' => '' );
 		}
-		if ( UPLOAD_ERR_OK !== (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) || (int) ( $file['size'] ?? 0 ) > self::MAX_BYTES ) {
+		if ( UPLOAD_ERR_OK !== (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
 			return new \WP_Error( 'resume_size' );
 		}
 		$tmp_name = (string) ( $file['tmp_name'] ?? '' );
 		$name     = sanitize_file_name( wp_basename( $file['name'] ) );
+		$size     = $tmp_name && is_file( $tmp_name ) ? filesize( $tmp_name ) : 0;
+		if ( ! $size || $size > self::MAX_BYTES ) {
+			return new \WP_Error( 'resume_size' );
+		}
 		$checked  = wp_check_filetype_and_ext( $tmp_name, $name, $this->allowed_mimes() );
 		if ( empty( $checked['ext'] ) || empty( $checked['type'] ) ) {
+			return new \WP_Error( 'resume_type' );
+		}
+		$signature = $this->validate_signature( $tmp_name, $checked['ext'] );
+		if ( is_wp_error( $signature ) ) {
+			return $signature;
+		}
+		$validation = apply_filters( 'llamahire_validate_resume_upload', true, $tmp_name, $name, $checked, absint( $job_id ) );
+		if ( is_wp_error( $validation ) ) {
+			return $validation;
+		}
+		if ( true !== $validation ) {
 			return new \WP_Error( 'resume_type' );
 		}
 
@@ -28,10 +43,10 @@ final class Resume_Storage implements Resume_Storage_Contract {
 			return $directory;
 		}
 		$path = trailingslashit( $directory ) . wp_generate_uuid4() . '.' . $checked['ext'];
-		if ( ! @move_uploaded_file( $tmp_name, $path ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors
+		if ( ! @move_uploaded_file( $tmp_name, $path ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors,Generic.PHP.ForbiddenFunctions.Found -- Preserves PHP's HTTP-upload provenance check.
 			return new \WP_Error( 'resume_error' );
 		}
-		@chmod( $path, 0640 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+		@chmod( $path, 0640 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors,WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Restricts a private candidate file after the atomic upload move.
 		return array( 'token' => $path, 'name' => $name );
 	}
 
@@ -72,7 +87,7 @@ final class Resume_Storage implements Resume_Storage_Contract {
 		if ( is_wp_error( $directory ) ) {
 			return array( 'available' => false, 'outside_webroot' => false );
 		}
-		return array( 'available' => is_dir( $directory ) && is_writable( $directory ), 'outside_webroot' => 0 !== strpos( wp_normalize_path( $directory ), trailingslashit( $this->wordpress_root() ) ) );
+		return array( 'available' => is_dir( $directory ) && is_writable( $directory ), 'outside_webroot' => 0 !== strpos( wp_normalize_path( $directory ), trailingslashit( $this->wordpress_root() ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Site Health must test actual private-directory writability.
 	}
 
 	private function record( $application_id ) {
@@ -88,11 +103,12 @@ final class Resume_Storage implements Resume_Storage_Contract {
 		}
 		$uploads = wp_upload_dir();
 		$fallback = trailingslashit( $uploads['basedir'] ) . 'llamahire-private';
-		if ( is_dir( $fallback ) || ( $create && wp_mkdir_p( $fallback ) ) ) {
-			$this->protect( $fallback );
+		$development    = in_array( wp_get_environment_type(), array( 'local', 'development' ), true );
+		$allow_fallback = (bool) apply_filters( 'llamahire_allow_webroot_resume_storage', $development, $fallback );
+		if ( $allow_fallback && ( is_dir( $fallback ) || ( $create && wp_mkdir_p( $fallback ) ) ) && $this->protect( $fallback ) ) {
 			return $fallback;
 		}
-		return new \WP_Error( 'resume_error' );
+		return new \WP_Error( 'resume_storage' );
 	}
 
 	private function is_managed_path( $path ) {
@@ -117,7 +133,48 @@ final class Resume_Storage implements Resume_Storage_Contract {
 		foreach ( $rules as $file => $contents ) {
 			$path = trailingslashit( $directory ) . $file;
 			if ( ! file_exists( $path ) ) { file_put_contents( $path, $contents, LOCK_EX ); } // phpcs:ignore WordPress.WP.AlternativeFunctions
+			if ( ! is_file( $path ) ) {
+				return false;
+			}
 		}
+		return true;
+	}
+
+	private function validate_signature( $path, $extension ) {
+		$header = file_get_contents( $path, false, null, 0, 8 ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		if ( false === $header ) {
+			return new \WP_Error( 'resume_type' );
+		}
+		if ( 'pdf' === $extension && 0 !== strncmp( $header, '%PDF-', 5 ) ) {
+			return new \WP_Error( 'resume_type' );
+		}
+		if ( 'doc' === $extension && "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1" !== $header ) {
+			return new \WP_Error( 'resume_type' );
+		}
+		if ( 'docx' === $extension ) {
+			if ( 0 !== strncmp( $header, "PK\x03\x04", 4 ) ) {
+				return new \WP_Error( 'resume_type' );
+			}
+			if ( class_exists( 'ZipArchive' ) ) {
+				$archive = new \ZipArchive();
+				if ( true !== $archive->open( $path ) ) {
+					return new \WP_Error( 'resume_type' );
+				}
+				if ( false === $archive->locateName( '[Content_Types].xml' ) || false === $archive->locateName( 'word/document.xml' ) || false !== $archive->locateName( 'word/vbaProject.bin', \ZipArchive::FL_NOCASE ) ) {
+					$archive->close();
+					return new \WP_Error( 'resume_type' );
+				}
+				for ( $index = 0; $index < $archive->numFiles; $index++ ) {
+					$entry = $archive->getNameIndex( $index );
+					if ( false === $entry || false !== strpos( $entry, '../' ) || 0 === strpos( $entry, '/' ) || preg_match( '/^[A-Za-z]:/', $entry ) ) {
+						$archive->close();
+						return new \WP_Error( 'resume_type' );
+					}
+				}
+				$archive->close();
+			}
+		}
+		return true;
 	}
 
 	private function allowed_mimes() {

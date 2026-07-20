@@ -108,7 +108,7 @@ final class Jobs {
 		wp_enqueue_script(
 			'llamahire-job-editor',
 			LLAMAHIRE_URL . 'assets/js/job-editor.js',
-			array( 'wp-components', 'wp-data', 'wp-edit-post', 'wp-element', 'wp-i18n', 'wp-plugins' ),
+			array( 'wp-block-editor', 'wp-components', 'wp-data', 'wp-edit-post', 'wp-element', 'wp-i18n', 'wp-plugins' ),
 			(string) filemtime( LLAMAHIRE_PATH . 'assets/js/job-editor.js' ),
 			true
 		);
@@ -119,6 +119,7 @@ final class Jobs {
 			array(
 				'defaults'     => self::defaults(),
 				'organization' => Settings::get(),
+				'duplicateNotice' => absint( $_GET['llamahire_duplicated'] ?? 0 ) ? __( 'Job duplicated as a new draft. Review its details before publishing.', 'llamahire' ) : '',
 			)
 		);
 	}
@@ -168,8 +169,8 @@ final class Jobs {
 			'featured'            => '0',
 			'closed'              => '0',
 			'address_street'      => '',
-			'address_locality'    => '',
-			'address_region'      => '',
+			'address_locality'    => Settings::get()['default_locality'],
+			'address_region'      => Settings::get()['default_region'],
 			'postal_code'         => '',
 			'address_country'     => Settings::get()['default_country'],
 			'applicant_countries' => '',
@@ -190,18 +191,29 @@ final class Jobs {
 		$countries   = array_filter( array_map( 'trim', explode( ',', strtoupper( sanitize_text_field( $data['applicant_countries'] ) ) ) ) );
 		$countries   = array_values( array_unique( array_filter( $countries, static function ( $code ) { return (bool) preg_match( '/^[A-Z]{2}$/', $code ); } ) ) );
 		$number      = static function ( $value ) {
-			return '' === $value || null === $value ? '' : max( 0, (float) $value );
+			if ( '' === $value || null === $value || ! is_numeric( $value ) ) {
+				return '';
+			}
+			$value = (float) $value;
+			return is_finite( $value ) && $value > 0 ? $value : '';
 		};
+		$salary_min      = $number( $data['salary_min'] );
+		$salary_max      = $number( $data['salary_max'] );
+		$salary_currency = Settings::currency_code( $data['salary_currency'], '' );
+		if ( ! $salary_currency || ( '' !== $salary_min && '' !== $salary_max && $salary_max < $salary_min ) ) {
+			$salary_min = '';
+			$salary_max = '';
+		}
 
 		return array(
 			'location'            => sanitize_text_field( $data['location'] ),
 			'employment_type'     => in_array( $data['employment_type'], $employment, true ) ? $data['employment_type'] : 'FULL_TIME',
 			'workplace'           => in_array( $data['workplace'], array( 'onsite', 'hybrid', 'remote' ), true ) ? $data['workplace'] : 'onsite',
-			'salary_min'          => $number( $data['salary_min'] ),
-			'salary_max'          => $number( $data['salary_max'] ),
-			'salary_currency'     => Settings::currency_code( $data['salary_currency'] ),
+			'salary_min'          => $salary_min,
+			'salary_max'          => $salary_max,
+			'salary_currency'     => $salary_currency,
 			'salary_unit'         => in_array( $data['salary_unit'], $units, true ) ? $data['salary_unit'] : 'YEAR',
-			'deadline'            => preg_match( '/^\d{4}-\d{2}-\d{2}$/', (string) $data['deadline'] ) ? $data['deadline'] : '',
+			'deadline'            => self::valid_date( $data['deadline'] ) ? $data['deadline'] : '',
 			'featured'            => empty( $data['featured'] ) || '0' === (string) $data['featured'] ? '0' : '1',
 			'closed'              => empty( $data['closed'] ) || '0' === (string) $data['closed'] ? '0' : '1',
 			'address_street'      => sanitize_text_field( $data['address_street'] ),
@@ -216,6 +228,16 @@ final class Jobs {
 			'organization_url'    => esc_url_raw( $data['organization_url'] ),
 			'organization_logo'   => esc_url_raw( $data['organization_logo'] ),
 		);
+	}
+
+	public static function valid_date( $value ) {
+		$value = (string) $value;
+		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
+			return false;
+		}
+		$date   = \DateTimeImmutable::createFromFormat( '!Y-m-d', $value, new \DateTimeZone( 'UTC' ) );
+		$errors = \DateTimeImmutable::getLastErrors();
+		return false !== $date && ( false === $errors || ( 0 === $errors['warning_count'] && 0 === $errors['error_count'] ) ) && $value === $date->format( 'Y-m-d' );
 	}
 
 	public static function open_meta_query() {
@@ -257,6 +279,7 @@ final class Jobs {
 
 	public static function location_label( array $meta ) {
 		if ( 'remote' === $meta['workplace'] ) {
+			/* translators: %s: comma-separated eligible country codes. */
 			return $meta['applicant_countries'] ? sprintf( __( 'Remote — %s', 'llamahire' ), $meta['applicant_countries'] ) : __( 'Remote', 'llamahire' );
 		}
 		$parts = array_filter( array( $meta['address_locality'], $meta['address_region'], $meta['address_country'] ) );
@@ -304,10 +327,14 @@ final class Jobs {
 			wp_die( esc_html__( 'You cannot duplicate this job.', 'llamahire' ) );
 		}
 		$post = get_post( $post_id );
-		$new  = wp_insert_post( array( 'post_type' => self::POST_TYPE, 'post_status' => 'draft', 'post_title' => sprintf( __( '%s (Copy)', 'llamahire' ), $post->post_title ), 'post_content' => $post->post_content, 'post_excerpt' => $post->post_excerpt ) );
+		/* translators: %s: original job title. */
+		$new  = wp_insert_post( array( 'post_type' => self::POST_TYPE, 'post_status' => 'draft', 'post_title' => sprintf( __( '%s (Copy)', 'llamahire' ), $post->post_title ), 'post_content' => $post->post_content, 'post_excerpt' => $post->post_excerpt ), true );
+		if ( is_wp_error( $new ) ) {
+			wp_die( esc_html__( 'WordPress could not duplicate this job. Please try again.', 'llamahire' ), 500 );
+		}
 		self::set_meta( $new, self::get_meta( $post_id ) );
 		wp_set_object_terms( $new, wp_get_object_terms( $post_id, 'llamahire_department', array( 'fields' => 'ids' ) ), 'llamahire_department' );
-		wp_safe_redirect( get_edit_post_link( $new, 'url' ) );
+		wp_safe_redirect( add_query_arg( 'llamahire_duplicated', $post_id, get_edit_post_link( $new, 'url' ) ) );
 		exit;
 	}
 

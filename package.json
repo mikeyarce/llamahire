@@ -10,7 +10,11 @@
     "test:smoke": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/smoke.php",
     "test:e2e:setup": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/e2e/setup.php",
     "test:e2e": "playwright test",
-    "test:e2e:cleanup": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/e2e/cleanup.php"
+    "test:e2e:cleanup": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/e2e/cleanup.php",
+    "fixtures:generate": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures generate --scenario=small",
+    "fixtures:status": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures status",
+    "fixtures:cleanup": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures cleanup --yes",
+    "test:fixtures": "bash scripts/test-fixtures.sh"
   },
   "devDependencies": {
     "@playwright/test": "1.61.1",

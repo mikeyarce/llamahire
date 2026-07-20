@@ -1,4 +1,4 @@
-=== LlamaHire – Job Board & Careers Plugin for WordPress ===
+=== LlamaHire – Job Board & Careers ===
 Contributors: llamahire
 Tags: jobs, careers, hiring, applications, job board
 Requires at least: 6.5
@@ -28,6 +28,8 @@ The free plugin includes unlimited jobs, departments, workplace and employment d
 = Where are applications stored? =
 
 Applications use a dedicated database table. Resume files are stored in a protected private directory and can only be downloaded by an authorized WordPress user through a signed admin URL.
+
+On production sites, resume uploads fail closed if WordPress cannot create storage outside the public web root. Site Health reports the storage status so the host can correct it before accepting applications.
 
 = Does this require WooCommerce? =
 

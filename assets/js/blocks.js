@@ -1,4 +1,4 @@
-( function ( blocks, element, components, blockEditor, i18n, ServerSideRender ) {
+( function ( blocks, element, components, blockEditor, data, i18n, ServerSideRender ) {
 	'use strict';
 	var el = element.createElement;
 	var InspectorControls = blockEditor.InspectorControls;
@@ -6,6 +6,8 @@
 	var ToggleControl = components.ToggleControl;
 	var RangeControl = components.RangeControl;
 	var TextControl = components.TextControl;
+	var SelectControl = components.SelectControl;
+	var useSelect = data.useSelect;
 	var __ = i18n.__;
 
 	blocks.registerBlockType( 'llamahire/jobs-directory', {
@@ -24,14 +26,25 @@
 
 	blocks.registerBlockType( 'llamahire/application-form', {
 		edit: function ( props ) {
+			var editorData = useSelect( function ( select ) {
+				var editorStore = select( 'core/editor' );
+				return {
+					postType: editorStore && editorStore.getCurrentPostType ? editorStore.getCurrentPostType() : '',
+					jobs: select( 'core' ).getEntityRecords( 'postType', 'llamahire_job', { per_page: 100, orderby: 'title', order: 'asc' } )
+				};
+			}, [] );
+			var jobOptions = [ { label: editorData.postType === 'llamahire_job' ? __( 'Current job', 'llamahire' ) : __( 'Select a published job', 'llamahire' ), value: 0 } ];
+			( editorData.jobs || [] ).forEach( function ( job ) {
+				jobOptions.push( { label: job.title.rendered || __( '(Untitled job)', 'llamahire' ), value: job.id } );
+			} );
 			return el( element.Fragment, {},
 				el( InspectorControls, {}, el( PanelBody, { title: __( 'Form settings', 'llamahire' ) },
 					el( TextControl, { label: __( 'Heading', 'llamahire' ), value: props.attributes.heading, onChange: function ( value ) { props.setAttributes( { heading: value } ); } } ),
-					el( TextControl, { label: __( 'Job ID (leave empty on a job)', 'llamahire' ), type: 'number', value: props.attributes.jobId || '', onChange: function ( value ) { props.setAttributes( { jobId: parseInt( value, 10 ) || 0 } ); } } )
+					el( SelectControl, { label: __( 'Job', 'llamahire' ), help: editorData.postType === 'llamahire_job' ? __( 'Use Current job when this form is inside a job post.', 'llamahire' ) : __( 'Choose the job that receives applications from this form.', 'llamahire' ), value: props.attributes.jobId || 0, options: jobOptions, onChange: function ( value ) { props.setAttributes( { jobId: parseInt( value, 10 ) || 0 } ); } } )
 				) ),
 				el( 'div', { className: 'llamahire-editor-placeholder' }, el( 'strong', {}, props.attributes.heading ), el( 'p', {}, __( 'The candidate application form will appear here.', 'llamahire' ) ) )
 			);
 		},
 		save: function () { return null; }
 	} );
-} )( window.wp.blocks, window.wp.element, window.wp.components, window.wp.blockEditor, window.wp.i18n, window.wp.serverSideRender );
+} )( window.wp.blocks, window.wp.element, window.wp.components, window.wp.blockEditor, window.wp.data, window.wp.i18n, window.wp.serverSideRender );

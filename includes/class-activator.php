@@ -20,6 +20,7 @@ final class Activator {
 	private static function install_current_site() {
 		Migrations::run();
 		Capabilities::install();
+		Setup::mark_pending();
 		Jobs::register();
 		flush_rewrite_rules();
 	}

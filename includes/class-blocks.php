@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Blocks {
 	public static function register() {
-		wp_register_script( 'llamahire-blocks-editor', LLAMAHIRE_URL . 'assets/js/blocks.js', array( 'wp-blocks', 'wp-element', 'wp-components', 'wp-block-editor', 'wp-i18n', 'wp-server-side-render' ), LLAMAHIRE_VERSION, true );
+		wp_register_script( 'llamahire-blocks-editor', LLAMAHIRE_URL . 'assets/js/blocks.js', array( 'wp-blocks', 'wp-element', 'wp-components', 'wp-block-editor', 'wp-data', 'wp-i18n', 'wp-server-side-render' ), LLAMAHIRE_VERSION, true );
 		register_block_type( LLAMAHIRE_PATH . 'blocks/jobs-directory', array( 'render_callback' => array( __CLASS__, 'render_directory' ) ) );
 		register_block_type( LLAMAHIRE_PATH . 'blocks/application-form', array( 'render_callback' => array( __CLASS__, 'render_form' ) ) );
 		add_filter( 'the_content', array( __CLASS__, 'single_job_content' ) );
@@ -127,7 +127,7 @@ final class Blocks {
 					<?php
 			endwhile; else :
 				?>
-				<p class="llamahire-empty"><?php esc_html_e( 'No open roles match your search.', 'llamahire' ); ?></p>
+				<p class="llamahire-empty"><?php esc_html_e( 'No open roles match your search.', 'llamahire' ); ?> <?php if ( $search || $department || $workplace ) : ?><a href="<?php echo esc_url( remove_query_arg( array( 'job_search', 'department', 'workplace' ) ) ); ?>"><?php esc_html_e( 'Clear filters', 'llamahire' ); ?></a><?php endif; ?></p>
 				<?php
 endif;
 			wp_reset_postdata();
@@ -148,12 +148,14 @@ endif;
 		}
 		$result   = sanitize_key( wp_unslash( $_GET['application'] ?? '' ) );
 		$messages = array(
-			'success'     => __( 'Thanks! Your application has been received.', 'llamahire' ),
-			'required'    => __( 'Please provide your name and a valid email address.', 'llamahire' ),
-			'resume_size' => __( 'Your resume must be smaller than 5 MB.', 'llamahire' ),
-			'resume_type' => __( 'Please upload a PDF, DOC, or DOCX resume.', 'llamahire' ),
-			'error'       => __( 'We could not save your application. Please try again.', 'llamahire' ),
-			'invalid'     => __( 'This application link is no longer valid.', 'llamahire' ),
+			'success'        => __( 'Thanks! Your application has been received.', 'llamahire' ),
+			'required'       => __( 'Please provide your name and a valid email address.', 'llamahire' ),
+			'resume_size'    => __( 'Your resume must be smaller than 5 MB.', 'llamahire' ),
+			'resume_type'    => __( 'Please upload a PDF, DOC, or DOCX resume.', 'llamahire' ),
+			'resume_storage' => __( 'Resume uploads are temporarily unavailable. Please contact the employer.', 'llamahire' ),
+			'rate_limited'   => __( 'Too many applications were submitted recently. Please wait and try again.', 'llamahire' ),
+			'error'          => __( 'We could not save your application. Please try again.', 'llamahire' ),
+			'invalid'        => __( 'This application link is no longer valid.', 'llamahire' ),
 		);
 		wp_enqueue_style( 'llamahire' );
 		ob_start();
@@ -163,7 +165,7 @@ endif;
 			<?php
 			if ( isset( $messages[ $result ] ) ) :
 				?>
-				<div class="llamahire-notice <?php echo 'success' === $result ? 'is-success' : 'is-error'; ?>" role="status"><?php echo esc_html( $messages[ $result ] ); ?></div><?php endif; ?>
+				<div class="llamahire-notice <?php echo 'success' === $result ? 'is-success' : 'is-error'; ?>" role="<?php echo 'success' === $result ? 'status' : 'alert'; ?>" tabindex="-1"><?php echo esc_html( $messages[ $result ] ); ?></div><?php endif; ?>
 			<?php if ( 'success' !== $result ) : ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
 				<input type="hidden" name="action" value="llamahire_apply"><input type="hidden" name="job_id" value="<?php echo esc_attr( $job_id ); ?>"><input type="hidden" name="submission_key" value="<?php echo esc_attr( wp_generate_uuid4() ); ?>"><?php wp_nonce_field( 'llamahire_apply_' . $job_id, 'llamahire_nonce' ); ?>
@@ -171,9 +173,23 @@ endif;
 				<label><?php esc_html_e( 'Name', 'llamahire' ); ?> <span aria-hidden="true">*</span><input type="text" name="name" required autocomplete="name"></label>
 				<label><?php esc_html_e( 'Email', 'llamahire' ); ?> <span aria-hidden="true">*</span><input type="email" name="email" required autocomplete="email"></label>
 				<label><?php esc_html_e( 'Phone', 'llamahire' ); ?><input type="tel" name="phone" autocomplete="tel"></label>
-				<label><?php esc_html_e( 'Resume', 'llamahire' ); ?><input type="file" name="resume" accept=".pdf,.doc,.docx"><small><?php esc_html_e( 'PDF, DOC, or DOCX. Maximum 5 MB.', 'llamahire' ); ?></small></label>
+				<label><?php esc_html_e( 'Resume', 'llamahire' ); ?><input type="file" name="resume" accept=".pdf,.doc,.docx" aria-describedby="llamahire-resume-help"><small id="llamahire-resume-help"><?php esc_html_e( 'PDF, DOC, or DOCX. Maximum 5 MB.', 'llamahire' ); ?></small></label>
 				<label><?php esc_html_e( 'Cover letter', 'llamahire' ); ?><textarea name="cover_letter" rows="7"></textarea></label>
-				<button type="submit"><?php esc_html_e( 'Submit application', 'llamahire' ); ?></button>
+				<p class="llamahire-application-privacy" id="llamahire-application-privacy">
+					<?php
+					$settings    = Settings::get();
+					$privacy_url = Settings::privacy_url();
+					$privacy_text = $settings['privacy_text'] ?: __( 'Your information will be used by the employer to evaluate your application.', 'llamahire' );
+					if ( $privacy_url ) {
+						echo esc_html( $privacy_text ) . ' ';
+						/* translators: %s: privacy policy URL. */
+						echo wp_kses_post( sprintf( __( '<a href="%s">Read our privacy policy.</a>', 'llamahire' ), esc_url( $privacy_url ) ) );
+					} else {
+						echo esc_html( $privacy_text );
+					}
+					?>
+				</p>
+				<button type="submit" aria-describedby="llamahire-application-privacy"><?php esc_html_e( 'Submit application', 'llamahire' ); ?></button>
 			</form>
 			<?php endif; ?>
 		</div>

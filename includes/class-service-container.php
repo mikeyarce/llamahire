@@ -24,7 +24,7 @@ final class Service_Container implements Service_Container_Contract {
 
 	public function get( $id ) {
 		if ( ! $this->has( $id ) ) {
-			throw new \InvalidArgumentException( sprintf( 'Unknown LlamaHire service: %s', (string) $id ) );
+			throw new \InvalidArgumentException( sprintf( 'Unknown LlamaHire service: %s', (string) $id ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception text is not rendered.
 		}
 		return $this->services[ $id ];
 	}

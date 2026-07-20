@@ -23,4 +23,16 @@ if ( $job_id ) {
 	wp_delete_post( $job_id, true );
 }
 delete_option( 'llamahire_e2e_job_id' );
+$privacy_page_id = absint( get_option( 'llamahire_e2e_privacy_page_id' ) );
+if ( $privacy_page_id ) {
+	wp_delete_post( $privacy_page_id, true );
+}
+delete_option( 'llamahire_e2e_privacy_page_id' );
+$settings = \LlamaHire\Settings::get();
+$careers_page = \LlamaHire\Settings::public_page( $settings['careers_page_id'] );
+if ( $careers_page && 'LlamaHire E2E Careers' === $careers_page->post_title ) {
+	wp_delete_post( $careers_page->ID, true );
+	$settings['careers_page_id'] = 0;
+	update_option( \LlamaHire\Settings::OPTION, $settings, false );
+}
 WP_CLI::success( 'LlamaHire browser fixtures removed.' );

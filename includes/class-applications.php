@@ -39,6 +39,9 @@ final class Applications {
 		if ( ! $name || ! is_email( $email ) ) {
 			self::redirect( $job_id, 'required' );
 		}
+		if ( ! self::consume_submission_limit( $job_id ) ) {
+			self::redirect( $job_id, 'rate_limited' );
+		}
 
 		$file    = isset( $_FILES['resume'] ) && is_array( $_FILES['resume'] ) ? $_FILES['resume'] : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$storage = Plugin::instance()->services()->get( Service_IDs::RESUME_STORAGE );
@@ -111,12 +114,43 @@ final class Applications {
 		}
 		return array(
 			'label'       => $good ? __( 'Resumes use private storage outside the web root', 'llamahire' ) : __( 'Resume storage needs attention', 'llamahire' ),
-			'status'      => $good ? 'good' : 'recommended',
+			'status'      => $good ? 'good' : ( $health['available'] ? 'recommended' : 'critical' ),
 			'badge'       => array( 'label' => __( 'LlamaHire', 'llamahire' ), 'color' => 'blue' ),
 			'description' => '<p>' . esc_html( $description ) . '</p>',
 			'actions'     => '',
 			'test'        => 'llamahire_resume_storage',
 		);
+	}
+
+	public static function consume_submission_limit( $job_id, $client = '' ) {
+		$job_id = absint( $job_id );
+		if ( ! $job_id ) {
+			return false;
+		}
+		if ( '' === $client ) {
+			$client = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) );
+		}
+		$window = max( MINUTE_IN_SECONDS, absint( apply_filters( 'llamahire_submission_rate_window', HOUR_IN_SECONDS, $job_id ) ) );
+		$limits = array(
+			'client' => max( 0, absint( apply_filters( 'llamahire_submission_rate_limit', 5, $job_id ) ) ),
+			'job'    => max( 0, absint( apply_filters( 'llamahire_job_submission_rate_limit', 100, $job_id ) ) ),
+		);
+		$identifiers = array(
+			'client' => hash_hmac( 'sha256', (string) $client, wp_salt( 'nonce' ) ),
+			'job'    => 'all',
+		);
+		foreach ( $limits as $scope => $limit ) {
+			if ( 0 === $limit ) {
+				continue;
+			}
+			$key   = 'llamahire_rate_' . md5( get_current_blog_id() . '|' . $job_id . '|' . $scope . '|' . $identifiers[ $scope ] );
+			$count = absint( get_transient( $key ) );
+			if ( $count >= $limit ) {
+				return false;
+			}
+			set_transient( $key, $count + 1, $window );
+		}
+		return true;
 	}
 
 	private static function redirect( $job_id, $result ) {
