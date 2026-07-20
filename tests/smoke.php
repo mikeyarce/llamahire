@@ -21,6 +21,7 @@ global $wpdb;
 $table = $wpdb->prefix . 'llamahire_applications';
 $job_id = 0;
 $sitemap_job_id = 0;
+$filter_job_id = 0;
 $application_id = 0;
 $privacy_page_id = 0;
 $original_settings = get_option( \LlamaHire\Settings::OPTION, false );
@@ -78,13 +79,16 @@ try {
 	$assert( 'completed' === \LlamaHire\Setup::state()['status'], 'Reactivation preserves completed setup state' );
 	$job_defaults = \LlamaHire\Jobs::defaults();
 	$assert( 'Vancouver' === $job_defaults['address_locality'] && 'bc' === $job_defaults['address_region'] && 'CA' === $job_defaults['address_country'] && 'CAD' === $job_defaults['salary_currency'], 'New jobs inherit configured location and currency defaults' );
-	$assert( has_block( 'llamahire/jobs-directory', \LlamaHire\Setup::careers_page_content() ), 'Generated Careers pages reuse the supplied Jobs Directory pattern' );
+	$careers_content = \LlamaHire\Setup::careers_page_content();
+	$assert( has_block( 'llamahire/job-search', $careers_content ) && has_block( 'llamahire/job-filters', $careers_content ) && has_block( 'llamahire/jobs-directory', $careers_content ), 'Generated Careers pages compose Search, Filters, and Jobs Directory blocks' );
 	$invalid_job_meta = \LlamaHire\Jobs::sanitize_meta( array( 'deadline' => '2026-99-99', 'salary_min' => 120000, 'salary_max' => 90000, 'salary_currency' => 'dollars' ) );
 	$assert( '' === $invalid_job_meta['deadline'] && '' === $invalid_job_meta['salary_min'] && '' === $invalid_job_meta['salary_max'] && '' === $invalid_job_meta['salary_currency'], 'Invalid dates, reversed salary ranges, and invalid currencies fail safe' );
 	$non_positive_salary = \LlamaHire\Jobs::sanitize_meta( array( 'salary_min' => -1, 'salary_max' => 0, 'salary_currency' => 'USD' ) );
 	$assert( '' === $non_positive_salary['salary_min'] && '' === $non_positive_salary['salary_max'], 'Non-positive salary boundaries are omitted' );
 	$assert( \LlamaHire\Jobs::valid_date( '2028-02-29' ) && ! \LlamaHire\Jobs::valid_date( '2027-02-29' ), 'Application deadlines require a real calendar date' );
 	$assert( WP_Block_Type_Registry::get_instance()->is_registered( 'llamahire/jobs-directory' ), 'Jobs Directory block is registered' );
+	$assert( WP_Block_Type_Registry::get_instance()->is_registered( 'llamahire/job-search' ), 'Job Search block is registered' );
+	$assert( WP_Block_Type_Registry::get_instance()->is_registered( 'llamahire/job-filters' ), 'Job Filters block is registered' );
 	$assert( WP_Block_Type_Registry::get_instance()->is_registered( 'llamahire/application-form' ), 'Application Form block is registered' );
 	$assert( $table === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ), 'Applications table exists' );
 	$index_names = array_unique( wp_list_pluck( $wpdb->get_results( "SHOW INDEX FROM {$table}" ), 'Key_name' ) );
@@ -123,6 +127,10 @@ try {
 			'organization_url'  => 'https://example.test/',
 		)
 	);
+	delete_post_meta( $job_id, \LlamaHire\Jobs::META_EMPLOYMENT );
+	delete_post_meta( $job_id, \LlamaHire\Jobs::META_LOCATION );
+	update_option( \LlamaHire\Migrations::OPTION, '5', false );
+	$assert( \LlamaHire\Migrations::run() && 'FULL_TIME' === get_post_meta( $job_id, \LlamaHire\Jobs::META_EMPLOYMENT, true ) && false !== strpos( get_post_meta( $job_id, \LlamaHire\Jobs::META_LOCATION, true ), 'Vancouver' ), 'Schema migration 6 backfills normalized employment and location filters' );
 	$assert( \LlamaHire\Jobs::is_open( $job_id ), 'Published job is open for applications' );
 	$job_meta = \LlamaHire\Jobs::get_meta( $job_id );
 	$application_form = do_blocks( '<!-- wp:llamahire/application-form {"jobId":' . (int) $job_id . '} /-->' );
@@ -149,7 +157,7 @@ try {
 	$rest_response = rest_do_request( $rest_request );
 	wp_set_current_user( $original_user_id );
 	$rest_saved = \LlamaHire\Jobs::get_meta( $job_id );
-	$assert( 200 === $rest_response->get_status() && 'remote' === $rest_saved['workplace'] && 'remote' === get_post_meta( $job_id, \LlamaHire\Jobs::META_WORKPLACE, true ), 'Block editor REST saves persist and synchronize query metadata' );
+	$assert( 200 === $rest_response->get_status() && 'remote' === $rest_saved['workplace'] && 'remote' === get_post_meta( $job_id, \LlamaHire\Jobs::META_WORKPLACE, true ) && 'FULL_TIME' === get_post_meta( $job_id, \LlamaHire\Jobs::META_EMPLOYMENT, true ) && false !== strpos( get_post_meta( $job_id, \LlamaHire\Jobs::META_LOCATION, true ), 'Vancouver' ), 'Block editor REST saves persist and synchronize query metadata' );
 	$remote_schema = $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id );
 	$assert( 'TELECOMMUTE' === ( $remote_schema['jobLocationType'] ?? '' ) && 2 === count( $remote_schema['applicantLocationRequirements'] ?? array() ), 'Fully remote schema includes eligible applicant countries' );
 	$assert( false === isset( $remote_schema['jobLocation'] ), 'Fully remote schema does not claim a physical reporting location' );
@@ -177,8 +185,28 @@ try {
 	$deleted_sitemap_urls = $posts_sitemap->get_url_list( 1, \LlamaHire\Jobs::POST_TYPE );
 	$assert( ! array_filter( $deleted_sitemap_urls, static function ( $url ) use ( $sitemap_job_url ) { return $sitemap_job_url === $url['loc']; } ), 'Deleted jobs are removed from the XML sitemap' );
 
+	$_GET['job_search'] = 'LlamaHire Smoke';
+	$_GET['workplace'] = 'hybrid';
+	$search_block = do_blocks( '<!-- wp:llamahire/job-search /-->' );
+	$filters_block = do_blocks( '<!-- wp:llamahire/job-filters /-->' );
+	$assert( false !== strpos( $search_block, 'name="workplace" value="hybrid"' ) && false !== strpos( $filters_block, 'name="job_search" value="LlamaHire Smoke"' ), 'Composable search and filter forms preserve each other\'s URL state' );
+	$_GET['employment_type'] = 'full_time';
+	$_GET['location'] = 'Vancouver';
+	$_GET['featured'] = '1';
 	$directory = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":true,"featuredOnly":false,"perPage":12} /-->' );
-	$assert( false !== strpos( $directory, 'LlamaHire Smoke Test Role' ), 'Directory renders the open job' );
+	$assert( false !== strpos( $directory, 'LlamaHire Smoke Test Role' ), 'Directory combines keyword, employment, workplace, location, and featured filters' );
+	$assert( false !== strpos( $directory, '1 open role' ) && false !== strpos( $directory, 'Clear filters' ), 'Directory reports matching results and offers a clear action' );
+	$_GET['employment_type'] = 'part_time';
+	$empty_directory = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":false,"perPage":12} /-->' );
+	$assert( false !== strpos( $empty_directory, 'No matching open roles' ) && false !== strpos( $empty_directory, 'Clear filters' ), 'Directory provides a recoverable filtered empty state' );
+	unset( $_GET['employment_type'], $_GET['location'], $_GET['featured'], $_GET['workplace'] );
+	$filter_job_id = wp_insert_post( array( 'post_type' => \LlamaHire\Jobs::POST_TYPE, 'post_status' => 'publish', 'post_title' => 'LlamaHire Smoke Pagination Role', 'post_content' => 'A second open role for pagination coverage.' ) );
+	\LlamaHire\Jobs::set_meta( $filter_job_id, array_merge( \LlamaHire\Jobs::get_meta( $job_id ), array( 'featured' => '0' ) ) );
+	$paginated_directory = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":false,"perPage":1} /-->' );
+	$assert( false !== strpos( $paginated_directory, '2 open roles' ) && false !== strpos( $paginated_directory, 'job_page=2' ) && false !== strpos( $paginated_directory, 'Job results pages' ), 'Directory pagination preserves query state and exposes navigation semantics' );
+	wp_delete_post( $filter_job_id, true );
+	$filter_job_id = 0;
+	unset( $_GET['job_search'] );
 
 	$form = do_blocks( '<!-- wp:llamahire/application-form {"jobId":' . (int) $job_id . ',"heading":"Apply now"} /-->' );
 	$assert( false !== strpos( $form, 'llamahire_apply' ) && false !== strpos( $form, 'enctype="multipart/form-data"' ), 'Application form renders for the job' );
@@ -288,6 +316,9 @@ try {
 	}
 	if ( $sitemap_job_id ) {
 		wp_delete_post( $sitemap_job_id, true );
+	}
+	if ( $filter_job_id ) {
+		wp_delete_post( $filter_job_id, true );
 	}
 	if ( $privacy_page_id ) {
 		wp_delete_post( $privacy_page_id, true );

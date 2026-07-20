@@ -17,5 +17,5 @@ defined( 'ABSPATH' ) || exit;
 <!-- /wp:group --><!-- wp:group {"align":"wide","style":{"spacing":{"padding":{"top":"var:preset|spacing|70","bottom":"var:preset|spacing|70"}}},"layout":{"type":"constrained"}} -->
 <div class="wp-block-group alignwide" style="padding-top:var(--wp--preset--spacing--70);padding-bottom:var(--wp--preset--spacing--70)"><!-- wp:heading -->
 <h2 class="wp-block-heading"><?php esc_html_e( 'Open positions', 'llamahire' ); ?></h2>
-<!-- /wp:heading --><!-- wp:llamahire/jobs-directory {"align":"wide"} /--></div>
+<!-- /wp:heading --><!-- wp:llamahire/job-search {"align":"wide"} /--><!-- wp:llamahire/job-filters {"align":"wide"} /--><!-- wp:llamahire/jobs-directory {"align":"wide","showFilters":false} /--></div>
 <!-- /wp:group -->

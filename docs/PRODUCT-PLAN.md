@@ -1,13 +1,13 @@
 # LlamaHire product and execution plan
 
-Status: Milestone 1 and the first hosted compatibility matrix are complete; Milestone 2 block composition is next
+Status: Milestone 2 search/filter composition is complete; job-card context and Featured Jobs are next
 Plan owner: LlamaHire
 Last reviewed: July 20, 2026
 Current version: 0.1.0 foundation
 
 ## 0. Current status and continuation handoff
 
-**Start here after a context reset.** The stabilized Free vertical slice and Milestone 1 setup/authoring flow are implemented and passing local and hosted release gates. The input, settings, menu, publication/closure, preview/duplicate, contextual-empty-state, repeatable test-site fixture, focused keyboard/screen-reader, compatibility-matrix, and automated sitemap-lifecycle passes are complete. Begin Milestone 2 with the block composition/context contract and independent Job Search and Job Filters blocks.
+**Start here after a context reset.** The stabilized Free vertical slice and Milestone 1 setup/authoring flow are implemented and passing local and hosted release gates. Milestone 2 now has standalone Job Search and Job Filters blocks, a shared URL-state contract, normalized filter metadata, result counts, pagination, clear actions, and recoverable empty states while retaining the all-in-one Jobs Directory. Continue with `llamahire/jobId` block context, Job Card, and Featured Jobs.
 
 ### Where we are
 
@@ -35,7 +35,7 @@ Current version: 0.1.0 foundation
 
 Latest local evidence:
 
-- 82 WP-CLI smoke checks passed.
+- 89 WP-CLI smoke checks passed.
 - All four Playwright hiring-workflow stages passed: first-run setup, editor save, candidate submission/schema, and recruiter review/export/download.
 - The fixture lifecycle test passed, every named scenario generated successfully, and the full `large` scenario created 60 jobs plus 1,000 applications in about nine seconds and removed them safely in about three seconds.
 - Release-equivalent Plugin Check completed with no errors. Remaining warnings are reviewed custom-table, read-only request, standard content-filter, and bounded-query cases.
@@ -61,8 +61,9 @@ Latest local evidence:
 6. Completed: add repeatable development-only WP-CLI demo-data commands that populate and clean a test site with complete jobs, departments, applications, safe resumes, statuses, notification states, Media Library assets, settings/pages, and deterministic edge-case fixtures. CI verifies ownership-safe cleanup and preservation of unrelated content.
 7. Completed: ran the dedicated keyboard and screen-reader pass for setup, authoring, candidate application, applications list, and recruiter review; fixed the confirmed semantic, announcement, association, ordering, and narrow-layout issues.
 8. Completed: the first supported-version CI matrix passed on push and pull-request runs, and smoke coverage verifies published, closed, reopened, and deleted job sitemap/schema/application behavior. Public Google validation is intentionally deferred to the final release-testing pass when a representative staging site is available.
-9. Next: begin Milestone 2 by defining the block composition/context contract, then implement independent Job Search and Job Filters blocks while preserving Jobs Directory as the easy all-in-one variation. Cover progressive enhancement, URL-preserved state, result counts, clear filters, and empty states from the first slice.
-10. Before the Free 1.0 release candidate, validate representative staging job URLs with Google's Rich Results Test and URL Inspection, and complete the broader accessibility pass with actual VoiceOver/NVDA output, 320% zoom, forced colors, reduced motion, RTL/localization, and representative classic/block themes. Store evidence in the repository; no Figma deliverable is required.
+9. Completed first Milestone 2 slice: defined the URL query-state and future job-context contracts; added independent Job Search and Job Filters blocks; preserved the all-in-one Jobs Directory; added keyword, department, employment, workplace, location, and featured filtering plus result counts, URL-preserved state, pagination, clear actions, and empty states. See [the block composition contract](BLOCKS.md).
+10. Next: formalize `llamahire/jobId` in block metadata and implement reusable Job Card plus Featured Jobs blocks without manual post IDs. Add editor previews, theme-inheriting design controls, and focused rendering/context tests.
+11. Before the Free 1.0 release candidate, validate representative staging job URLs with Google's Rich Results Test and URL Inspection, and complete the broader accessibility pass with actual VoiceOver/NVDA output, 320% zoom, forced colors, reduced motion, RTL/localization, and representative classic/block themes. Store evidence in the repository; no Figma deliverable is required.
 
 ### Known follow-up risks, not blockers to starting Milestone 1
 
@@ -72,7 +73,7 @@ Latest local evidence:
 - Full WCAG 2.2 AA evidence—including actual VoiceOver/NVDA output, 320% zoom, high contrast, reduced motion, and representative themes—remains a pre-release-candidate gate. RTL/localization, multisite, mail-transport, MySQL/MariaDB, and supported WordPress/PHP matrix evidence is also incomplete.
 - Google Rich Results/URL Inspection validation is deliberately scheduled for final release testing on a representative public staging site. The optional Indexing API boundary remains open; automated sitemap and closed-job lifecycle verification is complete.
 
-When resuming: read this section, inspect the current branch/PR state, and begin item 9 under “Exact next-task order.” Do not repeat completed setup/authoring, fixture, compatibility, accessibility-foundation, or security/SEO work unless a test exposes a regression.
+When resuming: read this section, inspect the current branch/PR state, and begin item 10 under “Exact next-task order.” Do not repeat completed setup/authoring, fixture, search/filter composition, compatibility, accessibility-foundation, or security/SEO work unless a test exposes a regression.
 
 ## 1. Product direction
 
@@ -151,7 +152,7 @@ Version 0.1.0 is an installable foundation, not yet a public release candidate.
 
 ### Important gaps
 
-- Only two of the planned seven dedicated blocks exist.
+- Four of the planned seven dedicated blocks exist: Jobs Directory, Job Search, Job Filters, and Application Form.
 - Only the Careers Page pattern exists; hero, featured jobs, and department landing patterns are missing.
 - Setup onboarding covers organization defaults, the hiring inbox, candidate privacy copy/policy, and Careers page creation or selection.
 - Administrators receive the new granular capabilities by default; a setup UI and purpose-built hiring roles are still missing.
@@ -160,7 +161,7 @@ Version 0.1.0 is an installable foundation, not yet a public release candidate.
 - Admin lists are paginated but still need bulk operations, stronger search/filtering, and accessible responsive behavior.
 - Spam protection now includes a honeypot, nonce, idempotency, and baseline throttling; configurable integrations and host/edge enforcement remain.
 - The initial service/hook API exists, but REST resources and broader domain events remain incomplete.
-- Automated coverage includes 82 smoke checks and a complete four-stage browser hiring workflow. The first hosted supported-version matrix passes; focused unit coverage remains incomplete.
+- Automated coverage includes 89 smoke checks and a complete four-stage browser hiring workflow. The first hosted supported-version matrix passes; focused unit coverage remains incomplete.
 - Plugin Check is error-free for the release-equivalent scan; full internationalization, accessibility, compatibility, and WordPress.org release evidence remains incomplete.
 
 The detailed validation evidence is recorded in [VALIDATION.md](VALIDATION.md).
@@ -199,7 +200,7 @@ Work:
 - Completed: define the private-storage contract, production fail-closed behavior, host opt-in fallback, and Site Health warnings.
 - Add application and job factories for tests.
 - Completed: add supported development-only WP-CLI demo-data generation, status, and ownership-safe cleanup commands for small, large, remote, expired, closed, notification-failure, and edge-case hiring datasets without hand-editing database rows. Application/job factories remain a separate focused-test follow-up.
-- Completed foundation: retain the fast 82-check smoke command and add isolated `wp-env`/Playwright integration coverage for setup and the complete browser hiring workflow. Continue converting domain checks to focused unit/integration tests as the product grows.
+- Completed foundation: retain the fast 89-check smoke command and add isolated `wp-env`/Playwright integration coverage for setup and the complete browser hiring workflow. Continue converting domain checks to focused unit/integration tests as the product grows.
 - Completed: authenticated application review, status, notes, formula-safe CSV, public resume upload, and authorized protected resume download are formalized in GitHub Actions. Confirm the first hosted supported-version matrix run when the repository is connected.
 - Completed baseline: add email failure/success interception and missing-channel retry tests. Subject, recipient, and escaped-content assertions can move into focused notification tests as the template system is built.
 
@@ -260,14 +261,14 @@ Patterns:
 
 Work:
 
-- Split search and filters into composable blocks while keeping an easy all-in-one directory variation.
+- Completed: split search and filters into composable blocks while keeping an easy all-in-one directory variation.
 - Define block context so Job Card and job-detail children compose without manual IDs.
-- Add query pagination, result counts, clear filters, empty states, and URL-preserved filter state.
-- Support department, employment type, workplace, location, featured, and keyword filtering.
+- Completed foundation: add query pagination, result counts, clear filters, empty states, and URL-preserved filter state.
+- Completed: support department, employment type, workplace, location, featured, and keyword filtering using normalized query metadata.
 - Use semantic markup and predictable design tokens that inherit theme styles.
 - Add block variations and previews.
-- Use the Interactivity API only where it improves navigation and remains progressively enhanced.
-- Document block attributes and extension points.
+- Use the Interactivity API only where it improves navigation and remains progressively enhanced; the current GET-form contract works without JavaScript.
+- Completed initial contract: document query-state composition, normalized metadata, progressive enhancement, and the future `llamahire/jobId` context boundary in [BLOCKS.md](BLOCKS.md). Block attributes and extension points will expand with each slice.
 
 Acceptance criteria:
 

@@ -1,10 +1,12 @@
 :root{--llamahire-accent:#5b4bdb;--llamahire-ink:#19172c;--llamahire-muted:#666278;--llamahire-line:#e7e5ee;--llamahire-surface:#fff;--llamahire-soft:#f7f6fb}
-.llamahire-directory,.llamahire-application{color:var(--llamahire-ink);font-family:inherit}
-.llamahire-filters{align-items:end;background:var(--llamahire-soft);border:1px solid var(--llamahire-line);border-radius:16px;display:grid;gap:16px;grid-template-columns:2fr 1fr 1fr auto;margin-bottom:28px;padding:20px}
-.llamahire-filters label,.llamahire-application label{display:flex;flex-direction:column;font-size:.88rem;font-weight:650;gap:7px}
-.llamahire-filters input,.llamahire-filters select,.llamahire-application input,.llamahire-application textarea{background:#fff;border:1px solid #c9c6d3;border-radius:8px;box-sizing:border-box;color:var(--llamahire-ink);font:inherit;padding:10px 12px;width:100%}
-.llamahire-filters input:focus,.llamahire-filters select:focus,.llamahire-application input:focus,.llamahire-application textarea:focus{border-color:var(--llamahire-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--llamahire-accent) 22%,transparent);outline:0}
-.llamahire-filters button,.llamahire-application button{background:var(--llamahire-accent);border:0;border-radius:8px;color:#fff;cursor:pointer;font:inherit;font-weight:700;padding:11px 18px}
+.llamahire-directory,.llamahire-query-block,.llamahire-application{color:var(--llamahire-ink);font-family:inherit}
+.llamahire-filters,.llamahire-search-form{align-items:end;background:var(--llamahire-soft);border:1px solid var(--llamahire-line);border-radius:16px;display:grid;gap:16px;margin-bottom:28px;padding:20px}.llamahire-filters{grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr))}.llamahire-search-form{grid-template-columns:minmax(0,1fr) auto}
+.llamahire-filters label,.llamahire-search-form label,.llamahire-application label{display:flex;flex-direction:column;font-size:.88rem;font-weight:650;gap:7px}
+.llamahire-filters input,.llamahire-filters select,.llamahire-search-form input,.llamahire-application input,.llamahire-application textarea{background:#fff;border:1px solid #c9c6d3;border-radius:8px;box-sizing:border-box;color:var(--llamahire-ink);font:inherit;padding:10px 12px;width:100%}
+.llamahire-filters input:focus,.llamahire-filters select:focus,.llamahire-search-form input:focus,.llamahire-application input:focus,.llamahire-application textarea:focus{border-color:var(--llamahire-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--llamahire-accent) 22%,transparent);outline:0}
+.llamahire-filters button,.llamahire-search-form button,.llamahire-application button{background:var(--llamahire-accent);border:0;border-radius:8px;color:#fff;cursor:pointer;font:inherit;font-weight:700;padding:11px 18px}.llamahire-filters button,.llamahire-search-form button{align-self:end}
+.llamahire-filters .llamahire-checkbox{align-items:center;align-self:center;flex-direction:row;gap:9px}.llamahire-filters .llamahire-checkbox input{accent-color:var(--llamahire-accent);height:18px;padding:0;width:18px}
+.llamahire-results-summary{align-items:center;display:flex;gap:16px;justify-content:space-between;margin:0 0 18px}.llamahire-results-summary p{font-weight:700;margin:0}.llamahire-clear-filters{white-space:nowrap}
 .llamahire-job-grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
 .llamahire-job-card{background:var(--llamahire-surface);border:1px solid var(--llamahire-line);border-radius:16px;padding:24px;position:relative;transition:box-shadow .2s,transform .2s}
 .llamahire-job-card:hover{box-shadow:0 12px 30px rgba(25,23,44,.08);transform:translateY(-2px)}
@@ -13,9 +15,10 @@
 .llamahire-single-meta{font-size:1rem;margin-block:0 24px}.llamahire-salary{color:var(--llamahire-muted);font-weight:650;margin-top:-14px}
 .llamahire-job-facts{background:var(--llamahire-soft);border:1px solid var(--llamahire-line);border-radius:16px;display:grid;gap:0;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin:0 0 28px;padding:8px 18px}.llamahire-job-facts div{padding:12px}.llamahire-job-facts dt{color:var(--llamahire-muted);font-size:.78rem;font-weight:700;text-transform:uppercase}.llamahire-job-facts dd{font-weight:650;margin:3px 0 0}
 .llamahire-badge{background:#eeebff;border-radius:999px;color:#4032aa;display:inline-block;font-size:.75rem;font-weight:750;padding:4px 9px;text-transform:uppercase}
-.llamahire-card-link{color:var(--llamahire-accent);font-weight:700}.llamahire-empty{grid-column:1/-1;text-align:center}
+.llamahire-card-link{color:var(--llamahire-accent);font-weight:700}.llamahire-empty{background:var(--llamahire-soft);border:1px solid var(--llamahire-line);border-radius:16px;grid-column:1/-1;padding:32px;text-align:center}.llamahire-empty h3{margin-top:0}
+.llamahire-pagination{margin-top:28px}.llamahire-pagination .page-numbers{align-items:center;display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0}.llamahire-pagination a,.llamahire-pagination .current{border:1px solid var(--llamahire-line);border-radius:8px;display:inline-block;min-width:1.5em;padding:8px 11px;text-align:center}.llamahire-pagination .current{background:var(--llamahire-ink);color:#fff}
 .llamahire-application{background:var(--llamahire-soft);border:1px solid var(--llamahire-line);border-radius:18px;margin-block:32px;padding:clamp(22px,5vw,42px)}
 .llamahire-application form{display:grid;gap:18px}.llamahire-application small{color:var(--llamahire-muted);font-weight:400}.llamahire-application button{justify-self:start}
 .llamahire-notice{border-radius:8px;padding:13px 15px}.llamahire-notice.is-success{background:#e9f8ef;color:#165c32}.llamahire-notice.is-error{background:#fff0f0;color:#8b2424}
 .llamahire-honeypot{height:0;left:-9999px;overflow:hidden;position:absolute;width:0}.llamahire-editor-placeholder{background:#f7f6fb;border:1px dashed #9b96ad;padding:24px;text-align:center}
-@media(max-width:760px){.llamahire-filters{grid-template-columns:1fr}.llamahire-filters button{width:100%}}
+@media(max-width:760px){.llamahire-filters,.llamahire-search-form{grid-template-columns:1fr}.llamahire-filters button,.llamahire-search-form button{width:100%}.llamahire-results-summary{align-items:flex-start;flex-direction:column}}

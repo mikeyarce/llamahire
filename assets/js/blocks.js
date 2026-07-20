@@ -24,6 +24,37 @@
 		save: function () { return null; }
 	} );
 
+	blocks.registerBlockType( 'llamahire/job-search', {
+		edit: function ( props ) {
+			return el( element.Fragment, {},
+				el( InspectorControls, {}, el( PanelBody, { title: __( 'Search settings', 'llamahire' ) },
+					el( TextControl, { label: __( 'Field label', 'llamahire' ), value: props.attributes.label, onChange: function ( value ) { props.setAttributes( { label: value } ); } } ),
+					el( TextControl, { label: __( 'Placeholder', 'llamahire' ), value: props.attributes.placeholder, onChange: function ( value ) { props.setAttributes( { placeholder: value } ); } } ),
+					el( TextControl, { label: __( 'Button label', 'llamahire' ), value: props.attributes.buttonLabel, onChange: function ( value ) { props.setAttributes( { buttonLabel: value } ); } } )
+				) ),
+				el( ServerSideRender, { block: 'llamahire/job-search', attributes: props.attributes } )
+			);
+		},
+		save: function () { return null; }
+	} );
+
+	blocks.registerBlockType( 'llamahire/job-filters', {
+		edit: function ( props ) {
+			return el( element.Fragment, {},
+				el( InspectorControls, {}, el( PanelBody, { title: __( 'Filter settings', 'llamahire' ) },
+					el( ToggleControl, { label: __( 'Show department', 'llamahire' ), checked: props.attributes.showDepartment, onChange: function ( value ) { props.setAttributes( { showDepartment: value } ); } } ),
+					el( ToggleControl, { label: __( 'Show employment type', 'llamahire' ), checked: props.attributes.showEmploymentType, onChange: function ( value ) { props.setAttributes( { showEmploymentType: value } ); } } ),
+					el( ToggleControl, { label: __( 'Show workplace', 'llamahire' ), checked: props.attributes.showWorkplace, onChange: function ( value ) { props.setAttributes( { showWorkplace: value } ); } } ),
+					el( ToggleControl, { label: __( 'Show location', 'llamahire' ), checked: props.attributes.showLocation, onChange: function ( value ) { props.setAttributes( { showLocation: value } ); } } ),
+					el( ToggleControl, { label: __( 'Show featured roles', 'llamahire' ), checked: props.attributes.showFeatured, onChange: function ( value ) { props.setAttributes( { showFeatured: value } ); } } ),
+					el( TextControl, { label: __( 'Button label', 'llamahire' ), value: props.attributes.buttonLabel, onChange: function ( value ) { props.setAttributes( { buttonLabel: value } ); } } )
+				) ),
+				el( ServerSideRender, { block: 'llamahire/job-filters', attributes: props.attributes } )
+			);
+		},
+		save: function () { return null; }
+	} );
+
 	blocks.registerBlockType( 'llamahire/application-form', {
 		edit: function ( props ) {
 			var editorData = useSelect( function ( select ) {

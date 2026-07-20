@@ -16,7 +16,7 @@ Run from the WordPress root:
 wp eval-file wp-content/plugins/llamahire/tests/smoke.php
 ```
 
-The disposable test creates and removes its own records. Eighty-two checks now pass, covering:
+The disposable test creates and removes its own records. Eighty-nine checks now pass, covering:
 
 - Job post type, department taxonomy, blocks, publication, availability, directory, and form rendering.
 - Applications table creation, repository persistence, retrieval, status changes, and private notes.
@@ -45,6 +45,8 @@ The disposable test creates and removes its own records. Eighty-two checks now p
 - Administrator permission to retry missing notifications, with subscriber denial.
 - Candidate form help/privacy associations and assertive application errors.
 - Published-job sitemap inclusion with accurate modification time, historical closed-job URL retention, and deleted-job removal.
+- Registration and composition of standalone Job Search and Job Filters blocks.
+- Preserved URL query state, normalized employment/location filters, result counts, clear actions, recoverable empty states, and paginated job results.
 
 A full deactivate/reactivate cycle also completed successfully. Existing schema and capability versions remained current.
 
@@ -92,7 +94,7 @@ The authenticated recruiter workflow was also exercised against disposable appli
 - CSV export included the tested applications and neutralized a formula-like cover-letter value.
 - The disposable applications, jobs, and resume files were removed afterward.
 
-These workflows are now encoded in a repeatable `wp-env` and Playwright integration harness. A clean isolated WordPress 7.0.2 environment passed all 82 smoke checks and all four browser tests in one run. The browser suite covers first-run organization/privacy setup and Careers page creation before creating and removing its own job, application, privacy page, Careers page, and resume fixtures. CI retains failure traces, screenshots, video, and an HTML report. See [TESTING.md](TESTING.md).
+These workflows are now encoded in a repeatable `wp-env` and Playwright integration harness. A clean isolated WordPress 7.0.2 environment passed all 89 smoke checks and all four browser tests in one run. The browser suite covers first-run organization/privacy setup, composed Careers-page search/filter behavior, editor authoring, candidate application, and recruiter review before removing its own fixtures. CI retains failure traces, screenshots, video, and an HTML report. See [TESTING.md](TESTING.md).
 
 ## Focused accessibility review
 

@@ -4,9 +4,13 @@ namespace LlamaHire;
 defined( 'ABSPATH' ) || exit;
 
 final class Blocks {
+	const QUERY_KEYS = array( 'job_search', 'department', 'employment_type', 'workplace', 'location', 'featured', 'job_page' );
+
 	public static function register() {
 		wp_register_script( 'llamahire-blocks-editor', LLAMAHIRE_URL . 'assets/js/blocks.js', array( 'wp-blocks', 'wp-element', 'wp-components', 'wp-block-editor', 'wp-data', 'wp-i18n', 'wp-server-side-render' ), LLAMAHIRE_VERSION, true );
 		register_block_type( LLAMAHIRE_PATH . 'blocks/jobs-directory', array( 'render_callback' => array( __CLASS__, 'render_directory' ) ) );
+		register_block_type( LLAMAHIRE_PATH . 'blocks/job-search', array( 'render_callback' => array( __CLASS__, 'render_search' ) ) );
+		register_block_type( LLAMAHIRE_PATH . 'blocks/job-filters', array( 'render_callback' => array( __CLASS__, 'render_filters' ) ) );
 		register_block_type( LLAMAHIRE_PATH . 'blocks/application-form', array( 'render_callback' => array( __CLASS__, 'render_form' ) ) );
 		add_filter( 'the_content', array( __CLASS__, 'single_job_content' ) );
 	}
@@ -44,18 +48,30 @@ final class Blocks {
 	}
 
 	public static function render_directory( $attributes ) {
-		$search     = sanitize_text_field( wp_unslash( $_GET['job_search'] ?? '' ) );
-		$department = sanitize_key( wp_unslash( $_GET['department'] ?? '' ) );
-		$workplace  = sanitize_key( wp_unslash( $_GET['workplace'] ?? '' ) );
+		$state      = self::query_state();
 		$meta_query = Jobs::open_meta_query();
-		if ( $workplace ) {
+		if ( $state['workplace'] ) {
 			$meta_query[] = array(
 				'key'     => Jobs::META_WORKPLACE,
-				'value'   => $workplace,
+				'value'   => $state['workplace'],
 				'compare' => '=',
 			);
 		}
-		if ( ! empty( $attributes['featuredOnly'] ) ) {
+		if ( $state['employment_type'] ) {
+			$meta_query[] = array(
+				'key'     => Jobs::META_EMPLOYMENT,
+				'value'   => $state['employment_type'],
+				'compare' => '=',
+			);
+		}
+		if ( $state['location'] ) {
+			$meta_query[] = array(
+				'key'     => Jobs::META_LOCATION,
+				'value'   => $state['location'],
+				'compare' => 'LIKE',
+			);
+		}
+		if ( ! empty( $attributes['featuredOnly'] ) || $state['featured'] ) {
 			$meta_query[] = array(
 				'key'     => Jobs::META_FEATURED,
 				'value'   => '1',
@@ -66,43 +82,38 @@ final class Blocks {
 			'post_type'      => Jobs::POST_TYPE,
 			'post_status'    => 'publish',
 			'posts_per_page' => min( 50, max( 1, absint( $attributes['perPage'] ?? 12 ) ) ),
-			's'              => $search,
+			'paged'          => $state['job_page'],
+			's'              => $state['job_search'],
 			'meta_query'     => $meta_query, // phpcs:ignore WordPress.DB.SlowDBQuery
 		);
-		if ( $department ) {
+		if ( $state['department'] ) {
 			$args['tax_query'] = array(
 				array(
 					'taxonomy' => 'llamahire_department',
 					'field'    => 'slug',
-					'terms'    => $department,
+					'terms'    => $state['department'],
 				),
 			); // phpcs:ignore WordPress.DB.SlowDBQuery
 		}
 		$query = new \WP_Query( $args );
-		$terms = get_terms(
-			array(
-				'taxonomy'   => 'llamahire_department',
-				'hide_empty' => true,
-			)
-		);
 
 		ob_start();
 		wp_enqueue_style( 'llamahire' );
 		?>
 		<div <?php echo get_block_wrapper_attributes( array( 'class' => 'llamahire-directory' ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?> >
 			<?php if ( ! empty( $attributes['showFilters'] ) ) : ?>
-			<form class="llamahire-filters" method="get" role="search">
-				<label><span><?php esc_html_e( 'Search jobs', 'llamahire' ); ?></span><input type="search" name="job_search" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php esc_attr_e( 'Job title or keyword', 'llamahire' ); ?>"></label>
-				<label><span><?php esc_html_e( 'Department', 'llamahire' ); ?></span><select name="department"><option value=""><?php esc_html_e( 'All departments', 'llamahire' ); ?></option>
-				<?php
-				foreach ( $terms as $term ) :
-					?>
-					<option value="<?php echo esc_attr( $term->slug ); ?>" <?php selected( $department, $term->slug ); ?>><?php echo esc_html( $term->name ); ?></option><?php endforeach; ?></select></label>
-				<label><span><?php esc_html_e( 'Workplace', 'llamahire' ); ?></span><select name="workplace"><option value=""><?php esc_html_e( 'Any workplace', 'llamahire' ); ?></option><option value="remote" <?php selected( $workplace, 'remote' ); ?>><?php esc_html_e( 'Remote', 'llamahire' ); ?></option><option value="hybrid" <?php selected( $workplace, 'hybrid' ); ?>><?php esc_html_e( 'Hybrid', 'llamahire' ); ?></option><option value="onsite" <?php selected( $workplace, 'onsite' ); ?>><?php esc_html_e( 'On-site', 'llamahire' ); ?></option></select></label>
-				<button type="submit"><?php esc_html_e( 'Find jobs', 'llamahire' ); ?></button>
-			</form>
+			<?php echo self::query_form( $state, true, true, array( 'class' => 'llamahire-filters llamahire-filters--combined' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Form markup is escaped by query_form(). ?>
 			<?php endif; ?>
-			<div class="llamahire-job-grid">
+			<div class="llamahire-results-summary" aria-live="polite">
+				<p>
+					<?php
+					/* translators: %s: number of matching open jobs. */
+					echo esc_html( sprintf( _n( '%s open role', '%s open roles', $query->found_posts, 'llamahire' ), number_format_i18n( $query->found_posts ) ) );
+					?>
+				</p>
+				<?php if ( self::has_active_filters( $state ) ) : ?><a class="llamahire-clear-filters" href="<?php echo esc_url( self::clear_url() ); ?>"><?php esc_html_e( 'Clear filters', 'llamahire' ); ?></a><?php endif; ?>
+			</div>
+			<div class="llamahire-job-grid" id="llamahire-job-results">
 			<?php
 			if ( $query->have_posts() ) :
 				while ( $query->have_posts() ) :
@@ -127,15 +138,129 @@ final class Blocks {
 					<?php
 			endwhile; else :
 				?>
-				<p class="llamahire-empty"><?php esc_html_e( 'No open roles match your search.', 'llamahire' ); ?> <?php if ( $search || $department || $workplace ) : ?><a href="<?php echo esc_url( remove_query_arg( array( 'job_search', 'department', 'workplace' ) ) ); ?>"><?php esc_html_e( 'Clear filters', 'llamahire' ); ?></a><?php endif; ?></p>
+				<div class="llamahire-empty"><h3><?php esc_html_e( 'No matching open roles', 'llamahire' ); ?></h3><p><?php esc_html_e( 'Try a broader search or clear the filters to see every open role.', 'llamahire' ); ?></p><?php if ( self::has_active_filters( $state ) ) : ?><p><a href="<?php echo esc_url( self::clear_url() ); ?>"><?php esc_html_e( 'Clear filters', 'llamahire' ); ?></a></p><?php endif; ?></div>
 				<?php
 endif;
 			wp_reset_postdata();
 			?>
 			</div>
+			<?php if ( $query->max_num_pages > 1 ) : ?>
+			<nav class="llamahire-pagination" aria-label="<?php esc_attr_e( 'Job results pages', 'llamahire' ); ?>">
+				<?php
+				echo wp_kses_post(
+					paginate_links(
+						array(
+							'base'      => add_query_arg( 'job_page', '%#%', remove_query_arg( 'job_page' ) ),
+							'format'    => '',
+							'current'   => $state['job_page'],
+							'total'     => $query->max_num_pages,
+							'type'      => 'list',
+							'prev_text' => __( 'Previous', 'llamahire' ),
+							'next_text' => __( 'Next', 'llamahire' ),
+						)
+					)
+				);
+				?>
+			</nav>
+			<?php endif; ?>
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	public static function render_search( $attributes ) {
+		wp_enqueue_style( 'llamahire' );
+		return '<div ' . get_block_wrapper_attributes( array( 'class' => 'llamahire-query-block llamahire-search' ) ) . '>' . self::query_form( self::query_state(), true, false, $attributes ) . '</div>';
+	}
+
+	public static function render_filters( $attributes ) {
+		wp_enqueue_style( 'llamahire' );
+		return '<div ' . get_block_wrapper_attributes( array( 'class' => 'llamahire-query-block llamahire-job-filters' ) ) . '>' . self::query_form( self::query_state(), false, true, $attributes ) . '</div>';
+	}
+
+	public static function query_state() {
+		$employment_types = Jobs::employment_types();
+		$workplace       = sanitize_key( wp_unslash( $_GET['workplace'] ?? '' ) );
+		$employment_type = sanitize_key( wp_unslash( $_GET['employment_type'] ?? '' ) );
+		return array(
+			'job_search'      => sanitize_text_field( wp_unslash( $_GET['job_search'] ?? '' ) ),
+			'department'      => sanitize_key( wp_unslash( $_GET['department'] ?? '' ) ),
+			'employment_type' => array_key_exists( strtoupper( $employment_type ), $employment_types ) ? strtoupper( $employment_type ) : '',
+			'workplace'       => in_array( $workplace, array( 'remote', 'hybrid', 'onsite' ), true ) ? $workplace : '',
+			'location'        => sanitize_text_field( wp_unslash( $_GET['location'] ?? '' ) ),
+			'featured'        => '1' === sanitize_text_field( wp_unslash( $_GET['featured'] ?? '' ) ) ? '1' : '',
+			'job_page'        => max( 1, absint( $_GET['job_page'] ?? 1 ) ),
+		);
+	}
+
+	private static function query_form( array $state, $include_search, $include_filters, array $attributes = array() ) {
+		$controls = array();
+		if ( $include_search ) {
+			$controls[] = 'job_search';
+		}
+		$filter_visibility = array(
+			'department'      => ! isset( $attributes['showDepartment'] ) || $attributes['showDepartment'],
+			'employment_type' => ! isset( $attributes['showEmploymentType'] ) || $attributes['showEmploymentType'],
+			'workplace'       => ! isset( $attributes['showWorkplace'] ) || $attributes['showWorkplace'],
+			'location'        => ! isset( $attributes['showLocation'] ) || $attributes['showLocation'],
+			'featured'        => ! isset( $attributes['showFeatured'] ) || $attributes['showFeatured'],
+		);
+		if ( $include_filters ) {
+			foreach ( $filter_visibility as $key => $visible ) {
+				if ( $visible ) {
+					$controls[] = $key;
+				}
+			}
+		}
+		$class = implode( ' ', array_map( 'sanitize_html_class', preg_split( '/\s+/', $attributes['class'] ?? ( $include_search ? 'llamahire-search-form' : 'llamahire-filters' ) ) ) );
+		ob_start();
+		?>
+		<form class="<?php echo esc_attr( $class ); ?>" method="get" action="<?php echo esc_url( self::form_action_url() ); ?>" role="search" aria-label="<?php echo esc_attr( $include_search && $include_filters ? __( 'Search and filter jobs', 'llamahire' ) : ( $include_search ? __( 'Search jobs', 'llamahire' ) : __( 'Filter jobs', 'llamahire' ) ) ); ?>">
+			<?php foreach ( $state as $key => $value ) : if ( 'job_page' !== $key && $value && ! in_array( $key, $controls, true ) ) : ?><input type="hidden" name="<?php echo esc_attr( $key ); ?>" value="<?php echo esc_attr( $value ); ?>"><?php endif; endforeach; ?>
+			<?php if ( $include_search ) : ?>
+			<label><span><?php echo esc_html( $attributes['label'] ?? __( 'Search jobs', 'llamahire' ) ); ?></span><input type="search" name="job_search" value="<?php echo esc_attr( $state['job_search'] ); ?>" placeholder="<?php echo esc_attr( $attributes['placeholder'] ?? __( 'Job title or keyword', 'llamahire' ) ); ?>"></label>
+			<?php endif; ?>
+			<?php if ( $include_filters && $filter_visibility['department'] ) : self::department_control( $state['department'] ); endif; ?>
+			<?php if ( $include_filters && $filter_visibility['employment_type'] ) : ?>
+			<label><span><?php esc_html_e( 'Employment type', 'llamahire' ); ?></span><select name="employment_type"><option value=""><?php esc_html_e( 'Any employment type', 'llamahire' ); ?></option><?php foreach ( Jobs::employment_types() as $value => $label ) : ?><option value="<?php echo esc_attr( strtolower( $value ) ); ?>" <?php selected( $state['employment_type'], $value ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>
+			<?php endif; ?>
+			<?php if ( $include_filters && $filter_visibility['workplace'] ) : ?>
+			<label><span><?php esc_html_e( 'Workplace', 'llamahire' ); ?></span><select name="workplace"><option value=""><?php esc_html_e( 'Any workplace', 'llamahire' ); ?></option><option value="remote" <?php selected( $state['workplace'], 'remote' ); ?>><?php esc_html_e( 'Remote', 'llamahire' ); ?></option><option value="hybrid" <?php selected( $state['workplace'], 'hybrid' ); ?>><?php esc_html_e( 'Hybrid', 'llamahire' ); ?></option><option value="onsite" <?php selected( $state['workplace'], 'onsite' ); ?>><?php esc_html_e( 'On-site', 'llamahire' ); ?></option></select></label>
+			<?php endif; ?>
+			<?php if ( $include_filters && $filter_visibility['location'] ) : ?>
+			<label><span><?php esc_html_e( 'Location', 'llamahire' ); ?></span><input type="search" name="location" value="<?php echo esc_attr( $state['location'] ); ?>" placeholder="<?php esc_attr_e( 'City, region, or country', 'llamahire' ); ?>"></label>
+			<?php endif; ?>
+			<?php if ( $include_filters && $filter_visibility['featured'] ) : ?>
+			<label class="llamahire-checkbox"><input type="checkbox" name="featured" value="1" <?php checked( $state['featured'], '1' ); ?>><span><?php esc_html_e( 'Featured roles only', 'llamahire' ); ?></span></label>
+			<?php endif; ?>
+			<button type="submit"><?php echo esc_html( $attributes['buttonLabel'] ?? ( $include_search && ! $include_filters ? __( 'Search', 'llamahire' ) : __( 'Apply filters', 'llamahire' ) ) ); ?></button>
+		</form>
+		<?php
+		return ob_get_clean();
+	}
+
+	private static function department_control( $selected ) {
+		$terms = get_terms( array( 'taxonomy' => 'llamahire_department', 'hide_empty' => true ) );
+		?>
+		<label><span><?php esc_html_e( 'Department', 'llamahire' ); ?></span><select name="department"><option value=""><?php esc_html_e( 'All departments', 'llamahire' ); ?></option><?php if ( ! is_wp_error( $terms ) ) : foreach ( $terms as $term ) : ?><option value="<?php echo esc_attr( $term->slug ); ?>" <?php selected( $selected, $term->slug ); ?>><?php echo esc_html( $term->name ); ?></option><?php endforeach; endif; ?></select></label>
+		<?php
+	}
+
+	private static function has_active_filters( array $state ) {
+		foreach ( array_diff( self::QUERY_KEYS, array( 'job_page' ) ) as $key ) {
+			if ( ! empty( $state[ $key ] ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static function form_action_url() {
+		return remove_query_arg( self::QUERY_KEYS );
+	}
+
+	private static function clear_url() {
+		return remove_query_arg( self::QUERY_KEYS );
 	}
 
 	public static function render_form( $attributes ) {

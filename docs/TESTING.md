@@ -75,7 +75,7 @@ The setup command always removes older browser fixtures before creating new ones
 The GitHub Actions workflow runs:
 
 - PHP syntax checks on PHP 7.4, 8.1, 8.3, and 8.5.
-- The 82-check smoke suite on minimum WordPress 6.5/PHP 7.4, latest WordPress on PHP 7.4 and 8.5, and the WordPress development mirror on PHP 8.5.
+- The 89-check smoke suite on minimum WordPress 6.5/PHP 7.4, latest WordPress on PHP 7.4 and 8.5, and the WordPress development mirror on PHP 8.5.
 - A WP-CLI fixture lifecycle that verifies complete generation, ownership markers, safe resumes, status coverage, option restoration, and preservation of unrelated content.
 - The complete Chromium workflow on latest WordPress/PHP 8.3.
 

@@ -10,6 +10,8 @@ final class Jobs {
 	const META_FEATURED  = '_llamahire_featured';
 	const META_CLOSED    = '_llamahire_closed';
 	const META_DEADLINE  = '_llamahire_deadline';
+	const META_EMPLOYMENT = '_llamahire_employment_type';
+	const META_LOCATION   = '_llamahire_location';
 
 	public static function register() {
 		register_post_type(
@@ -143,6 +145,8 @@ final class Jobs {
 		update_post_meta( $post_id, self::META_FEATURED, $data['featured'] );
 		update_post_meta( $post_id, self::META_CLOSED, $data['closed'] );
 		update_post_meta( $post_id, self::META_DEADLINE, $data['deadline'] );
+		update_post_meta( $post_id, self::META_EMPLOYMENT, $data['employment_type'] );
+		update_post_meta( $post_id, self::META_LOCATION, self::query_location( $data ) );
 	}
 
 	public static function set_meta( $post_id, array $data ) {
@@ -154,6 +158,21 @@ final class Jobs {
 		update_post_meta( $post_id, self::META_FEATURED, $data['featured'] );
 		update_post_meta( $post_id, self::META_CLOSED, $data['closed'] );
 		update_post_meta( $post_id, self::META_DEADLINE, $data['deadline'] );
+		update_post_meta( $post_id, self::META_EMPLOYMENT, $data['employment_type'] );
+		update_post_meta( $post_id, self::META_LOCATION, self::query_location( $data ) );
+	}
+
+	public static function query_location( array $data ) {
+		$parts = array_filter(
+			array(
+				$data['location'] ?? '',
+				$data['address_locality'] ?? '',
+				$data['address_region'] ?? '',
+				$data['address_country'] ?? '',
+				$data['applicant_countries'] ?? '',
+			)
+		);
+		return sanitize_text_field( implode( ' ', array_unique( $parts ) ) );
 	}
 
 	public static function defaults() {
@@ -305,6 +324,19 @@ final class Jobs {
 
 	public static function employment_label( $value ) {
 		return ucwords( strtolower( str_replace( '_', ' ', $value ) ) );
+	}
+
+	public static function employment_types() {
+		return array(
+			'FULL_TIME'  => __( 'Full time', 'llamahire' ),
+			'PART_TIME'  => __( 'Part time', 'llamahire' ),
+			'CONTRACTOR' => __( 'Contractor', 'llamahire' ),
+			'TEMPORARY'  => __( 'Temporary', 'llamahire' ),
+			'INTERN'     => __( 'Intern', 'llamahire' ),
+			'VOLUNTEER'  => __( 'Volunteer', 'llamahire' ),
+			'PER_DIEM'   => __( 'Per diem', 'llamahire' ),
+			'OTHER'      => __( 'Other', 'llamahire' ),
+		);
 	}
 
 	public static function is_open( $post_id ) {

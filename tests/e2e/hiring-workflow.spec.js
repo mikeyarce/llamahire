@@ -81,6 +81,24 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await page.goto( '/llamahire-e2e-careers/' );
 		await expect( page.getByRole( 'heading', { name: 'Do your best work with us' } ) ).toBeVisible();
 		await expect( page.getByRole( 'heading', { name: 'LlamaHire Browser Test Role' } ) ).toBeVisible();
+		await expect( page.getByText( '1 open role', { exact: true } ) ).toBeVisible();
+		const filterForm = page.getByRole( 'search', { name: 'Filter jobs' } );
+		await filterForm.getByLabel( 'Employment type' ).selectOption( 'full_time' );
+		await filterForm.getByRole( 'button', { name: 'Apply filters' } ).focus();
+		await page.keyboard.press( 'Enter' );
+		await expect( page ).toHaveURL( /employment_type=full_time/ );
+		await expect( page.getByRole( 'heading', { name: 'LlamaHire Browser Test Role' } ) ).toBeVisible();
+		const searchForm = page.getByRole( 'search', { name: 'Search jobs' } );
+		await searchForm.getByLabel( 'Search jobs' ).fill( 'No such role' );
+		await searchForm.getByRole( 'button', { name: 'Search' } ).focus();
+		await page.keyboard.press( 'Enter' );
+		await expect( page ).toHaveURL( /job_search=No(?:\+|%20)such(?:\+|%20)role/ );
+		await expect( page.getByRole( 'heading', { name: 'No matching open roles' } ) ).toBeVisible();
+		const emptyStateClear = page.locator( '.llamahire-empty' ).getByRole( 'link', { name: 'Clear filters' } );
+		await emptyStateClear.focus();
+		await page.keyboard.press( 'Enter' );
+		await expect( page ).not.toHaveURL( /job_search|employment_type/ );
+		await expect( page.getByRole( 'heading', { name: 'LlamaHire Browser Test Role' } ) ).toBeVisible();
 	} );
 
 	test( 'job editor saves structured Google Jobs fields', async ( { page } ) => {

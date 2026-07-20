@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "llamahire/job-search",
+  "version": "0.1.0",
+  "title": "Job Search",
+  "category": "widgets",
+  "icon": "search",
+  "description": "Search open roles by title or keyword.",
+  "textdomain": "llamahire",
+  "attributes": {
+    "label": { "type": "string", "default": "Search jobs" },
+    "placeholder": { "type": "string", "default": "Job title or keyword" },
+    "buttonLabel": { "type": "string", "default": "Search" }
+  },
+  "supports": { "align": ["wide", "full"], "html": false, "spacing": { "margin": true, "padding": true } },
+  "editorScript": "llamahire-blocks-editor",
+  "style": "llamahire"
+}

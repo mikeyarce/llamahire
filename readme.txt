@@ -14,7 +14,7 @@ Modern hiring for WordPress.
 
 LlamaHire provides an end-to-end careers workflow with beautiful block-first job listings, built-in applications, a focused hiring dashboard, and Google for Jobs-compatible structured data.
 
-The free plugin includes unlimited jobs, departments, workplace and employment details, salary ranges, featured roles, application deadlines, candidate and employer emails, private resume storage, application notes and statuses, and CSV export.
+The free plugin includes unlimited jobs, composable search and filters with shareable URLs, departments, workplace and employment details, salary ranges, featured roles, application deadlines, candidate and employer emails, private resume storage, application notes and statuses, and CSV export.
 
 == Installation ==
 
@@ -38,4 +38,4 @@ No. LlamaHire has no WooCommerce dependency.
 == Changelog ==
 
 = 0.1.0 =
-* Initial product foundation with jobs, careers blocks, applications, admin review, CSV export, and JobPosting schema.
+* Initial product foundation with jobs, composable careers search and filters, applications, admin review, CSV export, and JobPosting schema.
