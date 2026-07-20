@@ -1,6 +1,6 @@
 # LlamaHire validation record
 
-Last validated: July 17, 2026
+Last validated: July 20, 2026
 Plugin version: 0.1.0
 Environment: local WordPress 7.0.2, PHP 8.5.5, WP-CLI, Chrome
 
@@ -16,7 +16,7 @@ Run from the WordPress root:
 wp eval-file wp-content/plugins/llamahire/tests/smoke.php
 ```
 
-The disposable test creates and removes its own records. Sixty-one checks now pass, covering:
+The disposable test creates and removes its own records. Eighty-nine checks now pass, covering:
 
 - Job post type, department taxonomy, blocks, publication, availability, directory, and form rendering.
 - Applications table creation, repository persistence, retrieval, status changes, and private notes.
@@ -43,6 +43,10 @@ The disposable test creates and removes its own records. Sixty-one checks now pa
 - Failed, partial, and successful notification attempts without exposing mail error messages or candidate content.
 - Missing-channel retries that preserve a previously successful delivery.
 - Administrator permission to retry missing notifications, with subscriber denial.
+- Candidate form help/privacy associations and assertive application errors.
+- Published-job sitemap inclusion with accurate modification time, historical closed-job URL retention, and deleted-job removal.
+- Registration and composition of standalone Job Search and Job Filters blocks.
+- Preserved URL query state, normalized employment/location filters, result counts, clear actions, recoverable empty states, and paginated job results.
 
 A full deactivate/reactivate cycle also completed successfully. Existing schema and capability versions remained current.
 
@@ -90,7 +94,30 @@ The authenticated recruiter workflow was also exercised against disposable appli
 - CSV export included the tested applications and neutralized a formula-like cover-letter value.
 - The disposable applications, jobs, and resume files were removed afterward.
 
-These workflows are now encoded in a repeatable `wp-env` and Playwright integration harness. A clean isolated WordPress 7.0.2 environment passed all 61 smoke checks and all three browser tests in one run. The browser suite creates and removes its own job, application, and resume fixtures, and CI retains failure traces, screenshots, video, and an HTML report. See [TESTING.md](TESTING.md).
+These workflows are now encoded in a repeatable `wp-env` and Playwright integration harness. A clean isolated WordPress 7.0.2 environment passed all 92 smoke checks and all four browser tests in one run. The browser suite covers first-run organization/privacy setup, composed Careers-page search/filter behavior, editor authoring, candidate application, and recruiter review before removing its own fixtures. CI retains failure traces, screenshots, video, and an HTML report. See [TESTING.md](TESTING.md).
+
+## Focused accessibility review
+
+The July 20 keyboard and screen-reader pass reviewed setup, job authoring, candidate application, the applications list, and recruiter review. It confirmed keyboard activation in the Playwright workflow and fixed progress semantics, unique control IDs, help associations, error/status announcements, filter/table semantics, submenu order, and the narrow recruiter layout. Evidence and limitations are recorded in [the accessibility review](audits/2026-07-20-accessibility-review/REVIEW.md).
+
+## Hosted supported-version matrix
+
+Draft pull request #1 ran the complete CI workflow for both its branch push and pull-request event. Both runs passed packaging, PHP 7.4/8.1/8.3/8.5 syntax, WordPress 6.5 on PHP 7.4, current WordPress on PHP 7.4 and 8.5, WordPress development on PHP 8.5, the browser hiring workflow, and the deterministic WP-CLI fixture lifecycle. The hosted run IDs were `29774431177` and `29774482010`.
+
+The smoke suite also verifies that an open published job appears in WordPress XML sitemaps with the expected modification time; closing it preserves the useful historical URL while removing active `JobPosting` markup and application submission; reopening restores active behavior; and permanent deletion removes the URL from the sitemap.
+
+## Test-site fixture validation
+
+The development-only `wp llamahire fixtures` command group was exercised against the isolated site. Validation confirmed:
+
+- All seven named scenarios (`small`, `large`, `remote`, `expired`, `closed`, `notification-failures`, and `edge-cases`) generate and can replace one another with `--force`.
+- The lifecycle suite created structured jobs, every application status, notification outcomes, private notes, departments, privacy/Careers pages, a Media Library image, and safe PDF resumes.
+- Edge fixtures include draft, expired, manually closed, exact-salary, and no-salary jobs.
+- Cleanup required both registry membership and record-level ownership proof, restored prior settings/setup options, and preserved an unrelated WordPress post.
+- The full large scenario created 60 jobs and 1,000 applications in about nine seconds locally and removed all owned data in about three seconds.
+- The rebuilt release ZIP excludes `tools/`, tests, scripts, package metadata, and hidden development files.
+
+The fixture lifecycle now runs as a dedicated GitHub Actions job.
 
 Backend benchmark evidence and remaining database release gates are recorded in [PERFORMANCE.md](PERFORMANCE.md).
 
@@ -105,11 +132,10 @@ The resume-storage health check called `realpath()` on a host path blocked by `o
 These checks need purpose-built automated coverage or a final manual release pass:
 
 - Editor behavior across the remaining supported WordPress/browser matrix. The authenticated current-version workflow passes; the native date input still needs a focused manual interaction check because browser automation did not dispatch its React change event reliably.
-- Confirm the new hosted CI workflow across the complete supported WordPress/PHP matrix. The clean local WordPress 7.0.2/Chromium run passes.
+- During final release testing, validate representative public local, hybrid, and remote staging-job URLs with Google's Rich Results Test and URL Inspection.
 - Actual email delivery through a configured mail transport; current validation reaches `wp_mail()` but does not assert inbox delivery.
 - Apache, Nginx, multisite, Windows/IIS, and hosts where the directory above `ABSPATH` is not writable.
-- Accessibility with keyboard, screen reader, zoom, reduced motion, and high contrast.
+- Broader accessibility validation with actual screen-reader speech output, supported browser/OS combinations, 320% zoom, reduced motion, and high contrast. The focused core-workflow pass is complete.
 - Theme compatibility across classic, block, and popular third-party themes.
-- Google Rich Results validation against representative complete job data.
-- High-volume application queries and uploads.
-- WordPress Coding Standards, Plugin Check, vulnerability scanning, and supported-version matrix.
+- High-volume application uploads; query benchmarks and the 1,000-application fixture lifecycle pass locally.
+- WordPress Coding Standards and vulnerability scanning. The release-equivalent Plugin Check scan is error-free and the first hosted supported-version matrix passes.

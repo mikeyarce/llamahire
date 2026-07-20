@@ -2,13 +2,14 @@
 namespace LlamaHire\Services;
 
 use LlamaHire\Contracts\Notification_Service as Notification_Service_Contract;
+use LlamaHire\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
 final class Notification_Service implements Notification_Service_Contract {
 	public function application_received( array $application, $job_id, array $channels = array( 'employer', 'candidate' ) ) {
-		$settings = get_option( 'llamahire_settings', array() );
-		$to       = sanitize_email( $settings['notification_email'] ?? get_option( 'admin_email' ) );
+		$settings = Settings::get();
+		$to       = sanitize_email( $settings['notification_email'] ?: get_option( 'admin_email' ) );
 		$job      = get_the_title( $job_id );
 		$name     = sanitize_text_field( $application['name'] ?? '' );
 		$email    = sanitize_email( $application['email'] ?? '' );
@@ -33,14 +34,18 @@ final class Notification_Service implements Notification_Service_Contract {
 		if ( in_array( 'employer', $channels, true ) ) {
 			$results['employer'] = wp_mail(
 				$to,
+				/* translators: %s: job title. */
 				sprintf( __( 'New application for %s', 'llamahire' ), $job ),
+				/* translators: 1: candidate name, 2: job title, 3: applications admin URL. */
 				sprintf( __( "%1\$s applied for %2\$s.\n\nReview applications: %3\$s", 'llamahire' ), $name, $job, admin_url( 'admin.php?page=llamahire-applications' ) )
 			);
 		}
 		if ( in_array( 'candidate', $channels, true ) ) {
 			$results['candidate'] = wp_mail(
 				$email,
+				/* translators: %s: job title. */
 				sprintf( __( 'We received your application for %s', 'llamahire' ), $job ),
+				/* translators: 1: candidate name, 2: job title, 3: site name. */
 				sprintf( __( "Hi %1\$s,\n\nThanks for applying for %2\$s. We received your application and will be in touch if your experience matches what we are looking for.\n\n%3\$s", 'llamahire' ), $name, $job, get_bloginfo( 'name' ) )
 			);
 		}

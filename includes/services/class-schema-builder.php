@@ -49,9 +49,13 @@ final class Schema_Builder implements Schema_Builder_Contract {
 			$data['hiringOrganization']['logo'] = $organization['logo'];
 		}
 
-		if ( $meta['deadline'] ) {
-			$deadline = new \DateTimeImmutable( $meta['deadline'] . ' 23:59:59', wp_timezone() );
-			$data['validThrough'] = $deadline->format( DATE_W3C );
+		if ( $meta['deadline'] && Jobs::valid_date( $meta['deadline'] ) ) {
+			try {
+				$deadline = new \DateTimeImmutable( $meta['deadline'] . ' 23:59:59', wp_timezone() );
+				$data['validThrough'] = $deadline->format( DATE_W3C );
+			} catch ( \Exception $exception ) {
+				// Invalid legacy values must never break the public job page.
+			}
 		}
 		if ( $departments && ! is_wp_error( $departments ) ) {
 			$data['industry'] = implode( ', ', $departments );
@@ -78,7 +82,9 @@ final class Schema_Builder implements Schema_Builder_Contract {
 			}
 			$data['jobLocation'] = array( '@type' => 'Place', 'address' => $address );
 		}
-		if ( '' !== $meta['salary_min'] || '' !== $meta['salary_max'] ) {
+		$has_salary = '' !== $meta['salary_min'] || '' !== $meta['salary_max'];
+		$valid_range = '' === $meta['salary_min'] || '' === $meta['salary_max'] || (float) $meta['salary_max'] >= (float) $meta['salary_min'];
+		if ( $has_salary && $meta['salary_currency'] && $valid_range ) {
 			$value = array( '@type' => 'QuantitativeValue', 'unitText' => $meta['salary_unit'] );
 			if ( '' !== $meta['salary_min'] && '' !== $meta['salary_max'] && (float) $meta['salary_min'] === (float) $meta['salary_max'] ) {
 				$value['value'] = (float) $meta['salary_min'];

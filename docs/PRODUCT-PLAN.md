@@ -1,9 +1,79 @@
 # LlamaHire product and execution plan
 
-Status: Working plan
+Status: Milestone 2 search/filter composition is complete; job-card context and Featured Jobs are next
 Plan owner: LlamaHire
-Last reviewed: July 17, 2026
+Last reviewed: July 20, 2026
 Current version: 0.1.0 foundation
+
+## 0. Current status and continuation handoff
+
+**Start here after a context reset.** The stabilized Free vertical slice and Milestone 1 setup/authoring flow are implemented and passing local and hosted release gates. Milestone 2 now has standalone Job Search and Job Filters blocks, a shared URL-state contract, normalized filter metadata, result counts, pagination, clear actions, and recoverable empty states while retaining the all-in-one Jobs Directory. Continue with `llamahire/jobId` block context, Job Card, and Featured Jobs.
+
+### Where we are
+
+- Current phase: Milestones 0 and 1 are complete enough to advance; Milestone 2 is next.
+- Repository model: Free is the public `llamahire` repository on `main`; Pro is a separate private add-on repository that depends on Free's versioned API.
+- Working tree: the completed Milestone 1 work is committed on `codex/milestone-1-compatibility` in draft pull request #1. Inspect branch and PR state before making further changes.
+- Test environment: the disposable WordPress site is stopped and its generated candidate/job fixtures have been removed.
+- Installable artifact: `dist/llamahire-0.1.0.zip` was rebuilt deterministically after the fixture-tooling pass and verified to exclude all development tooling and metadata.
+
+### Completed and validated in the latest cycle
+
+- Added strict server-side calendar-date, positive salary, ordered salary-range, and currency validation.
+- Made JobPosting generation fail safe for malformed legacy values and preserve visible-page/schema parity.
+- Added per-client and per-job public application throttles with documented filters for host/Pro tuning.
+- Added resume content-signature checks, DOCX container checks when available, an external validation hook, and production storage that fails closed when outside-web-root storage is unavailable.
+- Expanded CSV formula neutralization to cover leading whitespace/control characters and UTF-8 byte-order marks.
+- Added candidate-data-use/privacy-policy copy and corrected the recruiter list's “Email status” label.
+- Added first-activation setup state, welcome/progress/skip behavior, organization identity, default locality/region/country/currency, a canonical hiring inbox with legacy fallback, candidate privacy copy/policy selection, inherited new-job defaults, and Careers page creation/selection using the supplied pattern.
+- Completed the input/control review: organization logos use the Media Library, the Application Form block selects jobs by title, setup/settings share task-based groups, and the Jobs submenu follows a stable workflow order.
+- Clarified publication versus application state in the editor and job list, added an explicit preview action and duplicate success feedback, and added contextual admin/directory empty states with next actions.
+- Added development-only `wp llamahire fixtures` generate/status/cleanup commands with deterministic named scenarios, realistic Media Library/job/application/resume data, recoverable ownership tracking, prior-option restoration, and a CI lifecycle safety test.
+- Completed the focused keyboard and screen-reader review across setup, authoring, candidate application, applications list, and recruiter review. Corrected progress semantics, duplicate control IDs, help associations, alert/status announcements, filter/table semantics, submenu ordering, and narrow recruiter layout. See [the July 20 accessibility review](audits/2026-07-20-accessibility-review/REVIEW.md).
+- Cleared actionable Plugin Check errors: translator notes, pattern direct-access guard, WordPress.org-safe plugin name, obsolete text-domain loading, and justified narrow suppressions for intentional operations.
+- Recorded the accessibility/security/SEO review in [the July 17 release review](audits/2026-07-17-release-review/REVIEW.md). One empty-editor screenshot was not reproduced by the normal browser workflow and is intentionally deferred.
+
+Latest local evidence:
+
+- 92 WP-CLI smoke checks passed.
+- All four Playwright hiring-workflow stages passed: first-run setup, editor save, candidate submission/schema, and recruiter review/export/download.
+- The fixture lifecycle test passed, every named scenario generated successfully, and the full `large` scenario created 60 jobs plus 1,000 applications in about nine seconds and removed them safely in about three seconds.
+- Release-equivalent Plugin Check completed with no errors. Remaining warnings are reviewed custom-table, read-only request, standard content-filter, and bounded-query cases.
+- PHP syntax checks and `git diff --check` passed.
+- The release ZIP contains only intended runtime files.
+
+### Decisions already made
+
+- Keep Free and Pro in two repositories; do not generate two conditional variants from one runtime tree.
+- Free remains a complete product. Paid listings, payments without WooCommerce, advanced workflow, automation, and integrations belong in Pro and must use Free's extension contracts.
+- Keep structured job fields in the editor sidebar; do not replace them with content blocks or block attributes.
+- Google Jobs values must come from the same model as visible job facts, including employer-provided salary ranges, remote eligibility, and expiry.
+- Use the `LlamaHire` PHP namespace, `llamahire_`/`llamahire-` for WordPress identifiers and handles, and `llamahire/` for block names.
+- Keep design and accessibility evidence in the repository; Figma is not a project dependency.
+
+### Exact next-task order
+
+1. Completed: re-review Milestone 1 using the stabilized workflow evidence and split the setup work into acceptance-testable slices.
+2. Completed foundation: add first-activation setup state, welcome/progress/skip behavior, organization identity, default location/currency, and a canonical notification inbox.
+3. Completed: add configurable candidate privacy text/policy plus idempotent Careers page creation or selection using the supplied pattern.
+4. Completed initial review: audited setup, settings, job-editor, application, recruiter, and block inputs plus Jobs-menu/settings ordering. Images now use the Media Library, the application-form block uses a job selector instead of a raw ID, settings share task-based groups, and the submenu has a stable workflow order. Country/currency selector refinement is recorded for localization review. See [the input, settings, and menu review](audits/2026-07-17-input-settings-menu-review/REVIEW.md).
+5. Completed: finish job-authoring polish with Published versus Closed clarity, an explicit job preview action, duplicate success/error feedback, contextual empty states, and next-action links.
+6. Completed: add repeatable development-only WP-CLI demo-data commands that populate and clean a test site with complete jobs, departments, applications, safe resumes, statuses, notification states, Media Library assets, settings/pages, and deterministic edge-case fixtures. CI verifies ownership-safe cleanup and preservation of unrelated content.
+7. Completed: ran the dedicated keyboard and screen-reader pass for setup, authoring, candidate application, applications list, and recruiter review; fixed the confirmed semantic, announcement, association, ordering, and narrow-layout issues.
+8. Completed: the first supported-version CI matrix passed on push and pull-request runs, and smoke coverage verifies published, closed, reopened, and deleted job sitemap/schema/application behavior. Public Google validation is intentionally deferred to the final release-testing pass when a representative staging site is available.
+9. Completed first Milestone 2 slice: defined the URL query-state and future job-context contracts; added independent Job Search and Job Filters blocks; preserved the all-in-one Jobs Directory; added keyword, department, employment, workplace, location, and featured filtering plus result counts, URL-preserved state, pagination, clear actions, and empty states. See [the block composition contract](BLOCKS.md).
+10. Next: formalize `llamahire/jobId` in block metadata and implement reusable Job Card plus Featured Jobs blocks without manual post IDs. Add editor previews, theme-inheriting design controls, and focused rendering/context tests.
+11. Before the Free 1.0 release candidate, validate representative staging job URLs with Google's Rich Results Test and URL Inspection, and complete the broader accessibility pass with actual VoiceOver/NVDA output, 320% zoom, forced colors, reduced motion, RTL/localization, and representative classic/block themes. Store evidence in the repository; no Figma deliverable is required.
+
+### Known follow-up risks, not blockers to starting Milestone 1
+
+- Application throttles are an application-layer baseline; high-traffic sites still need host or edge enforcement and future configurable anti-spam integrations.
+- Candidate retention periods, scheduled deletion, personal-data export/erasure, and audit history remain Milestone 3 work.
+- Production resume uploads require writable storage outside the web root unless a host explicitly opts into a verified protected fallback.
+- Full WCAG 2.2 AA evidence—including actual VoiceOver/NVDA output, 320% zoom, high contrast, reduced motion, and representative themes—remains a pre-release-candidate gate. RTL/localization, multisite, mail-transport, MySQL/MariaDB, and supported WordPress/PHP matrix evidence is also incomplete.
+- Google Rich Results/URL Inspection validation is deliberately scheduled for final release testing on a representative public staging site. The optional Indexing API boundary remains open; automated sitemap and closed-job lifecycle verification is complete.
+
+When resuming: read this section, inspect the current branch/PR state, and begin item 10 under “Exact next-task order.” Do not repeat completed setup/authoring, fixture, search/filter composition, compatibility, accessibility-foundation, or security/SEO work unless a test exposes a regression.
 
 ## 1. Product direction
 
@@ -11,7 +81,7 @@ LlamaHire will be the modern, block-first hiring platform for WordPress. It star
 
 Positioning:
 
-- Product name: **LlamaHire – Job Board & Careers Plugin for WordPress**
+- Product name: **LlamaHire – Job Board & Careers**
 - Primary promise: **Modern hiring for WordPress.**
 - Experience benchmark: polished, cohesive WordPress-native software with friendly personality.
 - Architectural stance: Gutenberg, REST, accessible defaults, explicit privacy, and scalable application storage.
@@ -68,7 +138,7 @@ Version 0.1.0 is an installable foundation, not yet a public release candidate.
 - Candidate and employer notification calls.
 - New, Reviewing, Rejected, and Hired statuses.
 - Private notes, basic search, dashboard counts, recent candidates, and CSV export.
-- Protected resume download for administrators; outside-web-root storage when the host allows it.
+- Protected resume download for authorized hiring users; production uploads fail closed unless outside-web-root storage is available or the host explicitly enables a verified protected fallback.
 - JobPosting JSON-LD, job archive URLs, and WordPress metadata.
 - Data-preserving uninstall default.
 - A repeatable WP-CLI smoke test.
@@ -77,20 +147,22 @@ Version 0.1.0 is an installable foundation, not yet a public release candidate.
 - Private resume-storage and bounded application-query services, paginated administration, streaming CSV batches, normalized job filter metadata, and an initial backend performance review.
 - Database-enforced idempotent submissions plus visible failed/partial email state and missing-channel retries.
 - A structured Google Jobs model with editor-native readiness guidance, location, remote eligibility, compensation, organization, and publication controls; public job facts and JSON-LD share the same values.
+- Strict job-domain validation, public-submission throttling, resume content checks, candidate-data-use copy, expanded CSV protection, and an error-free release-equivalent Plugin Check scan.
+- An isolated Playwright workflow covering authenticated editor saves, public application/schema behavior, recruiter review, safe export, and authorized resume download.
 
 ### Important gaps
 
-- Only two of the planned seven dedicated blocks exist.
+- Four of the planned seven dedicated blocks exist: Jobs Directory, Job Search, Job Filters, and Application Form.
 - Only the Careers Page pattern exists; hero, featured jobs, and department landing patterns are missing.
-- Setup onboarding does not exist; organization defaults now have a settings screen but are not yet part of a guided flow.
+- Setup onboarding covers organization defaults, the hiring inbox, candidate privacy copy/policy, and Careers page creation or selection.
 - Administrators receive the new granular capabilities by default; a setup UI and purpose-built hiring roles are still missing.
 - Emails are fixed strings without preview, templates, configured-transport delivery tests, or broader diagnostics beyond per-application failure state.
-- Application privacy tools, retention rules, consent text, erasure, and audit history are absent.
-- Admin lists need pagination, bulk operations, stronger search/filtering, and accessible responsive behavior.
-- Spam protection is limited to a honeypot and nonce.
+- Configurable candidate-data-use copy and policy selection exist, but retention rules, personal-data export/erasure, and audit history are absent.
+- Admin lists are paginated but still need bulk operations, stronger search/filtering, and accessible responsive behavior.
+- Spam protection now includes a honeypot, nonce, idempotency, and baseline throttling; configurable integrations and host/edge enforcement remain.
 - The initial service/hook API exists, but REST resources and broader domain events remain incomplete.
-- Automated test coverage is a smoke script rather than a full test suite.
-- Internationalization, accessibility, performance, compatibility, and WordPress.org checks are incomplete.
+- Automated coverage includes 92 smoke checks and a complete four-stage browser hiring workflow. The first hosted supported-version matrix passes; focused unit coverage remains incomplete.
+- Plugin Check is error-free for the release-equivalent scan; full internationalization, accessibility, compatibility, and WordPress.org release evidence remains incomplete.
 
 The detailed validation evidence is recorded in [VALIDATION.md](VALIDATION.md).
 The current Free/Pro extension contract is documented in [PUBLIC-API.md](PUBLIC-API.md).
@@ -121,15 +193,16 @@ Work:
 
 - Completed: database migrations independent of activation hooks, with an atomic lock, forward-only versions, replay tests, and multisite activation support.
 - Completed: dedicated capabilities for jobs, departments, application viewing/management, exports, and resumes; administrators receive them by default.
-- Completed foundation: public repository, notification, and schema service contracts. Remaining direct application-list queries will move behind query APIs with pagination.
+- Completed foundation: public repository, bounded query, notification, resume-storage, and schema service contracts; application lists and exports use the query API.
 - Add structured error logging that excludes candidate content; sanitized per-application notification error codes are complete, while general operational logging remains.
 - Completed: make duplicate submission handling idempotent with a browser submission key and database uniqueness.
-- Validate MIME type, extension, file signature, and configured upload limits consistently.
-- Define the private-storage contract and host fallback warnings.
+- Completed baseline: validate MIME type, extension, file signature, DOCX structure when available, and configured upload limits consistently; an extension hook supports additional scanners.
+- Completed: define the private-storage contract, production fail-closed behavior, host opt-in fallback, and Site Health warnings.
 - Add application and job factories for tests.
-- Completed foundation: retain the fast 61-check smoke command and add isolated `wp-env`/Playwright integration coverage for the complete browser hiring workflow. Continue converting domain checks to focused unit/integration tests as the product grows.
+- Completed: add supported development-only WP-CLI demo-data generation, status, and ownership-safe cleanup commands for small, large, remote, expired, closed, notification-failure, and edge-case hiring datasets without hand-editing database rows. Application/job factories remain a separate focused-test follow-up.
+- Completed foundation: retain the fast 92-check smoke command and add isolated `wp-env`/Playwright integration coverage for setup and the complete browser hiring workflow. Continue converting domain checks to focused unit/integration tests as the product grows.
 - Completed: authenticated application review, status, notes, formula-safe CSV, public resume upload, and authorized protected resume download are formalized in GitHub Actions. Confirm the first hosted supported-version matrix run when the repository is connected.
-- Add email interception tests for subject, recipients, and escaped candidate content.
+- Completed baseline: add email failure/success interception and missing-channel retry tests. Subject, recipient, and escaped-content assertions can move into focused notification tests as the template system is built.
 
 Acceptance criteria:
 
@@ -145,22 +218,25 @@ Goal: make the first-run experience feel like a modern product.
 
 Work:
 
-- Add a welcome/setup flow with progress and skip behavior.
-- Create or select the Careers page.
-- Configure organization name, logo, default currency, notification inbox, and privacy text.
+- Completed initial review: audit every setup, settings, editor, candidate, and recruiter input against its data type and task. Media Library selection now handles images, date/email/number/select/toggle controls are used where appropriate, and the application-form block no longer exposes a raw job ID. Future colors must use WordPress color controls; maintained country/currency selectors remain a localization follow-up.
+- Completed: review the Jobs menu, submenu positions, settings-page information architecture, field order, and headings before final visual polish. Setup and settings are grouped by organization identity, job defaults, notifications, privacy, and Careers page behavior; the Jobs submenu uses a stable workflow order.
+- Completed: add first-activation setup state plus welcome, progress, resume, and skip behavior.
+- Completed: create or select a public Careers page; generated pages reuse the supplied pattern and repeated submissions do not duplicate them.
+- Completed: configure organization name, website/logo, default locality/region/country/currency, a canonical notification inbox with legacy fallback, and candidate privacy text/policy.
 - Completed foundation: add a polished job-settings panel using editor-native controls, grouped readiness guidance, and server-side suppression of incomplete schema. Continue visual/accessibility refinement during this milestone.
-- Clarify Published versus Closed state in list and editor views.
-- Add validation for salary bounds and deadlines.
-- Add job preview and duplicate flows with clear feedback.
-- Provide sensible organization and location defaults.
-- Add contextual empty states and links to the next action.
+- Completed: clarify Published versus Closed state in list and editor views; drafts explicitly do not accept applications, while published jobs separately show their hiring state.
+- Completed: add server-side validation for positive salary bounds, ordered ranges, valid currencies, and real calendar deadlines.
+- Completed: expose a job preview action beside hiring status, duplicate into a new draft with success feedback, and fail safely if WordPress cannot create the copy.
+- Completed: provide sensible organization and location defaults that new jobs inherit.
+- Completed: add contextual empty states and next-action links to the dashboard, application list, and public directory filters.
 
 Acceptance criteria:
 
 - A new user can activate, configure, publish a job, and view a careers page in under five minutes.
 - Job authors never need to edit raw custom fields or know a post ID.
 - Closing and reopening a job are deliberate, reversible actions.
-- Required organization data for complete schema is collected once and reused. Completed foundation; setup flow remains.
+- Required organization data for complete schema is collected once and reused. Completed.
+- Every input has an intentional native control, label, help text, validation path, and accessible error behavior; menu and settings order follow the user's setup-to-operate workflow.
 
 ### Milestone 2 — Complete the block-first careers experience
 
@@ -185,14 +261,14 @@ Patterns:
 
 Work:
 
-- Split search and filters into composable blocks while keeping an easy all-in-one directory variation.
+- Completed: split search and filters into composable blocks while keeping an easy all-in-one directory variation.
 - Define block context so Job Card and job-detail children compose without manual IDs.
-- Add query pagination, result counts, clear filters, empty states, and URL-preserved filter state.
-- Support department, employment type, workplace, location, featured, and keyword filtering.
+- Completed foundation: add query pagination, result counts, clear filters, empty states, and URL-preserved filter state.
+- Completed: support department, employment type, workplace, location, featured, and keyword filtering using normalized query metadata.
 - Use semantic markup and predictable design tokens that inherit theme styles.
 - Add block variations and previews.
-- Use the Interactivity API only where it improves navigation and remains progressively enhanced.
-- Document block attributes and extension points.
+- Use the Interactivity API only where it improves navigation and remains progressively enhanced; the current GET-form contract works without JavaScript.
+- Completed initial contract: document query-state composition, normalized metadata, progressive enhancement, and the future `llamahire/jobId` context boundary in [BLOCKS.md](BLOCKS.md). Block attributes and extension points will expand with each slice.
 
 Acceptance criteria:
 
@@ -209,9 +285,9 @@ Goal: deliver a fast, respectful, privacy-conscious application experience.
 Work:
 
 - Add configurable required/optional states for phone, resume, and cover letter.
-- Add clear consent/privacy language and a privacy-policy link.
+- Completed: add configurable candidate-data-use language and privacy-policy selection; retention copy remains.
 - Preserve safe field values after recoverable validation errors.
-- Add server-side rate limits and configurable anti-spam integration points.
+- Completed baseline: add server-side per-client/per-job limits and tuning filters; broader configurable anti-spam integrations remain.
 - Add accessible upload progress/feedback where supported.
 - Add email sender settings, previews, plain-text templates, and delivery diagnostics.
 - Add duplicate-application policy and clear candidate messaging.
@@ -279,9 +355,13 @@ Goal: ship a trustworthy WordPress.org release.
 
 Work:
 
+- Completed foundation: build deterministic release ZIPs and checksums in CI and on version tags, and retain them as GitHub Actions artifacts.
+- Publish tagged ZIPs and checksums as GitHub Releases after all required release gates pass.
+- At the final WordPress.org release stage, add a protected GitHub Actions workflow that deploys approved tags, readme/assets, and stable-tag metadata to the WordPress.org SVN repository with explicit secrets and environment approval.
 - Run WordPress Coding Standards, Plugin Check, static analysis, JavaScript linting, and vulnerability scanning.
 - Test the supported WordPress/PHP matrix, multisite, common mail transports, and representative hosts.
 - Test classic themes, block themes, RTL, localization, and no-JavaScript behavior.
+- Validate representative public local, hybrid, and remote job URLs with Google's Rich Results Test and URL Inspection after the release-candidate staging site is available.
 - Complete accessibility and performance audits with documented budgets.
 - Add upgrade, rollback, backup, and uninstall test scenarios.
 - Complete readme, screenshots, onboarding copy, privacy documentation, changelog, support policy, and release checklist.
@@ -446,7 +526,7 @@ Official reference: [Google Search Central JobPosting documentation](https://dev
 - Track schema generation errors and Indexing API outcomes without sending candidate data.
 - Recheck the official Google documentation at each release because supported properties and policies can change.
 
-Version 0.1.0 now implements the core structured model, removes the inaccurate “Worldwide” default, supports Google pay units and structured physical/remote locations, and suppresses markup for jobs missing the minimum organization/location data. Remaining release work includes multiple physical locations, exact/no-salary fixtures, expired/closed fixtures, Rich Results validation, sitemap lifecycle checks, and accessibility/theme testing of the editor and public facts panel.
+Version 0.1.0 now implements the core structured model, removes the inaccurate “Worldwide” default, supports Google pay units and structured physical/remote locations, suppresses markup for incomplete/closed/expired jobs, and verifies exact/no-salary plus sitemap lifecycle behavior. Remaining release work includes multiple physical locations, hosted Rich Results/URL Inspection validation, the optional Indexing API boundary, and broader accessibility/theme testing.
 
 ## 8. Post-1.0 product phases
 
@@ -582,6 +662,7 @@ Every new analytics or integration feature must define its query and network cos
 - WordPress integration tests for migrations, database queries, post/taxonomy behavior, REST, email dispatch, uploads, and multisite.
 - JavaScript unit tests for editor controls and interactive state.
 - Browser end-to-end tests for setup, job publication, careers filtering, candidate submission, and recruiter review.
+- Supported WP-CLI demo-data generation and cleanup for realistic manual testing, screenshots, performance checks, and reproducible bug reports.
 - Accessibility automation supplemented by manual assistive-technology testing.
 - Static analysis, coding standards, dependency scanning, and Plugin Check.
 
@@ -605,6 +686,14 @@ A feature is done only when:
 - Accessibility and responsive behavior are verified.
 - Public APIs and user-facing behavior are documented.
 - No unrelated regression appears in the core end-to-end flow.
+
+### Test-site fixture tooling — completed foundation
+
+- Completed: provide namespaced `wp llamahire fixtures generate|status|cleanup` commands without requiring direct SQL from the user.
+- Completed: support deterministic seeds and named `small`, `large`, `remote`, `expired`, `closed`, `notification-failures`, and `edge-cases` scenarios plus bounded count overrides.
+- Completed: populate organization settings, privacy/Careers pages, a Media Library image, structured jobs, departments, safe PDF resumes, application statuses, dates, notes, and notification outcomes.
+- Completed: use a private registry, per-record ownership markers, and deterministic application keys so cleanup removes only fixture-owned data, restores prior options, survives partial generation, and remains safe to rerun.
+- Completed: keep the implementation under development-only `tools/`, load it only in WP-CLI when present, refuse production environments, and omit it from the public release package.
 
 ## 14. Measurement
 
@@ -650,9 +739,9 @@ Start Milestone 0 with this order:
 6. Completed initial gate: benchmark application and job queries, remove N+1 behavior, add composite indexes, normalize directory filter metadata, and document remaining MySQL/MariaDB release tests.
 7. Completed: add database-enforced duplicate-submission idempotency, channel-level notification state, administrator visibility, and missing-channel retries.
 8. Completed foundation: replace the location/salary fields with structured addresses, remote eligibility, currency/pay unit, stable identifiers, organization defaults/overrides, editor-native readiness guidance, and visible page/schema parity.
-9. Completed harness: authenticated editor behavior, expanded schema fixtures, public submission, admin review, formula-safe CSV, and authorized resume download pass in an isolated WordPress environment and are defined in GitHub Actions. Next confirm the first hosted matrix run; email failure/retry interception already passes.
+9. Completed harness: authenticated editor behavior, expanded schema fixtures, public submission, admin review, formula-safe CSV, authorized resume download, email failure/retry interception, and the first hosted supported-version matrix pass in GitHub Actions.
 10. Completed foundation: the public Free and private Pro repositories independently build deterministic installable ZIPs and checksums. Pro CI verifies missing/old/current/new Free API boundaries and runs Free `main` + Pro inside WordPress; release-version matrix entries will be added when the first Free versions are tagged.
-11. Run the first accessibility/security/SEO review on the stabilized vertical slice.
+11. Completed initial accessibility/security/SEO review and confirmed hardening: strict job-domain validation, fail-safe schema generation, submission throttles, resume content checks, production-safe private storage, expanded CSV protection, privacy copy, and actionable Plugin Check cleanup now pass smoke and browser workflow tests. The one blank-editor audit capture was not reproduced and is deferred. See [the 2026-07-17 release review](audits/2026-07-17-release-review/REVIEW.md).
 12. Re-review Milestone 1 scope using evidence from those tests.
 
 The plan should be reviewed at each milestone boundary. Update status, decisions, risks, and acceptance evidence in this document rather than maintaining a separate unconnected backlog.

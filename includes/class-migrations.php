@@ -69,6 +69,11 @@ final class Migrations {
 			if ( $current < 5 ) {
 				self::migration_5_upgrade_job_model();
 				update_option( self::OPTION, '5', false );
+				$current = 5;
+			}
+			if ( $current < 6 ) {
+				self::migration_6_backfill_filter_meta();
+				update_option( self::OPTION, '6', false );
 			}
 			delete_option( 'llamahire_db_version' );
 		} finally {
@@ -167,6 +172,16 @@ final class Migrations {
 					$stored['job_identifier'] = 'llamahire-' . get_current_blog_id() . '-job-' . $job_id;
 				}
 				Jobs::set_meta( $job_id, $stored );
+			}
+		}
+	}
+
+	private static function migration_6_backfill_filter_meta() {
+		global $wpdb;
+		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s", Jobs::POST_TYPE ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+		foreach ( array_chunk( $ids, 250 ) as $batch ) {
+			foreach ( $batch as $job_id ) {
+				Jobs::set_meta( $job_id, Jobs::get_meta( $job_id ) );
 			}
 		}
 	}

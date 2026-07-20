@@ -23,7 +23,7 @@ final class Plugin {
 		foreach ( array( 'interface-service-container.php', 'interface-application-repository.php', 'interface-application-query.php', 'interface-notification-service.php', 'interface-resume-storage.php', 'interface-schema-builder.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/contracts/' . $file;
 		}
-		foreach ( array( 'class-service-ids.php', 'class-service-container.php', 'class-settings.php', 'class-migrations.php', 'class-capabilities.php', 'class-jobs.php', 'class-applications.php', 'class-blocks.php', 'class-admin.php', 'class-seo.php' ) as $file ) {
+		foreach ( array( 'class-service-ids.php', 'class-service-container.php', 'class-settings.php', 'class-setup.php', 'class-migrations.php', 'class-capabilities.php', 'class-jobs.php', 'class-applications.php', 'class-blocks.php', 'class-admin.php', 'class-seo.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/' . $file;
 		}
 		foreach ( array( 'class-application-repository.php', 'class-application-query.php', 'class-notification-service.php', 'class-resume-storage.php', 'class-schema-builder.php' ) as $file ) {
@@ -32,13 +32,13 @@ final class Plugin {
 	}
 
 	public function init() {
-		load_plugin_textdomain( 'llamahire', false, dirname( plugin_basename( LLAMAHIRE_FILE ) ) . '/languages' );
 		Migrations::maybe_run();
 		Capabilities::maybe_install();
 		$this->register_assets();
 		$this->register_services();
 		Jobs::register();
 		Settings::register();
+		Setup::register();
 		Blocks::register();
 		Applications::register();
 		Admin::register();
@@ -81,7 +81,7 @@ final class Plugin {
 		);
 		foreach ( $required as $id => $contract ) {
 			if ( ! $this->services->has( $id ) || ! is_a( $this->services->get( $id ), $contract ) ) {
-				throw new \UnexpectedValueException( sprintf( 'The %1$s service must implement %2$s.', $id, $contract ) );
+				throw new \UnexpectedValueException( sprintf( 'The %1$s service must implement %2$s.', $id, $contract ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception text is not rendered.
 			}
 		}
 		$this->services->lock();

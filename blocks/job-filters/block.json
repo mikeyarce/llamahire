@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "llamahire/job-filters",
+  "version": "0.1.0",
+  "title": "Job Filters",
+  "category": "widgets",
+  "icon": "filter",
+  "description": "Filter open roles by department, employment type, workplace, location, or featured status.",
+  "textdomain": "llamahire",
+  "attributes": {
+    "showDepartment": { "type": "boolean", "default": true },
+    "showEmploymentType": { "type": "boolean", "default": true },
+    "showWorkplace": { "type": "boolean", "default": true },
+    "showLocation": { "type": "boolean", "default": true },
+    "showFeatured": { "type": "boolean", "default": true },
+    "buttonLabel": { "type": "string", "default": "Apply filters" }
+  },
+  "supports": { "align": ["wide", "full"], "html": false, "spacing": { "margin": true, "padding": true } },
+  "editorScript": "llamahire-blocks-editor",
+  "style": "llamahire"
+}

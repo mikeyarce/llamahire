@@ -18,6 +18,12 @@ jobs:
         run: bash scripts/build-release.sh
       - name: Verify installable ZIP
         run: unzip -t dist/llamahire-*.zip
+      - name: Verify development files are excluded
+        run: |
+          if unzip -Z1 dist/llamahire-*.zip | grep -Eq '(^|/)(tools|tests|scripts|docs|node_modules|package(-lock)?\.json|\.[^/]+)(/|$)'; then
+            echo 'Development-only files were found in the release ZIP.'
+            exit 1
+          fi
       - uses: actions/upload-artifact@v5
         with:
           name: llamahire-free-release

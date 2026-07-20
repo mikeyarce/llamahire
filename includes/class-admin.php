@@ -9,6 +9,7 @@ final class Admin {
 			return;
 		}
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
+		add_action( 'admin_menu', array( __CLASS__, 'order_job_menu' ), PHP_INT_MAX );
 		add_action( 'admin_post_llamahire_update_application', array( __CLASS__, 'update_application' ) );
 		add_action( 'admin_post_llamahire_retry_notifications', array( __CLASS__, 'retry_notifications' ) );
 		add_action( 'admin_post_llamahire_export', array( __CLASS__, 'export' ) );
@@ -21,6 +22,37 @@ final class Admin {
 		add_submenu_page( 'edit.php?post_type=' . Jobs::POST_TYPE, __( 'Applications', 'llamahire' ), __( 'Applications', 'llamahire' ), Capabilities::VIEW_APPLICATIONS, 'llamahire-applications', array( __CLASS__, 'applications_page' ) );
 	}
 
+	public static function order_job_menu() {
+		global $submenu;
+		$parent = 'edit.php?post_type=' . Jobs::POST_TYPE;
+		if ( empty( $submenu[ $parent ] ) ) {
+			return;
+		}
+		$order = array(
+			$parent,
+			'post-new.php?post_type=' . Jobs::POST_TYPE,
+			'llamahire-dashboard',
+			'llamahire-applications',
+			'edit-tags.php?taxonomy=llamahire_department&post_type=' . Jobs::POST_TYPE,
+			'llamahire-setup',
+			'llamahire-settings',
+		);
+		$items = $submenu[ $parent ];
+		usort(
+			$items,
+			static function ( $left, $right ) use ( $order ) {
+				$left_slug      = html_entity_decode( (string) $left[2], ENT_QUOTES, 'UTF-8' );
+				$right_slug     = html_entity_decode( (string) $right[2], ENT_QUOTES, 'UTF-8' );
+				$left_position  = array_search( $left_slug, $order, true );
+				$right_position = array_search( $right_slug, $order, true );
+				$left_position  = false === $left_position ? count( $order ) : $left_position;
+				$right_position = false === $right_position ? count( $order ) : $right_position;
+				return $left_position <=> $right_position;
+			}
+		);
+		$submenu[ $parent ] = $items;
+	}
+
 	public static function dashboard() {
 		self::require_capability( Capabilities::VIEW_APPLICATIONS );
 		$applications = Plugin::instance()->services()->get( Service_IDs::APPLICATION_QUERY );
@@ -29,13 +61,14 @@ final class Admin {
 		$recent = $applications->recent( 5 );
 		?>
 		<div class="wrap"><h1><?php esc_html_e( 'Hiring dashboard', 'llamahire' ); ?></h1>
+		<?php if ( ! $open_count ) : ?><div class="notice notice-info inline"><p><?php esc_html_e( 'There are no jobs accepting applications yet.', 'llamahire' ); ?> <a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . Jobs::POST_TYPE ) ); ?>"><?php esc_html_e( 'Add your first job', 'llamahire' ); ?></a>.</p></div><?php endif; ?>
 		<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;max-width:900px;margin:20px 0">
 		<?php foreach ( array( __( 'Open jobs', 'llamahire' ) => $open_count, __( 'New', 'llamahire' ) => $counts['new'], __( 'Reviewing', 'llamahire' ) => $counts['reviewing'], __( 'Hired', 'llamahire' ) => $counts['hired'], __( 'Email attention', 'llamahire' ) => $counts['notification_attention'] ) as $label => $count ) : ?>
 		<div class="card" style="margin:0"><p style="font-size:28px;font-weight:700;margin:0"><?php echo esc_html( $count ); ?></p><p><?php echo esc_html( $label ); ?></p></div><?php endforeach; ?>
 		</div>
 		<h2><?php esc_html_e( 'Recent applicants', 'llamahire' ); ?></h2>
 		<table class="widefat striped" style="max-width:900px"><thead><tr><th><?php esc_html_e( 'Candidate', 'llamahire' ); ?></th><th><?php esc_html_e( 'Job', 'llamahire' ); ?></th><th><?php esc_html_e( 'Status', 'llamahire' ); ?></th><th><?php esc_html_e( 'Received', 'llamahire' ); ?></th></tr></thead><tbody>
-		<?php if ( $recent ) : foreach ( $recent as $row ) : ?><tr><td><a href="<?php echo esc_url( admin_url( 'admin.php?page=llamahire-applications&application=' . $row->id ) ); ?>"><?php echo esc_html( $row->name ); ?></a></td><td><?php echo esc_html( $row->job_title ); ?></td><td><?php echo esc_html( ucfirst( $row->status ) ); ?></td><td><?php echo esc_html( get_date_from_gmt( $row->created_at, get_option( 'date_format' ) ) ); ?></td></tr><?php endforeach; else : ?><tr><td colspan="4"><?php esc_html_e( 'Applications will appear here.', 'llamahire' ); ?></td></tr><?php endif; ?>
+		<?php if ( $recent ) : foreach ( $recent as $row ) : ?><tr><td><a href="<?php echo esc_url( admin_url( 'admin.php?page=llamahire-applications&application=' . $row->id ) ); ?>"><?php echo esc_html( $row->name ); ?></a></td><td><?php echo esc_html( $row->job_title ); ?></td><td><?php echo esc_html( ucfirst( $row->status ) ); ?></td><td><?php echo esc_html( get_date_from_gmt( $row->created_at, get_option( 'date_format' ) ) ); ?></td></tr><?php endforeach; else : ?><tr><td colspan="4"><?php esc_html_e( 'No applications yet.', 'llamahire' ); ?> <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . Jobs::POST_TYPE ) ); ?>"><?php esc_html_e( 'Review your jobs', 'llamahire' ); ?></a> <?php esc_html_e( 'or share a published job to start receiving candidates.', 'llamahire' ); ?></td></tr><?php endif; ?>
 		</tbody></table></div>
 		<?php
 	}
@@ -53,10 +86,11 @@ final class Admin {
 		$rows   = $result['items'];
 		?>
 		<div class="wrap"><h1 class="wp-heading-inline"><?php esc_html_e( 'Applications', 'llamahire' ); ?></h1> <?php if ( current_user_can( Capabilities::EXPORT_APPLICATIONS ) ) : ?><a class="page-title-action" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=llamahire_export' ), 'llamahire_export' ) ); ?>"><?php esc_html_e( 'Export CSV', 'llamahire' ); ?></a><?php endif; ?><hr class="wp-header-end">
-		<ul class="subsubsub"><?php foreach ( array( '' => __( 'All', 'llamahire' ), 'new' => __( 'New', 'llamahire' ), 'reviewing' => __( 'Reviewing', 'llamahire' ), 'rejected' => __( 'Rejected', 'llamahire' ), 'hired' => __( 'Hired', 'llamahire' ) ) as $key => $label ) : ?><li><a <?php echo $status === $key ? 'class="current"' : ''; ?> href="<?php echo esc_url( add_query_arg( array( 'page' => 'llamahire-applications', 'status' => $key ), admin_url( 'admin.php' ) ) ); ?>"><?php echo esc_html( $label ); ?></a> | </li><?php endforeach; ?></ul>
+		<?php $filters = array( '' => __( 'All', 'llamahire' ), 'new' => __( 'New', 'llamahire' ), 'reviewing' => __( 'Reviewing', 'llamahire' ), 'rejected' => __( 'Rejected', 'llamahire' ), 'hired' => __( 'Hired', 'llamahire' ) ); ?>
+		<ul class="subsubsub" aria-label="<?php esc_attr_e( 'Filter applications by status', 'llamahire' ); ?>"><?php foreach ( $filters as $key => $label ) : ?><li><a <?php echo $status === $key ? 'class="current" aria-current="page"' : ''; ?> href="<?php echo esc_url( add_query_arg( array( 'page' => 'llamahire-applications', 'status' => $key ), admin_url( 'admin.php' ) ) ); ?>"><?php echo esc_html( $label ); ?></a><?php if ( array_key_last( $filters ) !== $key ) : ?> <span aria-hidden="true">|</span> <?php endif; ?></li><?php endforeach; ?></ul>
 		<form method="get"><input type="hidden" name="page" value="llamahire-applications"><?php if ( $status ) : ?><input type="hidden" name="status" value="<?php echo esc_attr( $status ); ?>"><?php endif; ?><p class="search-box"><label class="screen-reader-text" for="application-search"><?php esc_html_e( 'Search applications', 'llamahire' ); ?></label><input id="application-search" type="search" name="s" value="<?php echo esc_attr( $search ); ?>"><button class="button"><?php esc_html_e( 'Search', 'llamahire' ); ?></button></p></form>
-		<table class="wp-list-table widefat fixed striped"><thead><tr><th><?php esc_html_e( 'Candidate', 'llamahire' ); ?></th><th><?php esc_html_e( 'Job', 'llamahire' ); ?></th><th><?php esc_html_e( 'Status', 'llamahire' ); ?></th><th><?php esc_html_e( 'Email', 'llamahire' ); ?></th><th><?php esc_html_e( 'Received', 'llamahire' ); ?></th></tr></thead><tbody>
-		<?php if ( $rows ) : foreach ( $rows as $row ) : ?><tr><td><strong><a href="<?php echo esc_url( admin_url( 'admin.php?page=llamahire-applications&application=' . $row->id ) ); ?>"><?php echo esc_html( $row->name ); ?></a></strong><br><a href="mailto:<?php echo esc_attr( $row->email ); ?>"><?php echo esc_html( $row->email ); ?></a></td><td><a href="<?php echo esc_url( get_edit_post_link( $row->job_id ) ); ?>"><?php echo esc_html( $row->job_title ); ?></a></td><td><?php echo esc_html( ucfirst( $row->status ) ); ?></td><td><?php echo esc_html( ucfirst( $row->notification_status ) ); ?></td><td><?php echo esc_html( get_date_from_gmt( $row->created_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></td></tr><?php endforeach; else : ?><tr><td colspan="5"><?php esc_html_e( 'No applications found.', 'llamahire' ); ?></td></tr><?php endif; ?>
+			<table class="wp-list-table widefat fixed striped"><caption class="screen-reader-text"><?php esc_html_e( 'Candidate applications', 'llamahire' ); ?></caption><thead><tr><th scope="col"><?php esc_html_e( 'Candidate', 'llamahire' ); ?></th><th scope="col"><?php esc_html_e( 'Job', 'llamahire' ); ?></th><th scope="col"><?php esc_html_e( 'Status', 'llamahire' ); ?></th><th scope="col"><?php esc_html_e( 'Email status', 'llamahire' ); ?></th><th scope="col"><?php esc_html_e( 'Received', 'llamahire' ); ?></th></tr></thead><tbody>
+		<?php if ( $rows ) : foreach ( $rows as $row ) : ?><tr><td><strong><a href="<?php echo esc_url( admin_url( 'admin.php?page=llamahire-applications&application=' . $row->id ) ); ?>"><?php echo esc_html( $row->name ); ?></a></strong><br><a href="mailto:<?php echo esc_attr( $row->email ); ?>"><?php echo esc_html( $row->email ); ?></a></td><td><a href="<?php echo esc_url( get_edit_post_link( $row->job_id ) ); ?>"><?php echo esc_html( $row->job_title ); ?></a></td><td><?php echo esc_html( ucfirst( $row->status ) ); ?></td><td><?php echo esc_html( ucfirst( $row->notification_status ) ); ?></td><td><?php echo esc_html( get_date_from_gmt( $row->created_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></td></tr><?php endforeach; elseif ( $status || $search ) : ?><tr><td colspan="5"><?php esc_html_e( 'No applications match these filters.', 'llamahire' ); ?> <a href="<?php echo esc_url( admin_url( 'admin.php?page=llamahire-applications' ) ); ?>"><?php esc_html_e( 'Clear filters', 'llamahire' ); ?></a>.</td></tr><?php else : ?><tr><td colspan="5"><?php esc_html_e( 'No applications yet.', 'llamahire' ); ?> <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . Jobs::POST_TYPE ) ); ?>"><?php esc_html_e( 'Review your published jobs', 'llamahire' ); ?></a> <?php esc_html_e( 'or add a new role.', 'llamahire' ); ?></td></tr><?php endif; ?>
 		</tbody></table><?php if ( $result['pages'] > 1 ) : ?><div class="tablenav"><div class="tablenav-pages"><?php echo wp_kses_post( paginate_links( array( 'base' => add_query_arg( 'paged', '%#%' ), 'format' => '', 'current' => $result['page'], 'total' => $result['pages'], 'prev_text' => __( '&laquo; Previous', 'llamahire' ), 'next_text' => __( 'Next &raquo;', 'llamahire' ) ) ) ); ?></div></div><?php endif; ?></div>
 		<?php
 	}
@@ -64,8 +98,13 @@ final class Admin {
 	private static function application_detail( $id ) {
 		$row = Plugin::instance()->services()->get( Service_IDs::APPLICATION_REPOSITORY )->find( $id );
 		if ( ! $row ) { wp_die( esc_html__( 'Application not found.', 'llamahire' ) ); }
+		$updated = ! empty( $_GET['updated'] );
+		$retried = ! empty( $_GET['notifications_retried'] );
 		?>
-		<div class="wrap"><p><a href="<?php echo esc_url( admin_url( 'admin.php?page=llamahire-applications' ) ); ?>">&larr; <?php esc_html_e( 'All applications', 'llamahire' ); ?></a></p><h1><?php echo esc_html( $row->name ); ?></h1><div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:24px;max-width:1000px">
+		<div class="wrap"><p><a href="<?php echo esc_url( admin_url( 'admin.php?page=llamahire-applications' ) ); ?>">&larr; <?php esc_html_e( 'All applications', 'llamahire' ); ?></a></p><h1><?php echo esc_html( $row->name ); ?></h1>
+		<?php if ( $updated ) : ?><div class="notice notice-success inline" role="status"><p><?php esc_html_e( 'Application review saved.', 'llamahire' ); ?></p></div><?php endif; ?>
+		<?php if ( $retried ) : ?><div class="notice notice-success inline" role="status"><p><?php esc_html_e( 'Missing email notifications were retried.', 'llamahire' ); ?></p></div><?php endif; ?>
+		<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:24px;max-width:1000px">
 		<div class="card" style="max-width:none"><h2><?php esc_html_e( 'Candidate', 'llamahire' ); ?></h2><p><strong><?php esc_html_e( 'Email:', 'llamahire' ); ?></strong> <a href="mailto:<?php echo esc_attr( $row->email ); ?>"><?php echo esc_html( $row->email ); ?></a></p><?php if ( $row->phone ) : ?><p><strong><?php esc_html_e( 'Phone:', 'llamahire' ); ?></strong> <?php echo esc_html( $row->phone ); ?></p><?php endif; ?><p><strong><?php esc_html_e( 'Applied for:', 'llamahire' ); ?></strong> <?php echo esc_html( get_the_title( $row->job_id ) ); ?></p><?php if ( $row->has_resume && current_user_can( Capabilities::DOWNLOAD_RESUMES ) ) : ?><p><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=llamahire_resume&application=' . $id ), 'llamahire_resume_' . $id ) ); ?>"><?php esc_html_e( 'Download resume', 'llamahire' ); ?></a></p><?php endif; ?><h2><?php esc_html_e( 'Cover letter', 'llamahire' ); ?></h2><p style="white-space:pre-wrap"><?php echo esc_html( $row->cover_letter ?: __( 'No cover letter provided.', 'llamahire' ) ); ?></p><h2><?php esc_html_e( 'Notifications', 'llamahire' ); ?></h2><p><strong><?php esc_html_e( 'Status:', 'llamahire' ); ?></strong> <?php echo esc_html( ucfirst( $row->notification_status ) ); ?><br><strong><?php esc_html_e( 'Attempts:', 'llamahire' ); ?></strong> <?php echo esc_html( $row->notification_attempts ); ?></p><?php if ( in_array( $row->notification_status, array( 'pending', 'partial', 'failed' ), true ) && current_user_can( Capabilities::RETRY_NOTIFICATIONS ) ) : ?><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="llamahire_retry_notifications"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_retry_notifications_' . $id ); ?><button class="button"><?php esc_html_e( 'Retry missing emails', 'llamahire' ); ?></button></form><?php endif; ?></div>
 		<div><?php if ( current_user_can( Capabilities::MANAGE_APPLICATIONS ) ) : ?><form class="card" style="max-width:none" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><h2><?php esc_html_e( 'Review', 'llamahire' ); ?></h2><input type="hidden" name="action" value="llamahire_update_application"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_update_' . $id ); ?><p><label for="status"><strong><?php esc_html_e( 'Status', 'llamahire' ); ?></strong></label><br><select id="status" name="status" style="width:100%"><?php foreach ( array( 'new' => __( 'New', 'llamahire' ), 'reviewing' => __( 'Reviewing', 'llamahire' ), 'rejected' => __( 'Rejected', 'llamahire' ), 'hired' => __( 'Hired', 'llamahire' ) ) as $key => $label ) : ?><option value="<?php echo esc_attr( $key ); ?>" <?php selected( $row->status, $key ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></p><p><label for="notes"><strong><?php esc_html_e( 'Private notes', 'llamahire' ); ?></strong></label><textarea id="notes" name="notes" rows="8" style="width:100%"><?php echo esc_textarea( $row->notes ); ?></textarea></p><button class="button button-primary"><?php esc_html_e( 'Save changes', 'llamahire' ); ?></button></form><?php else : ?><div class="card" style="max-width:none"><h2><?php esc_html_e( 'Review', 'llamahire' ); ?></h2><p><strong><?php esc_html_e( 'Status:', 'llamahire' ); ?></strong> <?php echo esc_html( ucfirst( $row->status ) ); ?></p><p><strong><?php esc_html_e( 'Private notes:', 'llamahire' ); ?></strong><br><?php echo nl2br( esc_html( $row->notes ?: __( 'No private notes.', 'llamahire' ) ) ); ?></p></div><?php endif; ?></div>
 		</div></div>
@@ -81,7 +120,7 @@ final class Admin {
 			$id,
 			array(
 				'status' => $status,
-				'notes'  => wp_unslash( $_POST['notes'] ?? '' ),
+				'notes'  => sanitize_textarea_field( wp_unslash( $_POST['notes'] ?? '' ) ),
 			)
 		);
 		wp_safe_redirect( admin_url( 'admin.php?page=llamahire-applications&application=' . $id . '&updated=1' ) ); exit;
@@ -118,12 +157,14 @@ final class Admin {
 			$values = array( $row['id'], $row['job_title'], $row['name'], $row['email'], $row['phone'], $row['cover_letter'], $row['status'], $row['created_at'] );
 			fputcsv( $out, array_map( array( __CLASS__, 'safe_csv_value' ), $values ) );
 		}
-		fclose( $out ); exit;
+		fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing the streamed CSV output handle.
+		exit;
 	}
 
 	private static function safe_csv_value( $value ) {
 		$value = (string) $value;
-		return preg_match( '/^[=+\-@\t\r]/', $value ) ? "'" . $value : $value;
+		$test  = preg_replace( '/^\xEF\xBB\xBF/', '', $value );
+		return preg_match( '/^[\x00-\x20]*[=+\-@]/', $test ) ? "'" . $value : $value;
 	}
 
 	private static function require_capability( $capability ) {
@@ -132,6 +173,17 @@ final class Admin {
 		}
 	}
 
-	public static function job_columns( $columns ) { $columns['llamahire_status'] = __( 'Hiring status', 'llamahire' ); return $columns; }
-	public static function job_column( $column, $post_id ) { if ( 'llamahire_status' === $column ) { echo Jobs::is_open( $post_id ) ? esc_html__( 'Open', 'llamahire' ) : esc_html__( 'Closed', 'llamahire' ); } }
+	public static function job_columns( $columns ) { $columns['llamahire_status'] = __( 'Publication and hiring', 'llamahire' ); return $columns; }
+	public static function job_column( $column, $post_id ) {
+		if ( 'llamahire_status' !== $column ) {
+			return;
+		}
+		$status = get_post_status_object( get_post_status( $post_id ) );
+		echo '<strong>' . esc_html( $status ? $status->label : __( 'Unknown', 'llamahire' ) ) . '</strong><br>';
+		if ( 'publish' !== get_post_status( $post_id ) ) {
+			esc_html_e( 'Not accepting applications', 'llamahire' );
+		} else {
+			echo Jobs::is_open( $post_id ) ? esc_html__( 'Accepting applications', 'llamahire' ) : esc_html__( 'Closed to applications', 'llamahire' );
+		}
+	}
 }

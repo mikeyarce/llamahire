@@ -22,6 +22,12 @@ jobs:
         run: bash scripts/build-release.sh
       - name: Verify installable ZIP
         run: unzip -t dist/llamahire-*.zip
+      - name: Verify development files are excluded
+        run: |
+          if unzip -Z1 dist/llamahire-*.zip | grep -Eq '(^|/)(tools|tests|scripts|docs|node_modules|package(-lock)?\.json|\.[^/]+)(/|$)'; then
+            echo 'Development-only files were found in the release ZIP.'
+            exit 1
+          fi
 
   syntax:
     name: PHP ${{ matrix.php }} syntax
@@ -39,7 +45,10 @@ jobs:
       - name: Check PHP syntax
         run: find . -name '*.php' -not -path './node_modules/*' -print0 | xargs -0 -n1 php -l
       - name: Check editor JavaScript syntax
-        run: node --check assets/js/job-editor.js
+        run: |
+          node --check assets/js/admin-settings.js
+          node --check assets/js/blocks.js
+          node --check assets/js/job-editor.js
 
   smoke:
     name: WordPress ${{ matrix.wordpress }} / PHP ${{ matrix.php }}
@@ -130,3 +139,25 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+
+  fixtures:
+    name: WP-CLI fixture lifecycle
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Start disposable WordPress site
+        env:
+          WP_ENV_PHP_VERSION: '8.3'
+        run: npm run env:start
+      - name: Test deterministic fixture generation and ownership-safe cleanup
+        run: npm run test:fixtures
+      - name: Stop WordPress
+        if: always()
+        continue-on-error: true
+        run: npm run env:stop

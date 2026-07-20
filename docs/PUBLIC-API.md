@@ -108,6 +108,20 @@ The resume service owns validation, opaque storage tokens, deletion, availabilit
 
 Storage tokens and filesystem paths are internal even when passed between Free services. Pro must store application IDs, not resume paths.
 
+Resume uploads are restricted to 5 MB PDF, DOC, and DOCX files and must pass filename/MIME and content-signature validation. When `ZipArchive` is available, DOCX containers are also checked for the expected Word document entries, path traversal, and VBA macros. Trusted security extensions may perform additional inspection with `llamahire_validate_resume_upload`; return a `WP_Error` or `false` to reject the upload.
+
+Production storage fails closed when WordPress cannot create the private directory outside the web root. Local and development environments may use the protected uploads fallback. A production host with an independently verified server-level deny rule may opt in through `llamahire_allow_webroot_resume_storage`.
+
+### Public submission defenses
+
+Free applies a honeypot, idempotency key, per-client limit, and per-job limit before accepting a public application upload. Raw client addresses are not stored; the transient key uses a keyed hash. The defaults are five attempts per client and 100 attempts per job per hour. Hosts and Pro may tune these controls with:
+
+- `llamahire_submission_rate_limit` — per-client count; return `0` to disable this layer.
+- `llamahire_job_submission_rate_limit` — aggregate per-job count; return `0` to disable this layer.
+- `llamahire_submission_rate_window` — window in seconds, with a one-minute minimum.
+
+These application-layer limits complement, rather than replace, host or edge rate limiting for high-traffic sites.
+
 ### Notification service
 
 `application_received( array $application, $job_id, array $channels = array( 'employer', 'candidate' ) ): array` attempts the requested messages after persistence. Its result contains `employer` and `candidate` booleans plus sanitized `error_codes`. Passing only the missing channel allows a retry without resending an email that already succeeded.

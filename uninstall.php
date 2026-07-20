@@ -20,3 +20,5 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}llamahire_applications" ); //
 delete_option( 'llamahire_db_version' );
 delete_option( 'llamahire_schema_version' );
 delete_option( 'llamahire_organization' );
+delete_option( 'llamahire_setup' );
+delete_option( 'llamahire_settings' );

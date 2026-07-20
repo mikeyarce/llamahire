@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       LlamaHire – Job Board & Careers Plugin for WordPress
+ * Plugin Name:       LlamaHire – Job Board & Careers
  * Description:       Modern hiring for WordPress: publish jobs, build a careers page, and collect applications.
  * Version:           0.1.0
  * Requires at least: 6.5
@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 
 define( 'LLAMAHIRE_VERSION', '0.1.0' );
 define( 'LLAMAHIRE_API_VERSION', '1.0.0-alpha.4' );
-define( 'LLAMAHIRE_SCHEMA_VERSION', '5' );
+define( 'LLAMAHIRE_SCHEMA_VERSION', '6' );
 define( 'LLAMAHIRE_CAPABILITIES_VERSION', '2' );
 define( 'LLAMAHIRE_FILE', __FILE__ );
 define( 'LLAMAHIRE_PATH', plugin_dir_path( __FILE__ ) );
@@ -27,3 +27,9 @@ register_activation_hook( __FILE__, array( 'LlamaHire\\Activator', 'activate' ) 
 register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
 
 LlamaHire\Plugin::instance()->boot();
+
+// Development fixture commands are intentionally excluded from release ZIPs.
+if ( defined( 'WP_CLI' ) && WP_CLI && file_exists( LLAMAHIRE_PATH . 'tools/class-fixtures-command.php' ) ) {
+	require_once LLAMAHIRE_PATH . 'tools/class-fixtures-command.php';
+	WP_CLI::add_command( 'llamahire fixtures', 'LlamaHire\\Tools\\Fixtures_Command' );
+}
