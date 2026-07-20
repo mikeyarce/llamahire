@@ -29,7 +29,14 @@ final class Setup {
 	}
 
 	public static function state() {
-		$state = wp_parse_args( (array) get_option( self::OPTION, array() ), self::defaults() );
+		$stored = get_option( self::OPTION, false );
+		if ( false === $stored ) {
+			return array(
+				'version' => self::VERSION,
+				'status'  => 'skipped',
+			);
+		}
+		$state = wp_parse_args( (array) $stored, self::defaults() );
 		if ( ! in_array( $state['status'], array( 'pending', 'completed', 'skipped' ), true ) ) {
 			$state['status'] = 'pending';
 		}

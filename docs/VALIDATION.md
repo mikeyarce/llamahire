@@ -94,7 +94,7 @@ The authenticated recruiter workflow was also exercised against disposable appli
 - CSV export included the tested applications and neutralized a formula-like cover-letter value.
 - The disposable applications, jobs, and resume files were removed afterward.
 
-These workflows are now encoded in a repeatable `wp-env` and Playwright integration harness. A clean isolated WordPress 7.0.2 environment passed all 89 smoke checks and all four browser tests in one run. The browser suite covers first-run organization/privacy setup, composed Careers-page search/filter behavior, editor authoring, candidate application, and recruiter review before removing its own fixtures. CI retains failure traces, screenshots, video, and an HTML report. See [TESTING.md](TESTING.md).
+These workflows are now encoded in a repeatable `wp-env` and Playwright integration harness. A clean isolated WordPress 7.0.2 environment passed all 92 smoke checks and all four browser tests in one run. The browser suite covers first-run organization/privacy setup, composed Careers-page search/filter behavior, editor authoring, candidate application, and recruiter review before removing its own fixtures. CI retains failure traces, screenshots, video, and an HTML report. See [TESTING.md](TESTING.md).
 
 ## Focused accessibility review
 

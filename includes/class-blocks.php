@@ -96,6 +96,19 @@ final class Blocks {
 			); // phpcs:ignore WordPress.DB.SlowDBQuery
 		}
 		$query = new \WP_Query( $args );
+		if ( $state['job_page'] > 1 && 0 === (int) $query->post_count ) {
+			$args['paged'] = 1;
+			$first_page    = new \WP_Query( $args );
+			if ( $first_page->found_posts > 0 ) {
+				$state['job_page'] = max( 1, (int) $first_page->max_num_pages );
+				if ( 1 === $state['job_page'] ) {
+					$query = $first_page;
+				} else {
+					$args['paged'] = $state['job_page'];
+					$query         = new \WP_Query( $args );
+				}
+			}
+		}
 
 		ob_start();
 		wp_enqueue_style( 'llamahire' );
@@ -212,13 +225,16 @@ endif;
 				}
 			}
 		}
-		$class = implode( ' ', array_map( 'sanitize_html_class', preg_split( '/\s+/', $attributes['class'] ?? ( $include_search ? 'llamahire-search-form' : 'llamahire-filters' ) ) ) );
+		$class        = implode( ' ', array_map( 'sanitize_html_class', preg_split( '/\s+/', $attributes['class'] ?? ( $include_search ? 'llamahire-search-form' : 'llamahire-filters' ) ) ) );
+		$search_label = self::attribute_text( $attributes, 'label', __( 'Search jobs', 'llamahire' ) );
+		$placeholder  = self::attribute_text( $attributes, 'placeholder', __( 'Job title or keyword', 'llamahire' ) );
+		$button_label = self::attribute_text( $attributes, 'buttonLabel', $include_search && ! $include_filters ? __( 'Search', 'llamahire' ) : __( 'Apply filters', 'llamahire' ) );
 		ob_start();
 		?>
 		<form class="<?php echo esc_attr( $class ); ?>" method="get" action="<?php echo esc_url( self::form_action_url() ); ?>" role="search" aria-label="<?php echo esc_attr( $include_search && $include_filters ? __( 'Search and filter jobs', 'llamahire' ) : ( $include_search ? __( 'Search jobs', 'llamahire' ) : __( 'Filter jobs', 'llamahire' ) ) ); ?>">
 			<?php foreach ( $state as $key => $value ) : if ( 'job_page' !== $key && $value && ! in_array( $key, $controls, true ) ) : ?><input type="hidden" name="<?php echo esc_attr( $key ); ?>" value="<?php echo esc_attr( $value ); ?>"><?php endif; endforeach; ?>
 			<?php if ( $include_search ) : ?>
-			<label><span><?php echo esc_html( $attributes['label'] ?? __( 'Search jobs', 'llamahire' ) ); ?></span><input type="search" name="job_search" value="<?php echo esc_attr( $state['job_search'] ); ?>" placeholder="<?php echo esc_attr( $attributes['placeholder'] ?? __( 'Job title or keyword', 'llamahire' ) ); ?>"></label>
+			<label><span><?php echo esc_html( $search_label ); ?></span><input type="search" name="job_search" value="<?php echo esc_attr( $state['job_search'] ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>"></label>
 			<?php endif; ?>
 			<?php if ( $include_filters && $filter_visibility['department'] ) : self::department_control( $state['department'] ); endif; ?>
 			<?php if ( $include_filters && $filter_visibility['employment_type'] ) : ?>
@@ -233,10 +249,15 @@ endif;
 			<?php if ( $include_filters && $filter_visibility['featured'] ) : ?>
 			<label class="llamahire-checkbox"><input type="checkbox" name="featured" value="1" <?php checked( $state['featured'], '1' ); ?>><span><?php esc_html_e( 'Featured roles only', 'llamahire' ); ?></span></label>
 			<?php endif; ?>
-			<button type="submit"><?php echo esc_html( $attributes['buttonLabel'] ?? ( $include_search && ! $include_filters ? __( 'Search', 'llamahire' ) : __( 'Apply filters', 'llamahire' ) ) ); ?></button>
+			<button type="submit"><?php echo esc_html( $button_label ); ?></button>
 		</form>
 		<?php
 		return ob_get_clean();
+	}
+
+	private static function attribute_text( array $attributes, $key, $fallback ) {
+		$value = isset( $attributes[ $key ] ) && is_scalar( $attributes[ $key ] ) ? trim( (string) $attributes[ $key ] ) : '';
+		return '' === $value ? $fallback : $value;
 	}
 
 	private static function department_control( $selected ) {

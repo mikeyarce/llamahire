@@ -72,6 +72,7 @@ try {
 	update_option( \LlamaHire\Settings::OPTION, $sanitized_settings, false );
 	$assert( 'hiring@example.test' === \LlamaHire\Settings::get()['notification_email'], 'Canonical organization settings own the hiring inbox' );
 	delete_option( \LlamaHire\Setup::OPTION );
+	$assert( 'skipped' === \LlamaHire\Setup::state()['status'], 'Existing installations without setup state are not forced into first-run onboarding' );
 	\LlamaHire\Setup::mark_pending();
 	$assert( 'pending' === \LlamaHire\Setup::state()['status'], 'First activation queues the setup flow' );
 	update_option( \LlamaHire\Setup::OPTION, array( 'version' => \LlamaHire\Setup::VERSION, 'status' => 'completed' ), false );
@@ -190,6 +191,9 @@ try {
 	$search_block = do_blocks( '<!-- wp:llamahire/job-search /-->' );
 	$filters_block = do_blocks( '<!-- wp:llamahire/job-filters /-->' );
 	$assert( false !== strpos( $search_block, 'name="workplace" value="hybrid"' ) && false !== strpos( $filters_block, 'name="job_search" value="LlamaHire Smoke"' ), 'Composable search and filter forms preserve each other\'s URL state' );
+	$empty_text_search = do_blocks( '<!-- wp:llamahire/job-search {"label":"  ","placeholder":"","buttonLabel":""} /-->' );
+	$empty_text_filters = do_blocks( '<!-- wp:llamahire/job-filters {"buttonLabel":""} /-->' );
+	$assert( false !== strpos( $empty_text_search, '>Search jobs</span>' ) && false !== strpos( $empty_text_search, 'placeholder="Job title or keyword"' ) && false !== strpos( $empty_text_search, '>Search</button>' ) && false !== strpos( $empty_text_filters, '>Apply filters</button>' ), 'Empty customizable query labels retain accessible translated defaults' );
 	$_GET['employment_type'] = 'full_time';
 	$_GET['location'] = 'Vancouver';
 	$_GET['featured'] = '1';
@@ -204,6 +208,10 @@ try {
 	\LlamaHire\Jobs::set_meta( $filter_job_id, array_merge( \LlamaHire\Jobs::get_meta( $job_id ), array( 'featured' => '0' ) ) );
 	$paginated_directory = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":false,"perPage":1} /-->' );
 	$assert( false !== strpos( $paginated_directory, '2 open roles' ) && false !== strpos( $paginated_directory, 'job_page=2' ) && false !== strpos( $paginated_directory, 'Job results pages' ), 'Directory pagination preserves query state and exposes navigation semantics' );
+	$_GET['job_page'] = '999';
+	$recovered_directory = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":false,"perPage":1} /-->' );
+	$assert( false !== strpos( $recovered_directory, '2 open roles' ) && false !== strpos( $recovered_directory, 'llamahire-job-card' ) && false === strpos( $recovered_directory, 'No matching open roles' ), 'Out-of-range directory pages recover to the final populated page' );
+	unset( $_GET['job_page'] );
 	wp_delete_post( $filter_job_id, true );
 	$filter_job_id = 0;
 	unset( $_GET['job_search'] );

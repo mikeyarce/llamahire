@@ -1,7 +1,9 @@
 # Keyboard and screen-reader accessibility review
 
-Reviewed: July 20, 2026  
-Scope: first-run setup, job authoring, candidate application, applications list, and recruiter review  
+Reviewed: July 20, 2026
+
+Scope: first-run setup, job authoring, candidate application, applications list, and recruiter review
+
 Environment: local WordPress 7.0.2, Chromium, desktop and 400 px admin viewport
 
 ## Outcome

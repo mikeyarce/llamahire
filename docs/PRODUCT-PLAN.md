@@ -35,7 +35,7 @@ Current version: 0.1.0 foundation
 
 Latest local evidence:
 
-- 89 WP-CLI smoke checks passed.
+- 92 WP-CLI smoke checks passed.
 - All four Playwright hiring-workflow stages passed: first-run setup, editor save, candidate submission/schema, and recruiter review/export/download.
 - The fixture lifecycle test passed, every named scenario generated successfully, and the full `large` scenario created 60 jobs plus 1,000 applications in about nine seconds and removed them safely in about three seconds.
 - Release-equivalent Plugin Check completed with no errors. Remaining warnings are reviewed custom-table, read-only request, standard content-filter, and bounded-query cases.
@@ -161,7 +161,7 @@ Version 0.1.0 is an installable foundation, not yet a public release candidate.
 - Admin lists are paginated but still need bulk operations, stronger search/filtering, and accessible responsive behavior.
 - Spam protection now includes a honeypot, nonce, idempotency, and baseline throttling; configurable integrations and host/edge enforcement remain.
 - The initial service/hook API exists, but REST resources and broader domain events remain incomplete.
-- Automated coverage includes 89 smoke checks and a complete four-stage browser hiring workflow. The first hosted supported-version matrix passes; focused unit coverage remains incomplete.
+- Automated coverage includes 92 smoke checks and a complete four-stage browser hiring workflow. The first hosted supported-version matrix passes; focused unit coverage remains incomplete.
 - Plugin Check is error-free for the release-equivalent scan; full internationalization, accessibility, compatibility, and WordPress.org release evidence remains incomplete.
 
 The detailed validation evidence is recorded in [VALIDATION.md](VALIDATION.md).
@@ -200,7 +200,7 @@ Work:
 - Completed: define the private-storage contract, production fail-closed behavior, host opt-in fallback, and Site Health warnings.
 - Add application and job factories for tests.
 - Completed: add supported development-only WP-CLI demo-data generation, status, and ownership-safe cleanup commands for small, large, remote, expired, closed, notification-failure, and edge-case hiring datasets without hand-editing database rows. Application/job factories remain a separate focused-test follow-up.
-- Completed foundation: retain the fast 89-check smoke command and add isolated `wp-env`/Playwright integration coverage for setup and the complete browser hiring workflow. Continue converting domain checks to focused unit/integration tests as the product grows.
+- Completed foundation: retain the fast 92-check smoke command and add isolated `wp-env`/Playwright integration coverage for setup and the complete browser hiring workflow. Continue converting domain checks to focused unit/integration tests as the product grows.
 - Completed: authenticated application review, status, notes, formula-safe CSV, public resume upload, and authorized protected resume download are formalized in GitHub Actions. Confirm the first hosted supported-version matrix run when the repository is connected.
 - Completed baseline: add email failure/success interception and missing-channel retry tests. Subject, recipient, and escaped-content assertions can move into focused notification tests as the template system is built.
 

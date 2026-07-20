@@ -1,6 +1,7 @@
 # LlamaHire block composition contract
 
-Status: experimental in 0.1.0  
+Status: experimental in 0.1.0
+
 Last updated: July 20, 2026
 
 ## Query-state composition
