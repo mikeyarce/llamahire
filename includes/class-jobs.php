@@ -91,7 +91,7 @@ final class Jobs {
 	}
 
 	private static function rest_properties() {
-		$strings = array( 'location', 'employment_type', 'workplace', 'salary_currency', 'salary_unit', 'deadline', 'featured', 'closed', 'address_street', 'address_locality', 'address_region', 'postal_code', 'address_country', 'applicant_countries', 'job_identifier', 'organization_name', 'organization_url', 'organization_logo' );
+		$strings = array( 'location', 'employment_type', 'workplace', 'salary_currency', 'salary_unit', 'deadline', 'featured', 'closed', 'address_street', 'address_locality', 'address_region', 'postal_code', 'address_country', 'applicant_countries', 'job_identifier', 'organization_name', 'organization_tagline', 'organization_url', 'organization_logo', 'application_method', 'application_target' );
 		$schema  = array();
 		foreach ( $strings as $key ) {
 			$schema[ $key ] = array( 'type' => 'string' );
@@ -99,6 +99,7 @@ final class Jobs {
 		$schema['salary_min']     = array( 'type' => array( 'number', 'string' ) );
 		$schema['salary_max']     = array( 'type' => array( 'number', 'string' ) );
 		$schema['organization_id'] = array( 'type' => 'integer' );
+		$schema['organization_logo_id'] = array( 'type' => 'integer' );
 		return $schema;
 	}
 
@@ -196,8 +197,12 @@ final class Jobs {
 			'job_identifier'      => '',
 			'organization_id'     => 0,
 			'organization_name'   => '',
+			'organization_tagline' => '',
 			'organization_url'    => '',
 			'organization_logo'   => '',
+			'organization_logo_id' => 0,
+			'application_method'  => 'internal',
+			'application_target'  => '',
 		);
 	}
 
@@ -224,6 +229,9 @@ final class Jobs {
 			$salary_max = '';
 		}
 
+		$application_method = in_array( $data['application_method'], array( 'internal', 'external_url', 'external_email' ), true ) ? $data['application_method'] : 'internal';
+		$application_target = self::sanitize_application_target( $application_method, $data['application_target'] );
+
 		return array(
 			'location'            => sanitize_text_field( $data['location'] ),
 			'employment_type'     => in_array( $data['employment_type'], $employment, true ) ? $data['employment_type'] : 'FULL_TIME',
@@ -244,9 +252,22 @@ final class Jobs {
 			'job_identifier'      => sanitize_text_field( $data['job_identifier'] ),
 			'organization_id'     => absint( $data['organization_id'] ),
 			'organization_name'   => sanitize_text_field( $data['organization_name'] ),
+			'organization_tagline' => sanitize_text_field( $data['organization_tagline'] ),
 			'organization_url'    => esc_url_raw( $data['organization_url'] ),
 			'organization_logo'   => esc_url_raw( $data['organization_logo'] ),
+			'organization_logo_id' => absint( $data['organization_logo_id'] ),
+			'application_method'  => $application_method,
+			'application_target'  => $application_target,
 		);
+	}
+
+	public static function sanitize_application_target( $method, $value ) {
+		if ( 'external_url' === $method ) {
+			$url = esc_url_raw( $value, array( 'http', 'https' ) );
+			return $url && wp_parse_url( $url, PHP_URL_HOST ) ? $url : '';
+		}
+		$email = sanitize_email( $value );
+		return is_email( $email ) ? $email : '';
 	}
 
 	public static function valid_date( $value ) {
@@ -271,12 +292,16 @@ final class Jobs {
 		);
 	}
 
-	public static function open_count() {
+	public static function open_count( $author_id = 0 ) {
+		$args = array(
+			'post_type' => self::POST_TYPE, 'post_status' => 'publish', 'posts_per_page' => 1, 'fields' => 'ids',
+			'meta_query' => self::open_meta_query(), // phpcs:ignore WordPress.DB.SlowDBQuery
+		);
+		if ( absint( $author_id ) ) {
+			$args['author'] = absint( $author_id );
+		}
 		$query = new \WP_Query(
-			array(
-				'post_type' => self::POST_TYPE, 'post_status' => 'publish', 'posts_per_page' => 1, 'fields' => 'ids',
-				'meta_query' => self::open_meta_query(), // phpcs:ignore WordPress.DB.SlowDBQuery
-			)
+			$args
 		);
 		return (int) $query->found_posts;
 	}
@@ -288,10 +313,11 @@ final class Jobs {
 
 	public static function organization( array $meta ) {
 		$defaults = Settings::get();
+		$is_job_board = Settings::SITE_MODE_JOB_BOARD === Settings::site_mode();
 		return array(
 			'id'      => absint( $meta['organization_id'] ?? 0 ),
 			'name'    => $meta['organization_name'] ?: $defaults['name'],
-			'website' => $meta['organization_url'] ?: $defaults['website'],
+			'website' => $meta['organization_url'] ?: ( $is_job_board ? '' : $defaults['website'] ),
 			'logo'    => $meta['organization_logo'] ?: $defaults['logo'],
 		);
 	}

@@ -1,0 +1,285 @@
+.llamahire-applications-screen .subsubsub {
+	clear: both;
+	float: none;
+	margin: 14px 0 0;
+}
+
+.llamahire-application-filters {
+	align-items: end;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin: 16px 0;
+	padding: 16px;
+}
+
+.llamahire-application-filters label {
+	display: grid;
+	font-weight: 600;
+	gap: 6px;
+	min-width: min(100%, 220px);
+}
+
+.llamahire-application-filters input,
+.llamahire-application-filters select {
+	font-weight: 400;
+	margin: 0;
+	min-height: 32px;
+	width: 100%;
+}
+
+.llamahire-application-filters button,
+.llamahire-application-filters > .button {
+	margin: 0;
+	min-height: 32px;
+}
+
+.llamahire-application-results {
+	color: #50575e;
+	font-weight: 600;
+	margin: 12px 0;
+}
+
+.llamahire-applications-table td {
+	overflow-wrap: anywhere;
+	vertical-align: top;
+}
+
+.llamahire-application-email {
+	display: inline-block;
+}
+
+.llamahire-status-badge {
+	background: #f0f0f1;
+	border-radius: 999px;
+	color: #3c434a;
+	display: inline-block;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.5;
+	padding: 2px 8px;
+	white-space: nowrap;
+}
+
+.llamahire-status-badge--new {
+	background: #e7f5ff;
+	color: #0a4b78;
+}
+
+.llamahire-status-badge--reviewing,
+.llamahire-status-badge--email-partial {
+	background: #fcf0c3;
+	color: #6e4b00;
+}
+
+.llamahire-status-badge--hired,
+.llamahire-status-badge--email-sent {
+	background: #dff3e4;
+	color: #1e5b32;
+}
+
+.llamahire-status-badge--rejected,
+.llamahire-status-badge--email-failed {
+	background: #fbeaea;
+	color: #8a2424;
+}
+
+@media (max-width: 782px) {
+	.llamahire-applications-screen h1.wp-heading-inline {
+		display: block;
+		margin-bottom: 0;
+	}
+
+	.llamahire-applications-screen .page-title-action {
+		display: inline-block;
+		margin: 8px 0 4px;
+	}
+
+	.llamahire-applications-screen .subsubsub {
+		display: flex;
+		gap: 7px;
+		margin-top: 14px;
+		overflow-x: auto;
+		padding-bottom: 6px;
+		scrollbar-width: none;
+		white-space: nowrap;
+		width: 100%;
+	}
+
+	.llamahire-applications-screen .subsubsub::-webkit-scrollbar {
+		display: none;
+	}
+
+	.llamahire-applications-screen .subsubsub li {
+		flex: 0 0 auto;
+		font-size: 13px;
+		margin: 0;
+	}
+
+	.llamahire-applications-screen .subsubsub li > span {
+		display: none;
+	}
+
+	.llamahire-application-filters {
+		align-items: stretch;
+		display: grid;
+		gap: 12px;
+		grid-template-columns: 1fr;
+		padding: 14px;
+	}
+
+	.llamahire-application-filters label {
+		min-width: 0;
+	}
+
+	.llamahire-application-filters button,
+	.llamahire-application-filters > .button {
+		box-sizing: border-box;
+		text-align: center;
+		width: 100%;
+	}
+
+	.llamahire-applications-table {
+		background: transparent;
+		border: 0;
+		display: block;
+	}
+
+	.llamahire-applications-table thead {
+		clip: rect(0 0 0 0);
+		clip-path: inset(50%);
+		height: 1px;
+		overflow: hidden;
+		position: absolute;
+		white-space: nowrap;
+		width: 1px;
+	}
+
+	.llamahire-applications-table tbody {
+		display: block;
+		width: 100%;
+	}
+
+	.llamahire-applications-table tr {
+		box-sizing: border-box;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		width: 100%;
+	}
+
+	.llamahire-applications-table tr {
+		background: #fff;
+		border: 1px solid #c3c4c7;
+		border-radius: 3px;
+		box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+		margin-bottom: 12px;
+		overflow: hidden;
+	}
+
+	.llamahire-applications-table tbody tr:nth-child(odd),
+	.llamahire-applications-table tbody tr:nth-child(even) {
+		background: #fff;
+	}
+
+	.llamahire-applications-table td {
+		border: 0;
+		box-sizing: border-box;
+		display: block;
+		padding: 11px 16px;
+		width: auto;
+	}
+
+	.llamahire-applications-screen .llamahire-applications-table td::before {
+		color: #50575e;
+		content: attr(data-label) !important;
+		display: block;
+		float: none !important;
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		line-height: 1.4;
+		margin-bottom: 5px;
+		position: static !important;
+		text-align: left;
+		text-transform: uppercase;
+		width: auto !important;
+	}
+
+	.llamahire-applications-table .llamahire-application-candidate {
+		grid-column: 1 / -1;
+		padding-bottom: 12px;
+		padding-top: 15px;
+	}
+
+	.llamahire-applications-screen .llamahire-applications-table .llamahire-application-candidate::before {
+		content: none !important;
+	}
+
+	.llamahire-application-candidate strong {
+		display: block;
+		font-size: 16px;
+		line-height: 1.35;
+	}
+
+	.llamahire-application-email {
+		color: #50575e;
+		display: block;
+		font-size: 13px;
+		line-height: 1.45;
+		margin-top: 3px;
+	}
+
+	.llamahire-applications-table .llamahire-application-job {
+		border-top: 1px solid #dcdcde;
+		grid-column: 1 / -1;
+		padding-bottom: 13px;
+		padding-top: 12px;
+	}
+
+	.llamahire-application-job a {
+		font-weight: 600;
+	}
+
+	.llamahire-applications-table .llamahire-application-workflow-status,
+	.llamahire-applications-table .llamahire-application-email-status {
+		border-top: 1px solid #dcdcde;
+		min-width: 0;
+	}
+
+	.llamahire-applications-table .llamahire-application-email-status {
+		border-left: 1px solid #dcdcde;
+	}
+
+	.llamahire-applications-table .llamahire-application-received {
+		align-items: center;
+		background: #f6f7f7;
+		border-top: 1px solid #dcdcde;
+		color: #50575e;
+		display: flex;
+		font-size: 12px;
+		gap: 6px;
+		grid-column: 1 / -1;
+		padding-bottom: 9px;
+		padding-top: 9px;
+	}
+
+	.llamahire-applications-screen .llamahire-applications-table .llamahire-application-received::before {
+		display: inline;
+		font-size: 12px;
+		letter-spacing: 0;
+		margin: 0;
+		text-transform: none;
+	}
+
+	.llamahire-applications-table td[colspan] {
+		display: block;
+		grid-column: 1 / -1;
+		padding: 16px;
+	}
+
+	.llamahire-applications-screen .llamahire-applications-table td[colspan]::before {
+		content: none !important;
+	}
+}

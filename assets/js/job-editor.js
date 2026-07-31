@@ -54,6 +54,9 @@
 		if ( ! organizationName.trim() ) {
 			issues.push( __( 'Add a hiring organization.', 'llamahire' ) );
 		}
+		if ( organization.site_mode === 'job_board' && ! data.organization_name.trim() ) {
+			issues.push( __( 'Add the employer name for this job-board listing.', 'llamahire' ) );
+		}
 		if ( data.workplace === 'remote' ) {
 			if ( ! data.applicant_countries.trim() ) {
 				issues.push( __( 'Add at least one country where remote applicants may work.', 'llamahire' ) );
@@ -63,6 +66,9 @@
 		}
 		if ( data.salary_min !== '' && data.salary_max !== '' && Number( data.salary_max ) < Number( data.salary_min ) ) {
 			issues.push( __( 'Maximum salary must be at least the minimum salary.', 'llamahire' ) );
+		}
+		if ( organization.site_mode === 'job_board' && ! data.application_target.trim() ) {
+			issues.push( __( 'Add an application email or external URL.', 'llamahire' ) );
 		}
 
 		function set( key, value ) {
@@ -152,8 +158,23 @@
 			el( PluginDocumentSettingPanel, { name: 'llamahire-organization', title: __( 'Hiring organization', 'llamahire' ) },
 				el( 'p', { className: 'llamahire-editor-help' }, __( 'Leave overrides blank to use the organization defaults in Jobs → Settings.', 'llamahire' ) ),
 				el( TextControl, { label: __( 'Organization name override', 'llamahire' ), placeholder: organization.name || '', value: data.organization_name, onChange: function ( value ) { set( 'organization_name', value ); } } ),
+				el( TextControl, { label: __( 'Organization tagline', 'llamahire' ), value: data.organization_tagline, onChange: function ( value ) { set( 'organization_tagline', value ); } } ),
 				el( TextControl, { label: __( 'Website override', 'llamahire' ), type: 'url', placeholder: organization.website || '', value: data.organization_url, onChange: function ( value ) { set( 'organization_url', value ); } } ),
 				logoControl()
+			),
+			el( PluginDocumentSettingPanel, { name: 'llamahire-application-routing', title: __( 'Application routing', 'llamahire' ) },
+				el( SelectControl, {
+					label: __( 'How candidates apply', 'llamahire' ), value: data.application_method,
+					options: [ option( __( 'LlamaHire application form', 'llamahire' ), 'internal' ), option( __( 'Employer website', 'llamahire' ), 'external_url' ), option( __( 'Email', 'llamahire' ), 'external_email' ) ],
+					onChange: function ( value ) { set( 'application_method', value ); }
+				} ),
+				el( TextControl, {
+					label: data.application_method === 'external_url' ? __( 'Application URL', 'llamahire' ) : __( 'Application email', 'llamahire' ),
+					type: data.application_method === 'external_url' ? 'url' : 'email',
+					help: data.application_method === 'internal' ? __( 'Candidate notifications for this job are sent here. Leave blank to use the board-wide hiring inbox.', 'llamahire' ) : '',
+					value: data.application_target,
+					onChange: function ( value ) { set( 'application_target', value ); }
+				} )
 			)
 		);
 	}

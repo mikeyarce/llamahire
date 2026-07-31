@@ -11,7 +11,8 @@
   "attributes": {
     "perPage": { "type": "number", "default": 12 },
     "showFilters": { "type": "boolean", "default": true },
-    "featuredOnly": { "type": "boolean", "default": false }
+    "featuredOnly": { "type": "boolean", "default": false },
+    "department": { "type": "string", "default": "" }
   },
   "supports": { "align": ["wide", "full"], "html": false, "spacing": { "margin": true, "padding": true } },
   "editorScript": "llamahire-blocks-editor",

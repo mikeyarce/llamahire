@@ -52,7 +52,7 @@ final class Resume_Storage implements Resume_Storage_Contract {
 
 	public function delete( $token ) {
 		$token = (string) $token;
-		if ( '' === $token || ! $this->is_managed_path( $token ) ) {
+		if ( '' === $token || ! $this->is_managed_path( $token, true ) ) {
 			return false;
 		}
 		if ( ! file_exists( $token ) ) {
@@ -111,8 +111,12 @@ final class Resume_Storage implements Resume_Storage_Contract {
 		return new \WP_Error( 'resume_storage' );
 	}
 
-	private function is_managed_path( $path ) {
+	private function is_managed_path( $path, $allow_missing = false ) {
 		$real = @realpath( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+		if ( ! $real && $allow_missing ) {
+			$parent = @realpath( dirname( $path ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+			$real   = $parent ? trailingslashit( $parent ) . wp_basename( $path ) : false;
+		}
 		if ( ! $real ) { return false; }
 		$directories = array( trailingslashit( dirname( untrailingslashit( $this->wordpress_root() ) ) ) . '.llamahire-private' );
 		$uploads = wp_upload_dir();

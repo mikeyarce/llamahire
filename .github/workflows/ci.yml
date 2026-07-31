@@ -13,11 +13,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  coding-standards:
+    name: WordPress VIP PHPCS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+      - name: Install PHP quality tools
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Run WordPress VIP coding standards
+        run: composer phpcs
+      - name: Check PHP 7.4+ compatibility
+        run: composer phpcompatibility
+
   package:
     name: Installable Free package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build production JavaScript
+        run: npm run build
       - name: Build installable ZIP and checksum
         run: bash scripts/build-release.sh
       - name: Verify installable ZIP
@@ -28,6 +52,31 @@ jobs:
             echo 'Development-only files were found in the release ZIP.'
             exit 1
           fi
+      - name: Run WordPress Plugin Check
+        uses: wordpress/plugin-check-action@v1
+        with:
+          build-dir: dist/llamahire
+          exclude-checks: plugin_review_phpcs
+
+  translations:
+    name: Translation template
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: wp-cli
+      - run: npm ci
+      - name: Generate translation template
+        run: npm run i18n:make-pot
+      - name: Verify translation template is current
+        run: git diff --exit-code -- languages/llamahire.pot
 
   syntax:
     name: PHP ${{ matrix.php }} syntax
@@ -43,10 +92,11 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
       - name: Check PHP syntax
-        run: find . -name '*.php' -not -path './node_modules/*' -print0 | xargs -0 -n1 php -l
+        run: find . -name '*.php' -not -path './node_modules/*' -not -path './vendor/*' -not -path './dist/*' -print0 | xargs -0 -n1 php -l
       - name: Check editor JavaScript syntax
         run: |
           node --check assets/js/admin-settings.js
+          node --check assets/js/application-form.js
           node --check assets/js/blocks.js
           node --check assets/js/job-editor.js
 

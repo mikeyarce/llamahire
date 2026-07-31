@@ -74,6 +74,29 @@ final class Migrations {
 			if ( $current < 6 ) {
 				self::migration_6_backfill_filter_meta();
 				update_option( self::OPTION, '6', false );
+				$current = 6;
+			}
+			if ( $current < 7 ) {
+				if ( ! self::migration_1_create_applications_table() ) {
+					return false;
+				}
+				self::migration_7_backfill_candidate_keys();
+				update_option( self::OPTION, '7', false );
+				$current = 7;
+			}
+			if ( $current < 8 ) {
+				if ( ! self::migration_8_create_audit_table() ) {
+					return false;
+				}
+				update_option( self::OPTION, '8', false );
+				$current = 8;
+			}
+			if ( $current < 9 ) {
+				if ( ! self::migration_1_create_applications_table() ) {
+					return false;
+				}
+				self::migration_9_backfill_stage_changed_at();
+				update_option( self::OPTION, '9', false );
 			}
 			delete_option( 'llamahire_db_version' );
 		} finally {
@@ -101,14 +124,17 @@ final class Migrations {
 			notes longtext NULL,
 			created_at datetime NOT NULL,
 			updated_at datetime NOT NULL,
+			stage_changed_at datetime NULL,
 			submission_key varchar(64) NULL DEFAULT NULL,
 			notification_status varchar(20) NOT NULL DEFAULT 'pending',
 			notification_attempts smallint(5) unsigned NOT NULL DEFAULT 0,
 			employer_notified_at datetime NULL,
 			candidate_notified_at datetime NULL,
 			notification_error_code varchar(100) NOT NULL DEFAULT '',
+			candidate_key varchar(64) NULL DEFAULT NULL,
 			PRIMARY KEY  (id),
 			UNIQUE KEY submission_key (submission_key),
+			UNIQUE KEY candidate_key (candidate_key),
 			KEY job_id (job_id),
 			KEY status (status),
 			KEY created_at (created_at),
@@ -184,6 +210,56 @@ final class Migrations {
 				Jobs::set_meta( $job_id, Jobs::get_meta( $job_id ) );
 			}
 		}
+	}
+
+	/**
+	 * Assign one canonical key per existing job/email pair without deleting legacy duplicates.
+	 */
+	private static function migration_7_backfill_candidate_keys() {
+		global $wpdb;
+		$table = $wpdb->prefix . 'llamahire_applications';
+		$seen  = array_fill_keys( array_filter( $wpdb->get_col( "SELECT candidate_key FROM {$table} WHERE candidate_key IS NOT NULL" ) ), true ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$rows  = $wpdb->get_results( "SELECT id, job_id, email FROM {$table} WHERE candidate_key IS NULL ORDER BY id ASC" ); // phpcs:ignore WordPress.DB.PreparedSQL
+		foreach ( $rows as $row ) {
+			$key = Applications::candidate_key( $row->job_id, $row->email );
+			if ( ! $key || isset( $seen[ $key ] ) ) {
+				continue;
+			}
+			$wpdb->update( $table, array( 'candidate_key' => $key ), array( 'id' => (int) $row->id ), array( '%s' ), array( '%d' ) );
+			$seen[ $key ] = true;
+		}
+	}
+
+	private static function migration_8_create_audit_table() {
+		global $wpdb;
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		$table = $wpdb->prefix . 'llamahire_audit_log';
+		$charset = $wpdb->get_charset_collate();
+		$sql = "CREATE TABLE {$table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			event_type varchar(50) NOT NULL,
+			subject_type varchar(20) NOT NULL,
+			subject_id bigint(20) unsigned NOT NULL,
+			application_id bigint(20) unsigned NULL DEFAULT NULL,
+			job_id bigint(20) unsigned NOT NULL,
+			actor_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			from_state varchar(50) NOT NULL DEFAULT '',
+			to_state varchar(50) NOT NULL DEFAULT '',
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY job_created (job_id, created_at, id),
+			KEY application_created (application_id, created_at, id),
+			KEY actor_created (actor_user_id, created_at, id),
+			KEY event_created (event_type, created_at, id)
+		) {$charset};";
+		dbDelta( $sql );
+		return $table === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+	}
+
+	private static function migration_9_backfill_stage_changed_at() {
+		global $wpdb;
+		$table = $wpdb->prefix . 'llamahire_applications';
+		$wpdb->query( "UPDATE {$table} SET stage_changed_at = updated_at WHERE stage_changed_at IS NULL" ); // phpcs:ignore WordPress.DB.PreparedSQL
 	}
 
 	public static function failure_notice() {

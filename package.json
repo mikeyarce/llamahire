@@ -4,6 +4,8 @@
   "private": true,
   "description": "Development and integration-test tooling for LlamaHire.",
   "scripts": {
+    "build": "wp-scripts build src/admin-applications.js",
+    "start": "wp-scripts start src/admin-applications.js",
     "wp-env": "wp-env --config=.wp-env.ci.json",
     "env:start": "wp-env --config=.wp-env.ci.json start",
     "env:stop": "wp-env --config=.wp-env.ci.json stop",
@@ -14,11 +16,16 @@
     "fixtures:generate": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures generate --scenario=small",
     "fixtures:status": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures status",
     "fixtures:cleanup": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures cleanup --yes",
-    "test:fixtures": "bash scripts/test-fixtures.sh"
+    "test:fixtures": "bash scripts/test-fixtures.sh",
+    "i18n:make-pot": "wp i18n make-pot . languages/llamahire.pot --domain=llamahire --exclude=.git,.github,.wordpress-org,build,dist,docs,node_modules,test-results,tests,tools,vendor --headers='{\"Report-Msgid-Bugs-To\":\"https://github.com/mikeyarce/llamahire/issues\",\"POT-Creation-Date\":\"\",\"X-Generator\":\"WP-CLI\"}'"
+  },
+  "dependencies": {
+    "@wordpress/dataviews": "17.2.0"
   },
   "devDependencies": {
     "@playwright/test": "1.61.1",
-    "@wordpress/env": "11.11.0"
+    "@wordpress/env": "11.11.0",
+    "@wordpress/scripts": "31.7.0"
   },
   "engines": {
     "node": ">=20"

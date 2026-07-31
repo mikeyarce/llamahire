@@ -50,7 +50,7 @@ try {
 		'directory_default',
 		static function () {
 			$html = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":false,"perPage":12} /-->' );
-			return substr_count( $html, 'llamahire-job-card' );
+			return substr_count( $html, '<article ' );
 		}
 	);
 	$_GET['workplace'] = 'remote';
@@ -58,7 +58,7 @@ try {
 		'directory_remote_filter',
 		static function () {
 			$html = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":false,"perPage":12} /-->' );
-			return substr_count( $html, 'llamahire-job-card' );
+			return substr_count( $html, '<article ' );
 		}
 	);
 	unset( $_GET['workplace'] );
@@ -66,7 +66,7 @@ try {
 		'directory_featured_filter',
 		static function () {
 			$html = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":false,"featuredOnly":true,"perPage":12} /-->' );
-			return substr_count( $html, 'llamahire-job-card' );
+			return substr_count( $html, '<article ' );
 		}
 	);
 	$_GET['job_search'] = 'Performance Role 0499';
@@ -74,7 +74,7 @@ try {
 		'directory_keyword_search',
 		static function () {
 			$html = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":false,"perPage":12} /-->' );
-			return substr_count( $html, 'llamahire-job-card' );
+			return substr_count( $html, '<article ' );
 		}
 	);
 	unset( $_GET['job_search'] );

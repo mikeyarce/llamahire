@@ -7,12 +7,14 @@ defined( 'ABSPATH' ) || exit;
  * Dedicated permissions for jobs and sensitive candidate data.
  */
 final class Capabilities {
+	const EMPLOYER_ROLE       = 'llamahire_employer';
 	const OPTION              = 'llamahire_capabilities_version';
 	const VIEW_APPLICATIONS   = 'llamahire_view_applications';
 	const MANAGE_APPLICATIONS = 'llamahire_manage_applications';
 	const EXPORT_APPLICATIONS = 'llamahire_export_applications';
 	const DOWNLOAD_RESUMES    = 'llamahire_download_resumes';
 	const RETRY_NOTIFICATIONS = 'llamahire_retry_notifications';
+	const ERASE_APPLICATIONS  = 'llamahire_erase_applications';
 
 	public static function maybe_install() {
 		if ( LLAMAHIRE_CAPABILITIES_VERSION !== (string) get_option( self::OPTION, '0' ) ) {
@@ -32,6 +34,13 @@ final class Capabilities {
 				$role->add_cap( $capability );
 			}
 		}
+		$employer = add_role( self::EMPLOYER_ROLE, __( 'Employer', 'llamahire' ), array( 'read' => true ) );
+		$employer = $employer ?: get_role( self::EMPLOYER_ROLE );
+		if ( $employer ) {
+			foreach ( self::employer_capabilities() as $capability ) {
+				$employer->add_cap( $capability );
+			}
+		}
 		update_option( self::OPTION, LLAMAHIRE_CAPABILITIES_VERSION, false );
 	}
 
@@ -48,6 +57,7 @@ final class Capabilities {
 			}
 		}
 		delete_option( self::OPTION );
+		remove_role( self::EMPLOYER_ROLE );
 	}
 
 	/**
@@ -68,6 +78,7 @@ final class Capabilities {
 				self::EXPORT_APPLICATIONS,
 				self::DOWNLOAD_RESUMES,
 				self::RETRY_NOTIFICATIONS,
+				self::ERASE_APPLICATIONS,
 			)
 		);
 	}
@@ -89,6 +100,22 @@ final class Capabilities {
 			'delete_others_llamahire_jobs',
 			'edit_private_llamahire_jobs',
 			'edit_published_llamahire_jobs',
+		);
+	}
+
+	public static function employer_capabilities() {
+		return array(
+			'read',
+			'edit_llamahire_jobs',
+			'edit_published_llamahire_jobs',
+			'delete_llamahire_jobs',
+			'delete_published_llamahire_jobs',
+			'assign_llamahire_departments',
+			self::VIEW_APPLICATIONS,
+			self::MANAGE_APPLICATIONS,
+			self::EXPORT_APPLICATIONS,
+			self::DOWNLOAD_RESUMES,
+			self::RETRY_NOTIFICATIONS,
 		);
 	}
 

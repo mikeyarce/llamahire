@@ -1,0 +1,3270 @@
+# Copyright (C) 2026 LlamaHire
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: LlamaHire – Job Board & Careers 0.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/mikeyarce/llamahire/issues\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI\n"
+"X-Domain: llamahire\n"
+
+#. Plugin Name of the plugin
+#: llamahire.php:3
+msgid "LlamaHire – Job Board & Careers"
+msgstr ""
+
+#. Description of the plugin
+#: llamahire.php:4
+msgid "Modern hiring for WordPress: publish jobs, build a careers page, and collect applications."
+msgstr ""
+
+#. Author of the plugin
+#: llamahire.php:8
+#: includes/class-applications.php:240
+#: includes/class-blocks.php:32
+#: includes/class-settings.php:461
+msgid "LlamaHire"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:31
+msgid "The candidate could not be moved. Please try again."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:32
+#, php-format
+msgid "Candidate moved to %s."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:43
+msgid "You cannot move this candidate."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:46
+msgid "That hiring stage is not valid."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:50
+msgid "The candidate could not be moved."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:82
+msgid "Job board dashboard"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:82
+#: includes/class-admin.php:64
+msgid "Hiring dashboard"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:84
+msgid "Keep listings moving, resolve issues, and see what needs attention across your community."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:85
+msgid "See what needs attention across your jobs and applications, then jump into hiring when you need the full pipeline."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:93
+msgid "Open Hiring"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:94
+msgid "Add job"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:99
+msgid "Needs your attention"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:99
+msgid "The most useful work to pick up next."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:103
+#, php-format
+msgid "%d listing is waiting for review"
+msgid_plural "%d listings are waiting for review"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-admin-workspaces.php:103
+msgid "Moderate submitted jobs before they appear publicly."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:103
+msgid "Review listings"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:105
+#, php-format
+msgid "%d new application"
+msgid_plural "%d new applications"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-admin-workspaces.php:105
+msgid "Candidates are waiting for an initial review."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:105
+msgid "Review candidates"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:107
+#, php-format
+msgid "%d email needs attention"
+msgid_plural "%d emails need attention"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-admin-workspaces.php:107
+msgid "A candidate or employer notification may not have arrived."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:107
+msgid "Check email issues"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:108
+#, php-format
+msgid "%d job closes soon"
+msgid_plural "%d jobs close soon"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-admin-workspaces.php:108
+msgid "These listings reach their deadline in the next seven days."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:108
+msgid "Review jobs"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:114
+msgid "Board at a glance"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:114
+msgid "Hiring at a glance"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:117
+msgid "Live listings"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:117
+msgid "Open jobs"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:120
+msgid "Awaiting review"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:120
+msgid "New candidates"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:127
+msgid "Active employers"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:128
+#: includes/class-admin.php:65
+#: includes/class-admin.php:178
+msgid "Applications"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:130
+#: includes/class-applications.php:17
+#: src/admin-applications.js:14
+msgid "Interviewing"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:131
+msgid "Offers"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:139
+msgid "Active listings"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:139
+msgid "Active jobs"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:139
+msgid "A quick view of demand and candidate flow."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:139
+msgid "View all listings"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:147
+msgid "application"
+msgid_plural "applications"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-admin-workspaces.php:151
+msgid "No active jobs yet"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:151
+msgid "Publish a job to start tracking activity here."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:151
+msgid "Add your first job"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:155
+#: includes/class-admin-workspaces.php:249
+msgid "Recent activity"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:155
+msgid "Operational changes across your workspace."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:155
+msgid "View all activity"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:158
+#: includes/class-admin.php:112
+#, php-format
+msgid "Job #%d"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:158
+msgid "ago"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:159
+msgid "Activity will appear as jobs and candidates move forward."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:168
+msgid "The Hiring workspace is available to company hiring teams and employers managing their own jobs."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:190
+#: includes/class-admin.php:67
+msgid "Hiring"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:190
+msgid "Move candidates through your hiring process."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:191
+msgid "View applications"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:195
+#: src/admin-applications.js:389
+msgid "Search candidates"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:196
+#: includes/class-employer-portal.php:232
+msgid "Job title"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:196
+msgid "All job titles"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:197
+msgid "Apply"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:199
+msgid "Drag candidates between stages."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:202
+msgid "Candidate pipeline"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:208
+msgid "No candidates"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:224
+#, php-format
+msgid "Applied %s"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:224
+#, php-format
+msgid "%s in stage"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:225
+msgid "Drag candidate"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:226
+msgid "Has a private note"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:239
+msgid "Close candidate details"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:241
+#: includes/class-admin.php:228
+msgid "Download resume"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:242
+msgid "Changes saved."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:245
+msgid "Stage"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:246
+msgid "Private note"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:246
+msgid "Interview feedback, next steps, or context for the team…"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:246
+#, php-format
+msgid "Updated %s"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:247
+#: includes/class-admin.php:229
+#: includes/class-settings.php:391
+msgid "Save changes"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:249
+msgid "No recorded changes yet."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:250
+#, php-format
+msgid "Move to %s"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:250
+msgid "Move candidate"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:250
+#: includes/class-admin-workspaces.php:279
+msgid "Reject candidate"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:257
+msgid "New stage"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:257
+msgid "Update"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:273
+#, php-format
+msgid "Reject %s?"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:274
+msgid "Close rejection confirmation"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:276
+#, php-format
+msgid "%1$s will be moved to Rejected for %2$s. You can change their stage later."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:278
+msgid "Cancel"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:294
+msgid "Move candidates here when you are ready to make an offer."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:297
+msgid "Successful hires will appear here."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:299
+msgid "Drag a candidate here when they are ready."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:304
+msgid "No "
+msgstr ""
+
+#: includes/class-admin-workspaces.php:305
+msgid "Nothing needs action here right now."
+msgstr ""
+
+#: includes/class-admin-workspaces.php:370
+#, php-format
+msgid "Closes %s"
+msgstr ""
+
+#: includes/class-admin.php:57
+msgid "Live"
+msgstr ""
+
+#: includes/class-admin.php:64
+msgid "Dashboard"
+msgstr ""
+
+#: includes/class-admin.php:67
+msgid "Hiring pipeline"
+msgstr ""
+
+#: includes/class-admin.php:69
+#: includes/class-admin.php:110
+msgid "Hiring activity"
+msgstr ""
+
+#: includes/class-admin.php:69
+#: includes/class-admin.php:230
+msgid "Activity"
+msgstr ""
+
+#: includes/class-admin.php:110
+msgid "Privacy-safe operational history. Candidate names, contact details, notes, resume filenames, IP addresses, and browser data are never copied here."
+msgstr ""
+
+#: includes/class-admin.php:111
+msgid "Hiring activity events"
+msgstr ""
+
+#: includes/class-admin.php:111
+msgid "Event"
+msgstr ""
+
+#. Translators: %d is the numeric WordPress job post ID.
+#: includes/class-admin.php:111
+#: includes/class-employer-portal.php:263
+#: includes/class-jobs.php:22
+#: includes/class-privacy.php:100
+#: assets/js/blocks.js:209
+#: src/admin-applications.js:246
+msgid "Job"
+msgstr ""
+
+#: includes/class-admin.php:111
+msgid "Subject"
+msgstr ""
+
+#: includes/class-admin.php:111
+msgid "Actor"
+msgstr ""
+
+#: includes/class-admin.php:111
+msgid "Date"
+msgstr ""
+
+#. Translators: %d is the numeric WordPress job post ID.
+#: includes/class-admin.php:112
+#: includes/class-privacy.php:100
+#, php-format
+msgid "Deleted job #%d"
+msgstr ""
+
+#: includes/class-admin.php:112
+#, php-format
+msgid "Application #%d"
+msgstr ""
+
+#: includes/class-admin.php:112
+#: includes/class-admin.php:230
+msgid "System"
+msgstr ""
+
+#: includes/class-admin.php:112
+msgid "No hiring activity has been recorded yet."
+msgstr ""
+
+#: includes/class-admin.php:137
+msgid "The Applications interface assets are missing. Rebuild the LlamaHire plugin assets and try again."
+msgstr ""
+
+#: includes/class-admin.php:179
+msgid "The application and its private resume were permanently erased."
+msgstr ""
+
+#: includes/class-admin.php:180
+#: src/admin-applications.js:349
+msgid "Loading applications…"
+msgstr ""
+
+#: includes/class-admin.php:181
+msgid "The Applications inbox requires JavaScript. Candidate detail and privacy actions remain server-rendered."
+msgstr ""
+
+#: includes/class-admin.php:215
+#: includes/class-admin.php:218
+#: includes/class-admin.php:311
+#: includes/services/class-application-repository.php:158
+#: includes/services/class-candidate-data-lifecycle.php:48
+#: includes/services/class-candidate-data-lifecycle.php:63
+#: includes/services/class-candidate-data-lifecycle.php:86
+msgid "Application not found."
+msgstr ""
+
+#: includes/class-admin.php:223
+msgid "All applications"
+msgstr ""
+
+#: includes/class-admin.php:224
+msgid "Application review saved."
+msgstr ""
+
+#: includes/class-admin.php:225
+msgid "Missing email notifications were retried."
+msgstr ""
+
+#: includes/class-admin.php:226
+msgid "The private resume was permanently deleted."
+msgstr ""
+
+#: includes/class-admin.php:226
+msgid "The private resume was replaced."
+msgstr ""
+
+#: includes/class-admin.php:226
+msgid "The candidate-data change could not be completed. No application record was removed."
+msgstr ""
+
+#: includes/class-admin.php:228
+#: src/admin-applications.js:222
+msgid "Candidate"
+msgstr ""
+
+#: includes/class-admin.php:228
+msgid "Email:"
+msgstr ""
+
+#: includes/class-admin.php:228
+msgid "Phone:"
+msgstr ""
+
+#: includes/class-admin.php:228
+msgid "Applied for:"
+msgstr ""
+
+#: includes/class-admin.php:228
+#: includes/class-blocks.php:623
+#: includes/class-privacy.php:111
+#: includes/class-settings.php:353
+msgid "Cover letter"
+msgstr ""
+
+#: includes/class-admin.php:228
+msgid "No cover letter provided."
+msgstr ""
+
+#: includes/class-admin.php:228
+#: includes/class-settings.php:283
+#: includes/class-settings.php:364
+msgid "Notifications"
+msgstr ""
+
+#: includes/class-admin.php:228
+#: includes/class-admin.php:229
+msgid "Status:"
+msgstr ""
+
+#: includes/class-admin.php:228
+msgid "Attempts:"
+msgstr ""
+
+#: includes/class-admin.php:228
+msgid "Retry missing emails"
+msgstr ""
+
+#: includes/class-admin.php:229
+msgid "Review"
+msgstr ""
+
+#: includes/class-admin.php:229
+#: includes/class-employer-portal.php:263
+#: src/admin-applications.js:260
+msgid "Status"
+msgstr ""
+
+#: includes/class-admin.php:229
+msgid "Private notes"
+msgstr ""
+
+#: includes/class-admin.php:229
+msgid "Private notes:"
+msgstr ""
+
+#: includes/class-admin.php:229
+msgid "No private notes."
+msgstr ""
+
+#: includes/class-admin.php:230
+msgid "No activity recorded yet."
+msgstr ""
+
+#: includes/class-admin.php:231
+msgid "Candidate data"
+msgstr ""
+
+#: includes/class-admin.php:231
+msgid "Resume changes and erasure are permanent and are not restored from LlamaHire."
+msgstr ""
+
+#: includes/class-admin.php:231
+msgid "Replace resume"
+msgstr ""
+
+#: includes/class-admin.php:231
+msgid "Add resume"
+msgstr ""
+
+#: includes/class-admin.php:231
+msgid "Upload resume"
+msgstr ""
+
+#: includes/class-admin.php:231
+msgid "I understand the current resume will be permanently deleted."
+msgstr ""
+
+#: includes/class-admin.php:231
+msgid "Delete resume permanently"
+msgstr ""
+
+#: includes/class-admin.php:231
+msgid "I understand this permanently deletes the application, notes, notification history, and private resume."
+msgstr ""
+
+#: includes/class-admin.php:231
+msgid "Erase application permanently"
+msgstr ""
+
+#: includes/class-admin.php:238
+msgid "You cannot update applications."
+msgstr ""
+
+#: includes/class-admin.php:293
+msgid "You cannot erase candidate data."
+msgstr ""
+
+#: includes/class-admin.php:306
+msgid "You cannot retry application notifications."
+msgstr ""
+
+#: includes/class-admin.php:326
+msgid "You cannot export applications."
+msgstr ""
+
+#: includes/class-admin.php:351
+msgid "You cannot access candidate applications."
+msgstr ""
+
+#: includes/class-admin.php:355
+msgid "Publication and hiring"
+msgstr ""
+
+#: includes/class-admin.php:361
+msgid "Unknown"
+msgstr ""
+
+#: includes/class-admin.php:363
+msgid "Not accepting applications"
+msgstr ""
+
+#: includes/class-admin.php:365
+msgid "Accepting applications"
+msgstr ""
+
+#: includes/class-admin.php:365
+msgid "Closed to applications"
+msgstr ""
+
+#. translators: %s: Number of applications for a job.
+#: includes/class-admin.php:371
+#, php-format
+msgid "%s application"
+msgid_plural "%s applications"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-applications.php:15
+#: src/admin-applications.js:12
+msgid "New"
+msgstr ""
+
+#: includes/class-applications.php:16
+#: src/admin-applications.js:13
+msgid "Reviewing"
+msgstr ""
+
+#: includes/class-applications.php:18
+#: src/admin-applications.js:15
+msgid "Offer"
+msgstr ""
+
+#: includes/class-applications.php:19
+#: src/admin-applications.js:17
+msgid "Hired"
+msgstr ""
+
+#: includes/class-applications.php:20
+#: src/admin-applications.js:16
+msgid "Rejected"
+msgstr ""
+
+#: includes/class-applications.php:212
+msgid "You cannot access this resume."
+msgstr ""
+
+#: includes/class-applications.php:223
+msgid "LlamaHire private resume storage"
+msgstr ""
+
+#: includes/class-applications.php:231
+msgid "Resume storage is writable and located outside the public WordPress web root."
+msgstr ""
+
+#: includes/class-applications.php:233
+msgid "Resume storage is writable, but the host may require an explicit server rule because the private directory is inside the web root."
+msgstr ""
+
+#: includes/class-applications.php:235
+msgid "WordPress cannot write to the configured private resume directory."
+msgstr ""
+
+#: includes/class-applications.php:238
+msgid "Resumes use private storage outside the web root"
+msgstr ""
+
+#: includes/class-applications.php:238
+msgid "Resume storage needs attention"
+msgstr ""
+
+#: includes/class-audit-log.php:93
+msgid "Application status changed"
+msgstr ""
+
+#: includes/class-audit-log.php:94
+msgid "Application permanently erased"
+msgstr ""
+
+#: includes/class-audit-log.php:95
+msgid "Resume permanently deleted"
+msgstr ""
+
+#: includes/class-audit-log.php:96
+msgid "Resume replaced"
+msgstr ""
+
+#: includes/class-audit-log.php:97
+msgid "Application notifications retried"
+msgstr ""
+
+#: includes/class-audit-log.php:98
+msgid "Resume accessed"
+msgstr ""
+
+#: includes/class-audit-log.php:99
+msgid "Job submitted for review"
+msgstr ""
+
+#: includes/class-audit-log.php:100
+msgid "Job resubmitted for review"
+msgstr ""
+
+#: includes/class-audit-log.php:101
+msgid "Job approved and published"
+msgstr ""
+
+#: includes/class-audit-log.php:102
+msgid "Job returned for changes"
+msgstr ""
+
+#: includes/class-audit-log.php:103
+msgid "Job declined"
+msgstr ""
+
+#: includes/class-audit-log.php:104
+msgid "Job closed by employer"
+msgstr ""
+
+#: includes/class-audit-log.php:105
+msgid "Job deleted by employer"
+msgstr ""
+
+#: includes/class-audit-log.php:106
+msgid "Job owner changed"
+msgstr ""
+
+#: includes/class-blocks.php:33
+msgid "Careers and hiring layouts from LlamaHire."
+msgstr ""
+
+#: includes/class-blocks.php:39
+#: includes/class-settings.php:379
+msgid "Careers page"
+msgstr ""
+
+#: includes/class-blocks.php:40
+msgid "A complete careers page with a welcoming introduction and searchable job directory."
+msgstr ""
+
+#: includes/class-blocks.php:42
+#: includes/class-blocks.php:50
+msgid "careers"
+msgstr ""
+
+#: includes/class-blocks.php:42
+msgid "jobs"
+msgstr ""
+
+#: includes/class-blocks.php:47
+msgid "Careers hero"
+msgstr ""
+
+#: includes/class-blocks.php:48
+msgid "A welcoming careers introduction with a link to open roles."
+msgstr ""
+
+#: includes/class-blocks.php:50
+msgid "hero"
+msgstr ""
+
+#: includes/class-blocks.php:55
+msgid "Featured jobs section"
+msgstr ""
+
+#: includes/class-blocks.php:56
+msgid "A heading, introduction, and grid of featured open roles."
+msgstr ""
+
+#: includes/class-blocks.php:58
+msgid "featured jobs"
+msgstr ""
+
+#: includes/class-blocks.php:58
+msgid "open roles"
+msgstr ""
+
+#: includes/class-blocks.php:63
+msgid "Department landing page"
+msgstr ""
+
+#: includes/class-blocks.php:64
+msgid "A team introduction and job directory ready to be limited to a selected department."
+msgstr ""
+
+#: includes/class-blocks.php:66
+msgid "department"
+msgstr ""
+
+#: includes/class-blocks.php:66
+msgid "team jobs"
+msgstr ""
+
+#: includes/class-blocks.php:92
+msgid "Jobs List"
+msgstr ""
+
+#: includes/class-blocks.php:93
+msgid "Display job results without built-in search or filters."
+msgstr ""
+
+#: includes/class-blocks.php:100
+msgid "Location & Work Style Filters"
+msgstr ""
+
+#: includes/class-blocks.php:101
+msgid "Show only location and workplace controls."
+msgstr ""
+
+#: includes/class-blocks.php:108
+msgid "Compact Featured Jobs"
+msgstr ""
+
+#: includes/class-blocks.php:109
+msgid "Display concise featured cards without excerpts or badges."
+msgstr ""
+
+#: includes/class-blocks.php:116
+msgid "Essential Job Details"
+msgstr ""
+
+#: includes/class-blocks.php:117
+msgid "Show the primary role, location, salary, and deadline facts."
+msgstr ""
+
+#: includes/class-blocks.php:151
+#: includes/class-blocks.php:154
+#: includes/class-blocks.php:580
+#: includes/class-blocks.php:584
+#: includes/class-blocks.php:608
+msgid "Apply for this role"
+msgstr ""
+
+#. translators: %s: number of matching open jobs.
+#: includes/class-blocks.php:240
+#, php-format
+msgid "%s open role"
+msgid_plural "%s open roles"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-blocks.php:243
+#: includes/class-blocks.php:253
+msgid "Clear filters"
+msgstr ""
+
+#: includes/class-blocks.php:253
+msgid "No matching open roles"
+msgstr ""
+
+#: includes/class-blocks.php:253
+msgid "Try a broader search or clear the filters to see every open role."
+msgstr ""
+
+#: includes/class-blocks.php:260
+msgid "Job results pages"
+msgstr ""
+
+#: includes/class-blocks.php:270
+msgid "Previous"
+msgstr ""
+
+#: includes/class-blocks.php:271
+msgid "Next"
+msgstr ""
+
+#: includes/class-blocks.php:304
+#: assets/js/blocks.js:139
+msgid "View role"
+msgstr ""
+
+#: includes/class-blocks.php:310
+#: assets/js/blocks.js:134
+msgid "Featured"
+msgstr ""
+
+#: includes/class-blocks.php:338
+msgid "Company"
+msgstr ""
+
+#: includes/class-blocks.php:342
+#: includes/class-blocks.php:529
+#: includes/class-employer-portal.php:239
+#: assets/js/blocks.js:163
+msgid "Location"
+msgstr ""
+
+#: includes/class-blocks.php:345
+#: includes/class-blocks.php:526
+#: assets/js/blocks.js:164
+#: assets/js/job-editor.js:137
+msgid "Workplace"
+msgstr ""
+
+#: includes/class-blocks.php:348
+#: includes/class-blocks.php:523
+#: includes/class-employer-portal.php:241
+#: assets/js/job-editor.js:132
+msgid "Employment type"
+msgstr ""
+
+#: includes/class-blocks.php:351
+#: assets/js/blocks.js:166
+msgid "Salary"
+msgstr ""
+
+#: includes/class-blocks.php:354
+#: assets/js/blocks.js:167
+msgid "Posted"
+msgstr ""
+
+#: includes/class-blocks.php:357
+#: assets/js/blocks.js:168
+msgid "Apply by"
+msgstr ""
+
+#: includes/class-blocks.php:360
+#: assets/js/blocks.js:169
+msgid "Job reference"
+msgstr ""
+
+#: includes/class-blocks.php:411
+msgid "Featured jobs"
+msgstr ""
+
+#: includes/class-blocks.php:419
+msgid "No featured roles yet"
+msgstr ""
+
+#: includes/class-blocks.php:419
+msgid "Mark an open job as featured and it will appear here."
+msgstr ""
+
+#. translators: %s: comma-separated eligible country codes.
+#: includes/class-blocks.php:459
+#: includes/class-blocks.php:526
+#: includes/class-employer-portal.php:240
+#: includes/class-jobs.php:328
+#: assets/js/blocks.js:158
+msgid "Remote"
+msgstr ""
+
+#: includes/class-blocks.php:460
+#: includes/class-blocks.php:526
+#: includes/class-employer-portal.php:240
+#: assets/js/job-editor.js:138
+msgid "Hybrid"
+msgstr ""
+
+#: includes/class-blocks.php:461
+#: includes/class-blocks.php:526
+#: includes/class-employer-portal.php:240
+#: assets/js/job-editor.js:138
+msgid "On-site"
+msgstr ""
+
+#: includes/class-blocks.php:511
+#: includes/class-blocks.php:516
+msgid "Search jobs"
+msgstr ""
+
+#: includes/class-blocks.php:512
+msgid "Job title or keyword"
+msgstr ""
+
+#: includes/class-blocks.php:513
+msgid "Search"
+msgstr ""
+
+#: includes/class-blocks.php:513
+msgid "Apply filters"
+msgstr ""
+
+#: includes/class-blocks.php:516
+msgid "Search and filter jobs"
+msgstr ""
+
+#: includes/class-blocks.php:516
+msgid "Filter jobs"
+msgstr ""
+
+#: includes/class-blocks.php:523
+msgid "Any employment type"
+msgstr ""
+
+#: includes/class-blocks.php:526
+msgid "Any workplace"
+msgstr ""
+
+#: includes/class-blocks.php:529
+msgid "City, region, or country"
+msgstr ""
+
+#: includes/class-blocks.php:532
+msgid "Featured roles only"
+msgstr ""
+
+#: includes/class-blocks.php:548
+#: includes/class-jobs.php:70
+msgid "Department"
+msgstr ""
+
+#: includes/class-blocks.php:548
+#: assets/js/blocks.js:67
+msgid "All departments"
+msgstr ""
+
+#: includes/class-blocks.php:575
+msgid "Applications are closed for this role."
+msgstr ""
+
+#: includes/class-blocks.php:580
+msgid "Apply on the employer website"
+msgstr ""
+
+#: includes/class-blocks.php:584
+msgid "Apply by email"
+msgstr ""
+
+#: includes/class-blocks.php:590
+msgid "Thanks! Your application has been received."
+msgstr ""
+
+#: includes/class-blocks.php:591
+msgid "We already have your application for this role. No further action is needed."
+msgstr ""
+
+#: includes/class-blocks.php:592
+msgid "Please complete all required fields and provide a valid email address."
+msgstr ""
+
+#: includes/class-blocks.php:593
+msgid "Not a valid phone number."
+msgstr ""
+
+#: includes/class-blocks.php:594
+msgid "One or more fields are too long. Shorten your response and try again."
+msgstr ""
+
+#: includes/class-blocks.php:595
+msgid "Your resume must be smaller than 5 MB."
+msgstr ""
+
+#: includes/class-blocks.php:596
+msgid "Please upload a PDF, DOC, or DOCX resume."
+msgstr ""
+
+#: includes/class-blocks.php:597
+msgid "Resume uploads are temporarily unavailable. Please contact the employer."
+msgstr ""
+
+#: includes/class-blocks.php:598
+msgid "Too many applications were submitted recently. Please wait and try again."
+msgstr ""
+
+#: includes/class-blocks.php:599
+msgid "We could not save your application. Please try again."
+msgstr ""
+
+#: includes/class-blocks.php:600
+msgid "This application link is no longer valid."
+msgstr ""
+
+#: includes/class-blocks.php:609
+#, php-format
+msgid "Your application will be shared with %s for hiring review."
+msgstr ""
+
+#: includes/class-blocks.php:619
+msgid "Name"
+msgstr ""
+
+#: includes/class-blocks.php:619
+#: includes/class-blocks.php:620
+#: includes/class-blocks.php:621
+#: includes/class-blocks.php:622
+#: includes/class-blocks.php:623
+#: includes/class-setup.php:178
+#: includes/class-setup.php:192
+#: includes/class-setup.php:204
+#: includes/class-setup.php:205
+#: includes/class-setup.php:226
+#: includes/class-setup.php:228
+msgid "(required)"
+msgstr ""
+
+#: includes/class-blocks.php:619
+msgid "Enter your full name"
+msgstr ""
+
+#: includes/class-blocks.php:620
+#: includes/class-employer-portal.php:242
+#: assets/js/job-editor.js:168
+msgid "Email"
+msgstr ""
+
+#: includes/class-blocks.php:620
+msgid "Enter your email address"
+msgstr ""
+
+#: includes/class-blocks.php:621
+#: includes/class-privacy.php:110
+#: includes/class-settings.php:351
+msgid "Phone"
+msgstr ""
+
+#: includes/class-blocks.php:621
+msgid "Enter your phone number"
+msgstr ""
+
+#: includes/class-blocks.php:622
+#: includes/class-settings.php:352
+msgid "Resume"
+msgstr ""
+
+#: includes/class-blocks.php:622
+msgid "Drag and drop a file here or"
+msgstr ""
+
+#: includes/class-blocks.php:622
+msgid "choose a file"
+msgstr ""
+
+#: includes/class-blocks.php:622
+msgid "PDF, DOC, or DOCX. Maximum 5 MB."
+msgstr ""
+
+#: includes/class-blocks.php:623
+msgid "Tell us why you are a great fit"
+msgstr ""
+
+#: includes/class-blocks.php:628
+#: includes/class-settings.php:114
+msgid "Your information will be used by the employer to evaluate your application."
+msgstr ""
+
+#. translators: %s: privacy policy URL.
+#: includes/class-blocks.php:632
+#, php-format
+msgid "<a href=\"%s\">Read our privacy policy.</a>"
+msgstr ""
+
+#. translators: %s: configured number of retention days.
+#: includes/class-blocks.php:639
+#, php-format
+msgid "Application records are scheduled for deletion from this site after %s days."
+msgstr ""
+
+#: includes/class-blocks.php:645
+msgid "Uploading resume…"
+msgstr ""
+
+#: includes/class-blocks.php:646
+msgid "Submitting application…"
+msgstr ""
+
+#: includes/class-blocks.php:647
+msgid "Upload complete. Processing application…"
+msgstr ""
+
+#: includes/class-blocks.php:648
+msgid "We could not submit your application. Check your connection and try again."
+msgstr ""
+
+#: includes/class-blocks.php:650
+msgid "Resume upload progress"
+msgstr ""
+
+#: includes/class-blocks.php:654
+msgid "Submit application"
+msgstr ""
+
+#: includes/class-capabilities.php:37
+msgid "Employer"
+msgstr ""
+
+#: includes/class-employer-notifications.php:25
+msgid "Job listing resubmitted for review"
+msgstr ""
+
+#: includes/class-employer-notifications.php:25
+msgid "New job listing awaiting review"
+msgstr ""
+
+#. translators: 1: job title, 2: company, 3: submitter email, 4: moderation URL.
+#: includes/class-employer-notifications.php:28
+#, php-format
+msgid ""
+"Job: %1$s\n"
+"Company: %2$s\n"
+"Submitted by: %3$s\n"
+"\n"
+"Review listing: %4$s"
+msgstr ""
+
+#: includes/class-employer-notifications.php:48
+msgid "Your job listing was approved"
+msgstr ""
+
+#: includes/class-employer-notifications.php:48
+msgid "approved and published"
+msgstr ""
+
+#: includes/class-employer-notifications.php:49
+msgid "Your job listing needs changes"
+msgstr ""
+
+#: includes/class-employer-notifications.php:49
+msgid "returned to draft for changes"
+msgstr ""
+
+#: includes/class-employer-notifications.php:50
+msgid "Your job listing was declined"
+msgstr ""
+
+#: includes/class-employer-notifications.php:50
+msgid "declined by the job-board operator"
+msgstr ""
+
+#. translators: 1: job title, 2: moderation result, 3: employer dashboard URL.
+#: includes/class-employer-notifications.php:56
+#, php-format
+msgid ""
+"Your listing “%1$s” was %2$s.\n"
+"\n"
+"Manage your jobs: %3$s"
+msgstr ""
+
+#: includes/class-employer-portal.php:35
+msgid "Submit a Job"
+msgstr ""
+
+#: includes/class-employer-portal.php:35
+msgid "My Jobs"
+msgstr ""
+
+#: includes/class-employer-portal.php:58
+msgid "You cannot manage job listings."
+msgstr ""
+
+#: includes/class-employer-portal.php:76
+msgid "You cannot edit this job listing."
+msgstr ""
+
+#: includes/class-employer-portal.php:150
+msgid "Upload a JPG, PNG, GIF, or WebP image smaller than 2 MB."
+msgstr ""
+
+#: includes/class-employer-portal.php:153
+msgid "Upload a valid JPG, PNG, GIF, or WebP image."
+msgstr ""
+
+#: includes/class-employer-portal.php:171
+msgid "You cannot close this job listing."
+msgstr ""
+
+#: includes/class-employer-portal.php:182
+msgid "You cannot delete this job listing."
+msgstr ""
+
+#: includes/class-employer-portal.php:186
+msgid "The job listing could not be deleted."
+msgstr ""
+
+#: includes/class-employer-portal.php:206
+#, php-format
+msgid "Please <a href=\"%s\">sign in</a> to manage job listings. Employer accounts are approved by the job-board operator."
+msgstr ""
+
+#: includes/class-employer-portal.php:208
+msgid "Your account cannot manage job listings. Contact the job-board operator."
+msgstr ""
+
+#: includes/class-employer-portal.php:220
+msgid "Job listing not found."
+msgstr ""
+
+#: includes/class-employer-portal.php:228
+msgid "Edit job listing"
+msgstr ""
+
+#: includes/class-employer-portal.php:228
+#: includes/class-employer-portal.php:262
+msgid "Submit a job"
+msgstr ""
+
+#: includes/class-employer-portal.php:229
+msgid "Upload a valid JPG, PNG, GIF, or WebP logo smaller than 2 MB."
+msgstr ""
+
+#: includes/class-employer-portal.php:229
+msgid "Complete all required fields with a valid application email or URL."
+msgstr ""
+
+#: includes/class-employer-portal.php:233
+msgid "Job description"
+msgstr ""
+
+#: includes/class-employer-portal.php:234
+msgid "Company name"
+msgstr ""
+
+#: includes/class-employer-portal.php:235
+msgid "Company tagline"
+msgstr ""
+
+#: includes/class-employer-portal.php:236
+msgid "Company website"
+msgstr ""
+
+#: includes/class-employer-portal.php:237
+msgid "Company logo"
+msgstr ""
+
+#: includes/class-employer-portal.php:237
+msgid "JPG, PNG, GIF, or WebP. Maximum 2 MB. Uploads are stored in the WordPress Media Library."
+msgstr ""
+
+#: includes/class-employer-portal.php:238
+msgid "Remove the current company logo from this listing"
+msgstr ""
+
+#: includes/class-employer-portal.php:240
+msgid "Work style"
+msgstr ""
+
+#: includes/class-employer-portal.php:242
+#: assets/js/job-editor.js:167
+msgid "How candidates apply"
+msgstr ""
+
+#: includes/class-employer-portal.php:242
+#: assets/js/job-editor.js:168
+msgid "LlamaHire application form"
+msgstr ""
+
+#: includes/class-employer-portal.php:242
+#: assets/js/job-editor.js:168
+msgid "Employer website"
+msgstr ""
+
+#: includes/class-employer-portal.php:243
+msgid "Application email or URL"
+msgstr ""
+
+#: includes/class-employer-portal.php:243
+msgid "For the LlamaHire form, enter the employer inbox that should receive candidate notifications."
+msgstr ""
+
+#: includes/class-employer-portal.php:244
+msgid "Submit for review"
+msgstr ""
+
+#: includes/class-employer-portal.php:262
+msgid "My jobs"
+msgstr ""
+
+#: includes/class-employer-portal.php:262
+msgid "Your job was submitted for moderation."
+msgstr ""
+
+#: includes/class-employer-portal.php:262
+msgid "Your job listing was deleted."
+msgstr ""
+
+#: includes/class-employer-portal.php:263
+msgid "Actions"
+msgstr ""
+
+#: includes/class-employer-portal.php:263
+#: includes/class-jobs.php:401
+msgid "Closed"
+msgstr ""
+
+#: includes/class-employer-portal.php:263
+#: includes/class-setup.php:237
+#: includes/class-setup.php:238
+#: includes/class-setup.php:239
+#: includes/class-setup.php:240
+msgid "Edit"
+msgstr ""
+
+#: includes/class-employer-portal.php:263
+msgid "Preview"
+msgstr ""
+
+#: includes/class-employer-portal.php:263
+msgid "Close"
+msgstr ""
+
+#: includes/class-employer-portal.php:263
+msgid "Delete"
+msgstr ""
+
+#: includes/class-employer-portal.php:263
+msgid "Move this listing to the trash and remove it from My Jobs."
+msgstr ""
+
+#: includes/class-employer-portal.php:263
+msgid "Confirm delete"
+msgstr ""
+
+#: includes/class-employer-portal.php:263
+msgid "You have not submitted any jobs yet."
+msgstr ""
+
+#: includes/class-jobs.php:21
+#: includes/class-setup.php:113
+#: includes/class-setup.php:226
+msgid "Jobs"
+msgstr ""
+
+#: includes/class-jobs.php:23
+msgid "Add new job"
+msgstr ""
+
+#: includes/class-jobs.php:24
+msgid "Edit job"
+msgstr ""
+
+#: includes/class-jobs.php:70
+msgid "Departments"
+msgstr ""
+
+#: includes/class-jobs.php:125
+msgid "Job duplicated as a new draft. Review its details before publishing."
+msgstr ""
+
+#. translators: %s: comma-separated eligible country codes.
+#: includes/class-jobs.php:328
+#, php-format
+msgid "Remote — %s"
+msgstr ""
+
+#: includes/class-jobs.php:347
+msgid "hour"
+msgstr ""
+
+#: includes/class-jobs.php:347
+msgid "day"
+msgstr ""
+
+#: includes/class-jobs.php:347
+msgid "week"
+msgstr ""
+
+#: includes/class-jobs.php:347
+msgid "month"
+msgstr ""
+
+#: includes/class-jobs.php:347
+msgid "year"
+msgstr ""
+
+#: includes/class-jobs.php:357
+#: assets/js/job-editor.js:133
+msgid "Full time"
+msgstr ""
+
+#: includes/class-jobs.php:358
+#: assets/js/job-editor.js:133
+msgid "Part time"
+msgstr ""
+
+#: includes/class-jobs.php:359
+#: assets/js/job-editor.js:133
+msgid "Contractor"
+msgstr ""
+
+#: includes/class-jobs.php:360
+#: assets/js/job-editor.js:133
+msgid "Temporary"
+msgstr ""
+
+#: includes/class-jobs.php:361
+msgid "Intern"
+msgstr ""
+
+#: includes/class-jobs.php:362
+#: assets/js/job-editor.js:133
+msgid "Volunteer"
+msgstr ""
+
+#: includes/class-jobs.php:363
+#: assets/js/job-editor.js:133
+msgid "Per diem"
+msgstr ""
+
+#: includes/class-jobs.php:364
+#: assets/js/job-editor.js:133
+msgid "Other"
+msgstr ""
+
+#: includes/class-jobs.php:376
+msgid "Duplicate"
+msgstr ""
+
+#: includes/class-jobs.php:385
+msgid "You cannot duplicate this job."
+msgstr ""
+
+#. translators: %s: original job title.
+#: includes/class-jobs.php:389
+#, php-format
+msgid "%s (Copy)"
+msgstr ""
+
+#: includes/class-jobs.php:391
+msgid "WordPress could not duplicate this job. Please try again."
+msgstr ""
+
+#: includes/class-migrations.php:267
+msgid "LlamaHire could not update its application database. Candidate submissions may be unavailable until the database permissions or migration lock are resolved."
+msgstr ""
+
+#: includes/class-privacy.php:21
+#: includes/class-privacy.php:29
+msgid "LlamaHire applications"
+msgstr ""
+
+#: includes/class-privacy.php:53
+msgid "Job applications"
+msgstr ""
+
+#: includes/class-privacy.php:88
+msgid "One or more LlamaHire applications could not be safely erased because their private data could not be removed."
+msgstr ""
+
+#: includes/class-privacy.php:98
+msgid "Application ID"
+msgstr ""
+
+#: includes/class-privacy.php:101
+msgid "Candidate name"
+msgstr ""
+
+#: includes/class-privacy.php:102
+#: src/admin-applications.js:238
+msgid "Candidate email"
+msgstr ""
+
+#: includes/class-privacy.php:103
+msgid "Application status"
+msgstr ""
+
+#: includes/class-privacy.php:104
+msgid "Submitted"
+msgstr ""
+
+#: includes/class-privacy.php:105
+msgid "Last updated"
+msgstr ""
+
+#: includes/class-privacy.php:106
+msgid "Email notification status"
+msgstr ""
+
+#: includes/class-privacy.php:107
+msgid "Email notification attempts"
+msgstr ""
+
+#: includes/class-privacy.php:112
+msgid "Resume filename"
+msgstr ""
+
+#: includes/class-privacy.php:113
+msgid "Private hiring notes"
+msgstr ""
+
+#: includes/class-privacy.php:114
+msgid "Email notification error"
+msgstr ""
+
+#: includes/class-privacy.php:115
+msgid "Employer notified"
+msgstr ""
+
+#: includes/class-privacy.php:116
+msgid "Candidate confirmation sent"
+msgstr ""
+
+#: includes/class-seo.php:20
+#: patterns/careers-page.php:22
+#: templates/archive-llamahire_job.php:8
+msgid "Open positions"
+msgstr ""
+
+#: includes/class-settings.php:44
+msgid "New application for {job_title}"
+msgstr ""
+
+#: includes/class-settings.php:45
+msgid ""
+"{candidate_name} applied for {job_title}.\n"
+"\n"
+"Review applications: {applications_url}"
+msgstr ""
+
+#: includes/class-settings.php:46
+msgid "We received your application for {job_title}"
+msgstr ""
+
+#: includes/class-settings.php:47
+msgid ""
+"Hi {candidate_name},\n"
+"\n"
+"Thanks for applying for {job_title}. We received your application and will be in touch if your experience matches what we are looking for.\n"
+"\n"
+"{site_name}\n"
+"{site_url}"
+msgstr ""
+
+#: includes/class-settings.php:112
+msgid "Your information will be used by the job-board operator and the employer responsible for this listing to evaluate your application."
+msgstr ""
+
+#: includes/class-settings.php:166
+msgid "Select a country"
+msgstr ""
+
+#: includes/class-settings.php:177
+msgid "Select a currency"
+msgstr ""
+
+#: includes/class-settings.php:186
+msgid "Australia"
+msgstr ""
+
+#: includes/class-settings.php:187
+msgid "Brazil"
+msgstr ""
+
+#: includes/class-settings.php:188
+msgid "Canada"
+msgstr ""
+
+#: includes/class-settings.php:189
+msgid "China"
+msgstr ""
+
+#: includes/class-settings.php:190
+msgid "Germany"
+msgstr ""
+
+#: includes/class-settings.php:191
+msgid "Spain"
+msgstr ""
+
+#: includes/class-settings.php:192
+msgid "France"
+msgstr ""
+
+#: includes/class-settings.php:193
+msgid "United Kingdom"
+msgstr ""
+
+#: includes/class-settings.php:194
+msgid "India"
+msgstr ""
+
+#: includes/class-settings.php:195
+msgid "Italy"
+msgstr ""
+
+#: includes/class-settings.php:196
+msgid "Japan"
+msgstr ""
+
+#: includes/class-settings.php:197
+msgid "Mexico"
+msgstr ""
+
+#: includes/class-settings.php:198
+msgid "Netherlands"
+msgstr ""
+
+#: includes/class-settings.php:199
+msgid "New Zealand"
+msgstr ""
+
+#: includes/class-settings.php:200
+msgid "United States"
+msgstr ""
+
+#: includes/class-settings.php:201
+msgid "South Africa"
+msgstr ""
+
+#: includes/class-settings.php:209
+msgid "Australian Dollar"
+msgstr ""
+
+#: includes/class-settings.php:210
+msgid "Brazilian Real"
+msgstr ""
+
+#: includes/class-settings.php:211
+msgid "Canadian Dollar"
+msgstr ""
+
+#: includes/class-settings.php:212
+msgid "Swiss Franc"
+msgstr ""
+
+#: includes/class-settings.php:213
+msgid "Chinese Yuan"
+msgstr ""
+
+#: includes/class-settings.php:214
+msgid "Euro"
+msgstr ""
+
+#: includes/class-settings.php:215
+msgid "British Pound"
+msgstr ""
+
+#: includes/class-settings.php:216
+msgid "Indian Rupee"
+msgstr ""
+
+#: includes/class-settings.php:217
+msgid "Japanese Yen"
+msgstr ""
+
+#: includes/class-settings.php:218
+msgid "Mexican Peso"
+msgstr ""
+
+#: includes/class-settings.php:219
+msgid "New Zealand Dollar"
+msgstr ""
+
+#: includes/class-settings.php:220
+msgid "US Dollar"
+msgstr ""
+
+#: includes/class-settings.php:221
+msgid "South African Rand"
+msgstr ""
+
+#: includes/class-settings.php:239
+#: includes/class-settings.php:288
+msgid "LlamaHire settings"
+msgstr ""
+
+#: includes/class-settings.php:240
+msgid "Settings"
+msgstr ""
+
+#: includes/class-settings.php:279
+#: includes/class-settings.php:318
+#: includes/class-setup.php:127
+#: includes/class-setup.php:165
+msgid "Site purpose"
+msgstr ""
+
+#: includes/class-settings.php:280
+#: includes/class-settings.php:328
+msgid "Board identity"
+msgstr ""
+
+#: includes/class-settings.php:280
+#: includes/class-settings.php:328
+#: assets/js/blocks.js:162
+msgid "Organization"
+msgstr ""
+
+#: includes/class-settings.php:281
+#: includes/class-settings.php:337
+#: includes/class-setup.php:186
+msgid "Job defaults"
+msgstr ""
+
+#: includes/class-settings.php:282
+#: includes/class-settings.php:347
+#: includes/class-setup.php:129
+#: includes/class-setup.php:199
+#: includes/class-setup.php:239
+msgid "Applications & privacy"
+msgstr ""
+
+#: includes/class-settings.php:284
+#: includes/class-settings.php:377
+msgid "Pages"
+msgstr ""
+
+#: includes/class-settings.php:290
+msgid "WordPress accepted the test email. Confirm that it arrived before relying on application notifications."
+msgstr ""
+
+#: includes/class-settings.php:290
+msgid "The test email was not accepted. Review the sender details and your WordPress mail transport."
+msgstr ""
+
+#: includes/class-settings.php:291
+msgid "Manage the defaults and operating rules for this multi-employer job board."
+msgstr ""
+
+#: includes/class-settings.php:291
+msgid "Manage the organization defaults used across your careers site and job listings."
+msgstr ""
+
+#: includes/class-settings.php:293
+msgid "Settings sections"
+msgstr ""
+
+#: includes/class-settings.php:303
+msgid "Setup complete"
+msgstr ""
+
+#: includes/class-settings.php:307
+msgid "Restart setup"
+msgstr ""
+
+#: includes/class-settings.php:318
+msgid "Choose the operating model that matches this site. This changes labels and which multi-employer tools are available."
+msgstr ""
+
+#: includes/class-settings.php:320
+msgid "How do you use LlamaHire?"
+msgstr ""
+
+#: includes/class-settings.php:321
+#: includes/class-setup.php:166
+msgid "Company careers site"
+msgstr ""
+
+#: includes/class-settings.php:321
+#: includes/class-setup.php:166
+msgid "Publish jobs for one organization using shared employer defaults."
+msgstr ""
+
+#: includes/class-settings.php:322
+msgid "Community job board"
+msgstr ""
+
+#: includes/class-settings.php:322
+msgid "Publish listings from multiple employers while this site acts as the board operator."
+msgstr ""
+
+#: includes/class-settings.php:324
+msgid "Employer access"
+msgstr ""
+
+#: includes/class-settings.php:324
+msgid "Employer accounts are administrator-approved for the MVP. Create an account in Users, assign the Employer role, then send the employer the Submit a Job page."
+msgstr ""
+
+#: includes/class-settings.php:324
+msgid "Add an employer account"
+msgstr ""
+
+#: includes/class-settings.php:328
+msgid "These details identify the board operator. Each listing can identify its own employer."
+msgstr ""
+
+#: includes/class-settings.php:328
+msgid "These details identify the employer on job pages and in Google Jobs."
+msgstr ""
+
+#: includes/class-settings.php:330
+#: includes/class-setup.php:178
+msgid "Job board name"
+msgstr ""
+
+#: includes/class-settings.php:330
+#: includes/class-setup.php:178
+msgid "Organization name"
+msgstr ""
+
+#: includes/class-settings.php:330
+msgid "The name shown as the board operator."
+msgstr ""
+
+#: includes/class-settings.php:330
+msgid "The employer name shown on job pages."
+msgstr ""
+
+#: includes/class-settings.php:331
+#: includes/class-setup.php:179
+msgid "Organization website"
+msgstr ""
+
+#: includes/class-settings.php:331
+msgid "Optional. Use the organization’s canonical website when this careers site is on a different domain or subdomain."
+msgstr ""
+
+#: includes/class-settings.php:332
+#: includes/class-setup.php:181
+msgid "Job board logo"
+msgstr ""
+
+#: includes/class-settings.php:332
+#: includes/class-setup.php:181
+msgid "Organization logo"
+msgstr ""
+
+#: includes/class-settings.php:337
+msgid "New jobs start with these location and compensation values. Editors can override them on each job."
+msgstr ""
+
+#: includes/class-settings.php:339
+#: includes/class-setup.php:189
+msgid "Default city or locality"
+msgstr ""
+
+#: includes/class-settings.php:340
+#: includes/class-setup.php:190
+msgid "Default state, province, or region"
+msgstr ""
+
+#: includes/class-settings.php:341
+#: includes/class-setup.php:191
+msgid "Default country"
+msgstr ""
+
+#: includes/class-settings.php:342
+#: includes/class-setup.php:192
+msgid "Default currency"
+msgstr ""
+
+#: includes/class-settings.php:347
+msgid "Control the information candidates submit and how long their private data is retained."
+msgstr ""
+
+#: includes/class-settings.php:348
+msgid "Application fields"
+msgstr ""
+
+#: includes/class-settings.php:349
+msgid "Name and email are always required."
+msgstr ""
+
+#: includes/class-settings.php:352
+msgid "PDF, DOC, or DOCX files smaller than 5 MB."
+msgstr ""
+
+#: includes/class-settings.php:355
+msgid "Candidate privacy"
+msgstr ""
+
+#: includes/class-settings.php:357
+msgid "Privacy notice"
+msgstr ""
+
+#: includes/class-settings.php:357
+msgid "Shown beside the application form. Describe how candidate information will be used."
+msgstr ""
+
+#: includes/class-settings.php:358
+#: includes/class-setup.php:206
+msgid "Privacy policy page"
+msgstr ""
+
+#: includes/class-settings.php:358
+msgid "Use the WordPress privacy policy"
+msgstr ""
+
+#: includes/class-settings.php:359
+#: includes/class-setup.php:207
+msgid "Application retention"
+msgstr ""
+
+#: includes/class-settings.php:359
+#: includes/class-setup.php:122
+msgid "30 days"
+msgstr ""
+
+#: includes/class-settings.php:359
+#: includes/class-setup.php:122
+msgid "90 days"
+msgstr ""
+
+#: includes/class-settings.php:359
+#: includes/class-setup.php:122
+msgid "180 days"
+msgstr ""
+
+#: includes/class-settings.php:359
+#: includes/class-setup.php:123
+msgid "1 year"
+msgstr ""
+
+#: includes/class-settings.php:359
+#: includes/class-setup.php:123
+msgid "2 years"
+msgstr ""
+
+#: includes/class-settings.php:359
+#: includes/class-setup.php:123
+msgid "3 years"
+msgstr ""
+
+#: includes/class-settings.php:359
+#: includes/class-setup.php:124
+msgid "5 years"
+msgstr ""
+
+#: includes/class-settings.php:359
+#: includes/class-setup.php:124
+msgid "Keep until manually erased"
+msgstr ""
+
+#: includes/class-settings.php:359
+msgid "Applications and private resumes older than this are permanently deleted by the daily cleanup task."
+msgstr ""
+
+#: includes/class-settings.php:364
+msgid "Choose where application alerts are sent and customize the messages candidates and hiring teams receive."
+msgstr ""
+
+#: includes/class-settings.php:366
+#: includes/class-setup.php:204
+msgid "Hiring inbox"
+msgstr ""
+
+#: includes/class-settings.php:366
+#: includes/class-setup.php:204
+msgid "New application notifications are sent here."
+msgstr ""
+
+#: includes/class-settings.php:367
+msgid "Sender name"
+msgstr ""
+
+#: includes/class-settings.php:368
+msgid "Sender email"
+msgstr ""
+
+#: includes/class-settings.php:368
+msgid "Use an address authorized by your domain and mail provider."
+msgstr ""
+
+#: includes/class-settings.php:369
+msgid "Employer subject"
+msgstr ""
+
+#: includes/class-settings.php:370
+msgid "Employer message"
+msgstr ""
+
+#: includes/class-settings.php:371
+msgid "Candidate subject"
+msgstr ""
+
+#: includes/class-settings.php:372
+msgid "Candidate message"
+msgstr ""
+
+#: includes/class-settings.php:372
+msgid "Plain text. Available placeholders: {candidate_name}, {job_title}, {site_name}, {site_url}, and {applications_url}."
+msgstr ""
+
+#: includes/class-settings.php:377
+msgid "Connect the public pages that visitors and employers use."
+msgstr ""
+
+#: includes/class-settings.php:379
+msgid "No Careers page selected"
+msgstr ""
+
+#: includes/class-settings.php:380
+msgid "Submit a Job page"
+msgstr ""
+
+#: includes/class-settings.php:380
+#: includes/class-settings.php:381
+msgid "Create automatically"
+msgstr ""
+
+#: includes/class-settings.php:380
+msgid "Use a page containing [llamahire_submit_job]."
+msgstr ""
+
+#: includes/class-settings.php:381
+msgid "My Jobs page"
+msgstr ""
+
+#: includes/class-settings.php:381
+msgid "Use a page containing [llamahire_my_jobs]."
+msgstr ""
+
+#: includes/class-settings.php:390
+msgid "Changes apply when you save."
+msgstr ""
+
+#: includes/class-settings.php:401
+#: includes/services/class-notification-service.php:21
+msgid "Alex Candidate"
+msgstr ""
+
+#: includes/class-settings.php:405
+msgid "Email previews and delivery diagnostics"
+msgstr ""
+
+#: includes/class-settings.php:406
+msgid "Previews use saved settings and sample candidate data. Save changes before testing an edit."
+msgstr ""
+
+#: includes/class-settings.php:408
+msgid "Employer email preview"
+msgstr ""
+
+#: includes/class-settings.php:408
+msgid "Candidate email preview"
+msgstr ""
+
+#: includes/class-settings.php:409
+msgid "To:"
+msgstr ""
+
+#: includes/class-settings.php:409
+msgid "Subject:"
+msgstr ""
+
+#: includes/class-settings.php:412
+msgid "Send a test email"
+msgstr ""
+
+#: includes/class-settings.php:413
+msgid "Last test:"
+msgstr ""
+
+#: includes/class-settings.php:413
+msgid "Accepted by WordPress"
+msgstr ""
+
+#: includes/class-settings.php:413
+#: src/admin-applications.js:24
+msgid "Failed"
+msgstr ""
+
+#: includes/class-settings.php:413
+msgid "No delivery test has been run yet."
+msgstr ""
+
+#: includes/class-settings.php:418
+msgid "Test recipient"
+msgstr ""
+
+#: includes/class-settings.php:421
+msgid "Send test email"
+msgstr ""
+
+#: includes/class-settings.php:425
+msgid "A successful test means WordPress accepted the message. Confirm inbox delivery and configure SMTP or another mail transport if necessary."
+msgstr ""
+
+#: includes/class-settings.php:432
+msgid "You cannot test LlamaHire email delivery."
+msgstr ""
+
+#: includes/class-settings.php:451
+msgid "LlamaHire email configuration"
+msgstr ""
+
+#: includes/class-settings.php:459
+msgid "LlamaHire email sender is configured"
+msgstr ""
+
+#: includes/class-settings.php:459
+msgid "LlamaHire email sender needs attention"
+msgstr ""
+
+#: includes/class-settings.php:462
+msgid "The hiring inbox and sender identity are valid. Send a test email to verify the site mail transport."
+msgstr ""
+
+#: includes/class-settings.php:462
+msgid "Add a valid hiring inbox, sender name, and sender email before relying on application notifications."
+msgstr ""
+
+#: includes/class-settings.php:463
+msgid "Review email settings"
+msgstr ""
+
+#: includes/class-settings.php:470
+msgid "Choose organization logo"
+msgstr ""
+
+#: includes/class-settings.php:470
+msgid "Use this logo"
+msgstr ""
+
+#: includes/class-settings.php:470
+#: includes/class-settings.php:475
+#: assets/js/job-editor.js:92
+msgid "Choose logo"
+msgstr ""
+
+#: includes/class-settings.php:470
+#: includes/class-settings.php:475
+#: assets/js/job-editor.js:92
+msgid "Replace logo"
+msgstr ""
+
+#: includes/class-settings.php:476
+msgid "Remove logo"
+msgstr ""
+
+#: includes/class-settings.php:477
+msgid "Choose an image from the Media Library. Use a square or landscape image with a width-to-height ratio between 0.75 and 2.5."
+msgstr ""
+
+#: includes/class-settings.php:512
+msgid "Required"
+msgstr ""
+
+#: includes/class-settings.php:513
+msgid "Optional"
+msgstr ""
+
+#: includes/class-settings.php:514
+msgid "Do not ask"
+msgstr ""
+
+#: includes/class-setup.php:65
+#: includes/class-setup.php:135
+msgid "Set up LlamaHire"
+msgstr ""
+
+#: includes/class-setup.php:66
+msgid "Setup"
+msgstr ""
+
+#: includes/class-setup.php:93
+#: includes/class-setup.php:288
+#: includes/class-setup.php:406
+msgid "You cannot configure LlamaHire."
+msgstr ""
+
+#: includes/class-setup.php:113
+#: includes/class-setup.php:226
+msgid "Careers"
+msgstr ""
+
+#. translators: %s: Current WordPress privacy policy page title.
+#: includes/class-setup.php:118
+#, php-format
+msgid "Use WordPress privacy policy — %s"
+msgstr ""
+
+#: includes/class-setup.php:120
+msgid "No WordPress privacy policy is configured"
+msgstr ""
+
+#: includes/class-setup.php:128
+#: includes/class-setup.php:238
+msgid "Identity & defaults"
+msgstr ""
+
+#: includes/class-setup.php:130
+#: includes/class-setup.php:220
+#: includes/class-setup.php:240
+msgid "Public jobs page"
+msgstr ""
+
+#. translators: 1: Current setup step. 2: Total setup steps. 3: Current step name.
+#: includes/class-setup.php:142
+#, php-format
+msgid "Step %1$d of %2$d — %3$s"
+msgstr ""
+
+#: includes/class-setup.php:150
+msgid "Setup progress: purpose, identity and defaults, applications and privacy, and public jobs page"
+msgstr ""
+
+#: includes/class-setup.php:150
+msgid "Not complete"
+msgstr ""
+
+#: includes/class-setup.php:150
+#, php-format
+msgid "Step %d of 4"
+msgstr ""
+
+#: includes/class-setup.php:151
+msgid "Setup steps"
+msgstr ""
+
+#: includes/class-setup.php:156
+msgid "Your saved Setup progress has been restored."
+msgstr ""
+
+#: includes/class-setup.php:162
+msgid "How will you use LlamaHire?"
+msgstr ""
+
+#: includes/class-setup.php:163
+msgid "Choose the setup that matches how this site publishes jobs."
+msgstr ""
+
+#: includes/class-setup.php:167
+msgid "Multi-employer job board"
+msgstr ""
+
+#: includes/class-setup.php:167
+msgid "Publish listings from multiple employers with approved employer accounts, submission pages, and per-job application routing."
+msgstr ""
+
+#: includes/class-setup.php:172
+msgid "Identity & job defaults"
+msgstr ""
+
+#: includes/class-setup.php:173
+msgid "Set the employer identity and the values new jobs start with."
+msgstr ""
+
+#: includes/class-setup.php:173
+msgid "Set the board-operator identity and the values new listings start with. Employers can replace them per listing."
+msgstr ""
+
+#: includes/class-setup.php:176
+msgid "Organization identity"
+msgstr ""
+
+#: includes/class-setup.php:176
+msgid "Job board identity"
+msgstr ""
+
+#: includes/class-setup.php:178
+msgid "This is the name candidates will see on job postings."
+msgstr ""
+
+#: includes/class-setup.php:179
+msgid "Optional. Use the organization’s main website only when this careers site is on a different domain or subdomain."
+msgstr ""
+
+#: includes/class-setup.php:182
+msgid "This logo will appear on job postings and careers pages."
+msgstr ""
+
+#: includes/class-setup.php:187
+msgid "Editors can override these values on every job."
+msgstr ""
+
+#: includes/class-setup.php:200
+msgid "Choose where application alerts go and review the privacy notice candidates will see."
+msgstr ""
+
+#: includes/class-setup.php:204
+msgid "Board notification inbox"
+msgstr ""
+
+#: includes/class-setup.php:204
+msgid "Board-level notifications use this address; employer routing is configured per job."
+msgstr ""
+
+#: includes/class-setup.php:205
+msgid "Candidate privacy text"
+msgstr ""
+
+#: includes/class-setup.php:205
+msgid "Shown beside every application form. This operational preview is not legal advice."
+msgstr ""
+
+#: includes/class-setup.php:206
+msgid "Choose a published page, or use the page selected in WordPress Settings → Privacy."
+msgstr ""
+
+#: includes/class-setup.php:207
+msgid "Older applications and private resumes are permanently deleted by the daily cleanup task."
+msgstr ""
+
+#: includes/class-setup.php:211
+msgid "Candidate-facing preview"
+msgstr ""
+
+#: includes/class-setup.php:212
+msgid "Application privacy notice"
+msgstr ""
+
+#: includes/class-setup.php:213
+msgid "Read our privacy policy."
+msgstr ""
+
+#: includes/class-setup.php:221
+msgid "Choose the compatible page where candidates will discover open jobs, then review everything before completion."
+msgstr ""
+
+#: includes/class-setup.php:223
+msgid "Public jobs page choice"
+msgstr ""
+
+#: includes/class-setup.php:224
+msgid "Create and publish a new public jobs page"
+msgstr ""
+
+#: includes/class-setup.php:225
+msgid "The new page includes job search, filters, and the jobs directory. You can edit it after Setup."
+msgstr ""
+
+#: includes/class-setup.php:226
+msgid "New page title"
+msgstr ""
+
+#: includes/class-setup.php:227
+msgid "Use an existing published page"
+msgstr ""
+
+#: includes/class-setup.php:228
+msgid "Existing public jobs page"
+msgstr ""
+
+#: includes/class-setup.php:231
+msgid "Employer access pages"
+msgstr ""
+
+#: includes/class-setup.php:232
+msgid "Completing Setup also publishes Submit a Job and My Jobs pages when compatible pages do not already exist. Employer accounts remain administrator-approved."
+msgstr ""
+
+#: includes/class-setup.php:235
+msgid "Setup summary"
+msgstr ""
+
+#: includes/class-setup.php:237
+msgid "Purpose"
+msgstr ""
+
+#: includes/class-setup.php:237
+msgid "Edit site purpose"
+msgstr ""
+
+#: includes/class-setup.php:238
+msgid "Edit identity and defaults"
+msgstr ""
+
+#: includes/class-setup.php:239
+msgid "Edit applications and privacy"
+msgstr ""
+
+#: includes/class-setup.php:240
+msgid "Edit public jobs page"
+msgstr ""
+
+#: includes/class-setup.php:246
+msgid "Back"
+msgstr ""
+
+#: includes/class-setup.php:247
+msgid "Save and finish later"
+msgstr ""
+
+#: includes/class-setup.php:249
+msgid "Continue"
+msgstr ""
+
+#: includes/class-setup.php:250
+msgid "Complete setup"
+msgstr ""
+
+#. translators: %s: Careers page URL.
+#: includes/class-setup.php:267
+#, php-format
+msgid "LlamaHire setup is complete. <a href=\"%s\">View your public jobs page</a> or add your first job."
+msgstr ""
+
+#: includes/class-setup.php:271
+msgid "LlamaHire setup is complete. Add your first job when you are ready."
+msgstr ""
+
+#. translators: %s: setup page URL.
+#: includes/class-setup.php:276
+#, php-format
+msgid "Setup progress saved. You can <a href=\"%s\">resume setup</a> at any time."
+msgstr ""
+
+#: includes/class-setup.php:317
+msgid "Enter an organization name and choose a default currency."
+msgstr ""
+
+#: includes/class-setup.php:320
+msgid "Enter a valid hiring inbox and candidate privacy text."
+msgstr ""
+
+#: includes/class-setup.php:323
+msgid "Choose a published privacy policy page."
+msgstr ""
+
+#: includes/class-setup.php:334
+msgid "Create a public jobs page or select a published page containing the LlamaHire Jobs Directory block."
+msgstr ""
+
+#: includes/class-setup.php:350
+msgid "Enter a title for the new Careers page."
+msgstr ""
+
+#: includes/class-setup.php:353
+msgid "You cannot create and publish a Careers page."
+msgstr ""
+
+#: includes/class-setup.php:384
+msgid "Select a page with a LlamaHire jobs directory"
+msgstr ""
+
+#: includes/class-theme-support.php:16
+msgid "Single Job"
+msgstr ""
+
+#: includes/class-theme-support.php:17
+msgid "Displays a LlamaHire job with its role details and application form."
+msgstr ""
+
+#: includes/class-theme-support.php:20
+msgid "Jobs Archive"
+msgstr ""
+
+#: includes/class-theme-support.php:21
+msgid "Displays searchable and filterable open LlamaHire jobs."
+msgstr ""
+
+#: includes/class-theme-support.php:24
+msgid "Job Department"
+msgstr ""
+
+#: includes/class-theme-support.php:25
+msgid "Displays open LlamaHire jobs in the current department."
+msgstr ""
+
+#: includes/services/class-application-repository.php:48
+msgid "The application is missing required data."
+msgstr ""
+
+#: includes/services/class-application-repository.php:103
+msgid "The application could not be stored."
+msgstr ""
+
+#: includes/services/class-application-repository.php:127
+msgid "The application status is invalid."
+msgstr ""
+
+#: includes/services/class-candidate-data-lifecycle.php:51
+msgid "The private resume could not be deleted, so the application was retained."
+msgstr ""
+
+#: includes/services/class-candidate-data-lifecycle.php:54
+msgid "The application could not be erased."
+msgstr ""
+
+#: includes/services/class-candidate-data-lifecycle.php:66
+msgid "The private resume could not be deleted."
+msgstr ""
+
+#: includes/services/class-candidate-data-lifecycle.php:77
+msgid "The application could not be updated after deleting its resume."
+msgstr ""
+
+#: includes/services/class-candidate-data-lifecycle.php:93
+msgid "Choose a resume to upload."
+msgstr ""
+
+#: includes/services/class-candidate-data-lifecycle.php:105
+msgid "The replacement resume could not be attached."
+msgstr ""
+
+#: includes/services/class-candidate-data-lifecycle.php:116
+msgid "The previous resume could not be removed, so it was not replaced."
+msgstr ""
+
+#: includes/services/class-notification-service.php:17
+msgid "Sample role"
+msgstr ""
+
+#: includes/services/class-notification-service.php:100
+msgid "LlamaHire email delivery test"
+msgstr ""
+
+#: includes/services/class-notification-service.php:101
+msgid "WordPress accepted this test message from LlamaHire. Receiving it confirms that the configured sender and your site's mail transport can deliver to this address."
+msgstr ""
+
+#: includes/services/class-resume-storage.php:73
+msgid "Resume not found."
+msgstr ""
+
+#: patterns/careers-hero.php:16
+msgid "Build your next chapter with us"
+msgstr ""
+
+#: patterns/careers-hero.php:18
+msgid "Bring your perspective to a team that values thoughtful work, shared progress, and meaningful outcomes."
+msgstr ""
+
+#: patterns/careers-hero.php:21
+msgid "Explore open roles"
+msgstr ""
+
+#: patterns/careers-page.php:16
+msgid "Do your best work with us"
+msgstr ""
+
+#: patterns/careers-page.php:18
+msgid "Join a thoughtful team solving meaningful problems together."
+msgstr ""
+
+#: patterns/department-landing-page.php:16
+msgid "Do meaningful work with this team"
+msgstr ""
+
+#: patterns/department-landing-page.php:18
+msgid "Meet the people, purpose, and opportunities behind this part of our organization."
+msgstr ""
+
+#: patterns/department-landing-page.php:22
+msgid "Open roles on this team"
+msgstr ""
+
+#: patterns/department-landing-page.php:24
+msgid "See where your experience could make an impact with this team."
+msgstr ""
+
+#: patterns/featured-jobs.php:16
+msgid "Featured opportunities"
+msgstr ""
+
+#: patterns/featured-jobs.php:18
+msgid "A few roles where we are especially excited to meet great people."
+msgstr ""
+
+#: templates/archive-llamahire_job.php:10
+msgid "Find the role where you can do your best work."
+msgstr ""
+
+#: assets/js/blocks.js:16
+msgid "Show featured badge"
+msgstr ""
+
+#: assets/js/blocks.js:17
+msgid "Show excerpt"
+msgstr ""
+
+#: assets/js/blocks.js:18
+#: assets/js/blocks.js:37
+#: assets/js/blocks.js:105
+msgid "Show location"
+msgstr ""
+
+#: assets/js/blocks.js:19
+#: assets/js/blocks.js:39
+#: assets/js/blocks.js:104
+msgid "Show workplace"
+msgstr ""
+
+#: assets/js/blocks.js:20
+#: assets/js/blocks.js:40
+#: assets/js/blocks.js:103
+msgid "Show employment type"
+msgstr ""
+
+#: assets/js/blocks.js:21
+#: assets/js/blocks.js:41
+msgid "Show salary"
+msgstr ""
+
+#: assets/js/blocks.js:22
+msgid "Link label"
+msgstr ""
+
+#: assets/js/blocks.js:23
+msgid "Title heading level"
+msgstr ""
+
+#: assets/js/blocks.js:35
+msgid "Job details settings"
+msgstr ""
+
+#: assets/js/blocks.js:36
+msgid "Show organization"
+msgstr ""
+
+#: assets/js/blocks.js:38
+msgid "Show street address"
+msgstr ""
+
+#: assets/js/blocks.js:42
+msgid "Show posted date"
+msgstr ""
+
+#: assets/js/blocks.js:43
+msgid "Show application deadline"
+msgstr ""
+
+#: assets/js/blocks.js:44
+msgid "Show job reference"
+msgstr ""
+
+#: assets/js/blocks.js:72
+msgid "Directory settings"
+msgstr ""
+
+#: assets/js/blocks.js:73
+msgid "Jobs per page"
+msgstr ""
+
+#: assets/js/blocks.js:74
+msgid "Limit to department"
+msgstr ""
+
+#: assets/js/blocks.js:74
+msgid "Useful for department landing pages. The selected department stays fixed while visitors use other filters."
+msgstr ""
+
+#: assets/js/blocks.js:75
+msgid "Show search and filters"
+msgstr ""
+
+#: assets/js/blocks.js:76
+msgid "Featured jobs only"
+msgstr ""
+
+#: assets/js/blocks.js:87
+msgid "Search settings"
+msgstr ""
+
+#: assets/js/blocks.js:88
+msgid "Field label"
+msgstr ""
+
+#: assets/js/blocks.js:89
+msgid "Placeholder"
+msgstr ""
+
+#: assets/js/blocks.js:90
+#: assets/js/blocks.js:107
+msgid "Button label"
+msgstr ""
+
+#: assets/js/blocks.js:101
+msgid "Filter settings"
+msgstr ""
+
+#: assets/js/blocks.js:102
+msgid "Show department"
+msgstr ""
+
+#: assets/js/blocks.js:106
+msgid "Show featured roles"
+msgstr ""
+
+#: assets/js/blocks.js:119
+#: assets/js/blocks.js:122
+#: assets/js/blocks.js:132
+#: assets/js/blocks.js:186
+msgid "Card settings"
+msgstr ""
+
+#: assets/js/blocks.js:119
+msgid "Job Card"
+msgstr ""
+
+#: assets/js/blocks.js:119
+msgid "This block displays the job supplied by a LlamaHire collection. No post ID is needed."
+msgstr ""
+
+#: assets/js/blocks.js:122
+msgid "Loading job preview…"
+msgstr ""
+
+#: assets/js/blocks.js:135
+#: assets/js/blocks.js:204
+msgid "(Untitled job)"
+msgstr ""
+
+#: assets/js/blocks.js:150
+msgid "Single Job Details"
+msgstr ""
+
+#: assets/js/blocks.js:150
+msgid "This block displays the current job automatically. Add it to a job or a job-aware template."
+msgstr ""
+
+#: assets/js/blocks.js:153
+msgid "Loading job details…"
+msgstr ""
+
+#: assets/js/blocks.js:165
+msgid "Employment"
+msgstr ""
+
+#: assets/js/blocks.js:172
+msgid "Choose at least one available job detail to display."
+msgstr ""
+
+#: assets/js/blocks.js:181
+msgid "Featured jobs settings"
+msgstr ""
+
+#: assets/js/blocks.js:182
+msgid "Number of jobs"
+msgstr ""
+
+#: assets/js/blocks.js:183
+msgid "Show heading"
+msgstr ""
+
+#: assets/js/blocks.js:184
+#: assets/js/blocks.js:208
+msgid "Heading"
+msgstr ""
+
+#: assets/js/blocks.js:202
+msgid "Current job"
+msgstr ""
+
+#: assets/js/blocks.js:202
+msgid "Select a published job"
+msgstr ""
+
+#: assets/js/blocks.js:207
+msgid "Form settings"
+msgstr ""
+
+#: assets/js/blocks.js:209
+msgid "Use Current job when this form is inside a job post."
+msgstr ""
+
+#: assets/js/blocks.js:209
+msgid "Choose the job that receives applications from this form."
+msgstr ""
+
+#: assets/js/blocks.js:211
+msgid "The candidate application form will appear here."
+msgstr ""
+
+#: assets/js/job-editor.js:49
+msgid "Add a concise job title."
+msgstr ""
+
+#: assets/js/job-editor.js:52
+msgid "Add a complete job description."
+msgstr ""
+
+#: assets/js/job-editor.js:55
+msgid "Add a hiring organization."
+msgstr ""
+
+#: assets/js/job-editor.js:58
+msgid "Add the employer name for this job-board listing."
+msgstr ""
+
+#: assets/js/job-editor.js:62
+msgid "Add at least one country where remote applicants may work."
+msgstr ""
+
+#: assets/js/job-editor.js:65
+msgid "Add the job city/locality and country."
+msgstr ""
+
+#: assets/js/job-editor.js:68
+msgid "Maximum salary must be at least the minimum salary."
+msgstr ""
+
+#: assets/js/job-editor.js:71
+msgid "Add an application email or external URL."
+msgstr ""
+
+#: assets/js/job-editor.js:85
+msgid "Logo override"
+msgstr ""
+
+#: assets/js/job-editor.js:96
+msgid "Remove logo override"
+msgstr ""
+
+#: assets/js/job-editor.js:102
+msgid "Eligible applicant countries"
+msgstr ""
+
+#: assets/js/job-editor.js:103
+msgid "Comma-separated two-letter country codes, for example US, CA. Required for fully remote jobs."
+msgstr ""
+
+#: assets/js/job-editor.js:108
+msgid "Street address"
+msgstr ""
+
+#: assets/js/job-editor.js:109
+msgid "City or locality"
+msgstr ""
+
+#: assets/js/job-editor.js:110
+msgid "State, province, or region"
+msgstr ""
+
+#: assets/js/job-editor.js:111
+msgid "Postal code"
+msgstr ""
+
+#: assets/js/job-editor.js:112
+msgid "Country code"
+msgstr ""
+
+#: assets/js/job-editor.js:112
+msgid "Two-letter ISO code, such as US, CA, or GB."
+msgstr ""
+
+#: assets/js/job-editor.js:116
+msgid "Google Jobs readiness"
+msgstr ""
+
+#: assets/js/job-editor.js:119
+msgid "Complete these for Google Jobs eligibility:"
+msgstr ""
+
+#: assets/js/job-editor.js:122
+msgid "Required Google Jobs fields are complete."
+msgstr ""
+
+#: assets/js/job-editor.js:124
+msgid "Role and hiring status"
+msgstr ""
+
+#: assets/js/job-editor.js:126
+msgid "Published"
+msgstr ""
+
+#: assets/js/job-editor.js:126
+msgid "Not published"
+msgstr ""
+
+#: assets/js/job-editor.js:128
+msgid "applications will not open until this job is published."
+msgstr ""
+
+#: assets/js/job-editor.js:128
+msgid "closed to new applications."
+msgstr ""
+
+#: assets/js/job-editor.js:128
+msgid "accepting applications until its deadline."
+msgstr ""
+
+#: assets/js/job-editor.js:130
+msgid "Preview job"
+msgstr ""
+
+#: assets/js/job-editor.js:133
+msgid "Internship"
+msgstr ""
+
+#: assets/js/job-editor.js:138
+msgid "Fully remote"
+msgstr ""
+
+#: assets/js/job-editor.js:141
+msgid "Application deadline"
+msgstr ""
+
+#: assets/js/job-editor.js:142
+msgid "Stable job reference"
+msgstr ""
+
+#: assets/js/job-editor.js:142
+msgid "Used as Google’s unique identifier. Keep it stable after publication."
+msgstr ""
+
+#: assets/js/job-editor.js:143
+msgid "Featured job"
+msgstr ""
+
+#: assets/js/job-editor.js:144
+msgid "Close applications without unpublishing"
+msgstr ""
+
+#: assets/js/job-editor.js:144
+msgid "The job can remain publicly visible, but its application form and Google Jobs listing will close."
+msgstr ""
+
+#: assets/js/job-editor.js:146
+msgid "Remote eligibility"
+msgstr ""
+
+#: assets/js/job-editor.js:146
+msgid "Job location"
+msgstr ""
+
+#: assets/js/job-editor.js:147
+msgid "Compensation"
+msgstr ""
+
+#: assets/js/job-editor.js:148
+msgid "Only enter salary supplied by the employer. Values entered here are shown publicly."
+msgstr ""
+
+#: assets/js/job-editor.js:149
+msgid "Minimum salary"
+msgstr ""
+
+#: assets/js/job-editor.js:150
+msgid "Maximum salary"
+msgstr ""
+
+#: assets/js/job-editor.js:151
+msgid "Currency"
+msgstr ""
+
+#: assets/js/job-editor.js:151
+msgid "Three-letter ISO code, such as USD, CAD, or GBP."
+msgstr ""
+
+#: assets/js/job-editor.js:153
+msgid "Pay period"
+msgstr ""
+
+#: assets/js/job-editor.js:154
+msgid "Hour"
+msgstr ""
+
+#: assets/js/job-editor.js:154
+msgid "Day"
+msgstr ""
+
+#: assets/js/job-editor.js:154
+msgid "Week"
+msgstr ""
+
+#: assets/js/job-editor.js:154
+msgid "Month"
+msgstr ""
+
+#: assets/js/job-editor.js:154
+msgid "Year"
+msgstr ""
+
+#: assets/js/job-editor.js:158
+msgid "Hiring organization"
+msgstr ""
+
+#: assets/js/job-editor.js:159
+msgid "Leave overrides blank to use the organization defaults in Jobs → Settings."
+msgstr ""
+
+#: assets/js/job-editor.js:160
+msgid "Organization name override"
+msgstr ""
+
+#: assets/js/job-editor.js:161
+msgid "Organization tagline"
+msgstr ""
+
+#: assets/js/job-editor.js:162
+msgid "Website override"
+msgstr ""
+
+#: assets/js/job-editor.js:165
+msgid "Application routing"
+msgstr ""
+
+#: assets/js/job-editor.js:172
+msgid "Application URL"
+msgstr ""
+
+#: assets/js/job-editor.js:172
+msgid "Application email"
+msgstr ""
+
+#: assets/js/job-editor.js:174
+msgid "Candidate notifications for this job are sent here. Leave blank to use the board-wide hiring inbox."
+msgstr ""
+
+#: src/admin-applications.js:21
+msgid "Pending"
+msgstr ""
+
+#: src/admin-applications.js:22
+msgid "Sent"
+msgstr ""
+
+#: src/admin-applications.js:23
+msgid "Partial"
+msgstr ""
+
+#: src/admin-applications.js:272
+msgid "Email status"
+msgstr ""
+
+#: src/admin-applications.js:286
+msgid "Received"
+msgstr ""
+
+#: src/admin-applications.js:329
+msgid "Applications could not be loaded."
+msgstr ""
+
+#. translators: %s: Number of matching applications.
+#: src/admin-applications.js:352
+#, js-format
+msgid "%s matching applications"
+msgstr ""
+
+#: src/admin-applications.js:365
+msgid "Export filtered CSV"
+msgstr ""
+
+#: src/admin-applications.js:366
+msgid "Export CSV"
+msgstr ""
+
+#: src/admin-applications.js:394
+msgid "No applications match this view."
+msgstr ""
+
+#: src/admin-applications.js:395
+msgid "No applications yet."
+msgstr ""
+
+#: src/admin-applications.js:406
+msgid "Review application"
+msgstr ""
+
+#: blocks/application-form/block.json
+msgctxt "block title"
+msgid "Application Form"
+msgstr ""
+
+#: blocks/application-form/block.json
+msgctxt "block description"
+msgid "Collect candidate applications for a job."
+msgstr ""
+
+#: blocks/featured-jobs/block.json
+msgctxt "block title"
+msgid "Featured Jobs"
+msgstr ""
+
+#: blocks/featured-jobs/block.json
+msgctxt "block description"
+msgid "Display a collection of open featured jobs."
+msgstr ""
+
+#: blocks/job-card/block.json
+msgctxt "block title"
+msgid "Job Card"
+msgstr ""
+
+#: blocks/job-card/block.json
+msgctxt "block description"
+msgid "Display the current job supplied by a LlamaHire job collection."
+msgstr ""
+
+#: blocks/job-filters/block.json
+msgctxt "block title"
+msgid "Job Filters"
+msgstr ""
+
+#: blocks/job-filters/block.json
+msgctxt "block description"
+msgid "Filter open roles by department, employment type, workplace, location, or featured status."
+msgstr ""
+
+#: blocks/job-search/block.json
+msgctxt "block title"
+msgid "Job Search"
+msgstr ""
+
+#: blocks/job-search/block.json
+msgctxt "block description"
+msgid "Search open roles by title or keyword."
+msgstr ""
+
+#: blocks/jobs-directory/block.json
+msgctxt "block title"
+msgid "Jobs Directory"
+msgstr ""
+
+#: blocks/jobs-directory/block.json
+msgctxt "block description"
+msgid "Display searchable, filterable open roles."
+msgstr ""
+
+#: blocks/single-job-details/block.json
+msgctxt "block title"
+msgid "Single Job Details"
+msgstr ""
+
+#: blocks/single-job-details/block.json
+msgctxt "block description"
+msgid "Display structured facts for the current job."
+msgstr ""

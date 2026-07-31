@@ -1,0 +1,22 @@
+{
+	"name": "llamahire/llamahire",
+	"description": "Development tooling for the LlamaHire WordPress plugin.",
+	"type": "wordpress-plugin",
+	"license": "GPL-2.0-or-later",
+	"minimum-stability": "dev",
+	"prefer-stable": true,
+	"require-dev": {
+		"automattic/vipwpcs": "^3.0",
+		"phpcompatibility/phpcompatibility-wp": "^3.0@dev"
+	},
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		},
+		"sort-packages": true
+	},
+	"scripts": {
+		"phpcs": "phpcs",
+		"phpcompatibility": "phpcs --standard=phpcompatibility.xml.dist"
+	}
+}

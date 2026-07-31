@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "llamahire/single-job-details",
+  "version": "0.1.0",
+  "title": "Single Job Details",
+  "category": "widgets",
+  "icon": "list-view",
+  "description": "Display structured facts for the current job.",
+  "textdomain": "llamahire",
+  "usesContext": ["llamahire/jobId"],
+  "attributes": {
+    "showOrganization": { "type": "boolean", "default": true },
+    "showLocation": { "type": "boolean", "default": true },
+    "showFullAddress": { "type": "boolean", "default": true },
+    "showWorkplace": { "type": "boolean", "default": true },
+    "showEmploymentType": { "type": "boolean", "default": true },
+    "showSalary": { "type": "boolean", "default": true },
+    "showPostedDate": { "type": "boolean", "default": true },
+    "showDeadline": { "type": "boolean", "default": true },
+    "showReference": { "type": "boolean", "default": true },
+    "compact": { "type": "boolean", "default": false }
+  },
+  "supports": {
+    "align": ["wide", "full"],
+    "html": false,
+    "color": { "text": true, "background": true },
+    "spacing": { "margin": true, "padding": true, "blockGap": true },
+    "typography": { "fontSize": true, "lineHeight": true },
+    "border": { "color": true, "radius": true, "style": true, "width": true }
+  },
+  "editorScript": "llamahire-blocks-editor",
+  "style": "llamahire"
+}

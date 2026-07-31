@@ -16,8 +16,10 @@ cp "${ROOT_DIR}/readme.txt" "${STAGE_DIR}/"
 cp "${ROOT_DIR}/uninstall.php" "${STAGE_DIR}/"
 cp -R "${ROOT_DIR}/assets" "${STAGE_DIR}/"
 cp -R "${ROOT_DIR}/blocks" "${STAGE_DIR}/"
+cp -R "${ROOT_DIR}/build" "${STAGE_DIR}/"
 cp -R "${ROOT_DIR}/includes" "${STAGE_DIR}/"
 cp -R "${ROOT_DIR}/patterns" "${STAGE_DIR}/"
+cp -R "${ROOT_DIR}/templates" "${STAGE_DIR}/"
 
 if [ -d "${ROOT_DIR}/languages" ]; then
 	cp -R "${ROOT_DIR}/languages" "${STAGE_DIR}/"

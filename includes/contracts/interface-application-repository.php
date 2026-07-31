@@ -24,6 +24,15 @@ interface Application_Repository {
 	public function create_once( array $application );
 
 	/**
+	 * Find the canonical application for a job and candidate email.
+	 *
+	 * @param int    $job_id Job post ID.
+	 * @param string $email  Candidate email.
+	 * @return int Application ID, or zero when none exists.
+	 */
+	public function find_duplicate( $job_id, $email );
+
+	/**
 	 * Find one application.
 	 *
 	 * @param int $application_id Application ID.

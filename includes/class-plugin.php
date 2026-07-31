@@ -20,13 +20,13 @@ final class Plugin {
 	}
 
 	private function load_files() {
-		foreach ( array( 'interface-service-container.php', 'interface-application-repository.php', 'interface-application-query.php', 'interface-notification-service.php', 'interface-resume-storage.php', 'interface-schema-builder.php' ) as $file ) {
+		foreach ( array( 'interface-service-container.php', 'interface-application-repository.php', 'interface-application-query.php', 'interface-notification-service.php', 'interface-resume-storage.php', 'interface-candidate-data-lifecycle.php', 'interface-schema-builder.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/contracts/' . $file;
 		}
-		foreach ( array( 'class-service-ids.php', 'class-service-container.php', 'class-settings.php', 'class-setup.php', 'class-migrations.php', 'class-capabilities.php', 'class-jobs.php', 'class-applications.php', 'class-blocks.php', 'class-admin.php', 'class-seo.php' ) as $file ) {
+		foreach ( array( 'class-service-ids.php', 'class-service-container.php', 'class-settings.php', 'class-setup.php', 'class-migrations.php', 'class-capabilities.php', 'class-jobs.php', 'class-ownership.php', 'class-audit-log.php', 'class-employer-notifications.php', 'class-employer-portal.php', 'class-applications.php', 'class-privacy.php', 'class-blocks.php', 'class-theme-support.php', 'class-admin-workspaces.php', 'class-admin.php', 'class-rest-api.php', 'class-seo.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/' . $file;
 		}
-		foreach ( array( 'class-application-repository.php', 'class-application-query.php', 'class-notification-service.php', 'class-resume-storage.php', 'class-schema-builder.php' ) as $file ) {
+		foreach ( array( 'class-application-repository.php', 'class-application-query.php', 'class-notification-service.php', 'class-resume-storage.php', 'class-candidate-data-lifecycle.php', 'class-schema-builder.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/services/' . $file;
 		}
 	}
@@ -37,11 +37,17 @@ final class Plugin {
 		$this->register_assets();
 		$this->register_services();
 		Jobs::register();
+		Audit_Log::register();
+		Employer_Notifications::register();
+		Employer_Portal::register();
 		Settings::register();
 		Setup::register();
 		Blocks::register();
+		Theme_Support::register();
 		Applications::register();
+		Privacy::register();
 		Admin::register();
+		REST_API::register();
 		SEO::register();
 
 		/**
@@ -60,6 +66,7 @@ final class Plugin {
 		$this->services->set( Service_IDs::APPLICATION_QUERY, new Services\Application_Query() );
 		$this->services->set( Service_IDs::NOTIFICATIONS, new Services\Notification_Service() );
 		$this->services->set( Service_IDs::RESUME_STORAGE, new Services\Resume_Storage() );
+		$this->services->set( Service_IDs::CANDIDATE_DATA, new Services\Candidate_Data_Lifecycle( $this->services->get( Service_IDs::APPLICATION_REPOSITORY ), $this->services->get( Service_IDs::RESUME_STORAGE ) ) );
 		$this->services->set( Service_IDs::SCHEMA_BUILDER, new Services\Schema_Builder() );
 
 		/**
@@ -77,6 +84,7 @@ final class Plugin {
 			Service_IDs::APPLICATION_QUERY      => Contracts\Application_Query::class,
 			Service_IDs::NOTIFICATIONS          => Contracts\Notification_Service::class,
 			Service_IDs::RESUME_STORAGE         => Contracts\Resume_Storage::class,
+			Service_IDs::CANDIDATE_DATA         => Contracts\Candidate_Data_Lifecycle::class,
 			Service_IDs::SCHEMA_BUILDER         => Contracts\Schema_Builder::class,
 		);
 		foreach ( $required as $id => $contract ) {
@@ -113,5 +121,6 @@ final class Plugin {
 
 	private function register_assets() {
 		wp_register_style( 'llamahire', LLAMAHIRE_URL . 'assets/css/llamahire.css', array(), LLAMAHIRE_VERSION );
+		wp_register_script( 'llamahire-application-form', LLAMAHIRE_URL . 'assets/js/application-form.js', array(), LLAMAHIRE_VERSION, true );
 	}
 }

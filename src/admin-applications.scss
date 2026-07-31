@@ -1,0 +1,101 @@
+@import "@wordpress/dataviews/build-style/style.css";
+
+.llamahire-applications-screen {
+	max-width: 1400px;
+}
+
+#llamahire-applications-root {
+	margin-top: 20px;
+}
+
+.llamahire-dataviews-summary {
+	align-items: center;
+	display: flex;
+	gap: 16px;
+	justify-content: space-between;
+	margin-bottom: 12px;
+}
+
+.llamahire-dataviews-summary p {
+	margin: 0;
+}
+
+.llamahire-dataviews-candidate {
+	align-items: flex-start;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	min-width: 0;
+}
+
+.llamahire-dataviews-candidate a {
+	max-width: 100%;
+	overflow-wrap: anywhere;
+}
+
+.llamahire-dataviews-primary {
+	font-weight: 600;
+}
+
+.llamahire-status-badge {
+	border-radius: 999px;
+	display: inline-flex;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.5;
+	padding: 2px 9px;
+	white-space: nowrap;
+}
+
+.llamahire-status-badge--new {
+	background: #e7f1ff;
+	color: #0a4b78;
+}
+
+.llamahire-status-badge--reviewing {
+	background: #fcf0d5;
+	color: #6e4c00;
+}
+
+.llamahire-status-badge--interviewing {
+	background: #f1eafe;
+	color: #5936a2;
+}
+
+.llamahire-status-badge--offer {
+	background: #e0f5f3;
+	color: #17645d;
+}
+
+.llamahire-status-badge--rejected {
+	background: #f0f0f1;
+	color: #50575e;
+}
+
+.llamahire-status-badge--hired,
+.llamahire-status-badge--email-sent {
+	background: #edfaef;
+	color: #14532d;
+}
+
+.llamahire-status-badge--email-pending,
+.llamahire-status-badge--email-partial {
+	background: #fcf0d5;
+	color: #6e4c00;
+}
+
+.llamahire-status-badge--email-failed {
+	background: #fce8e8;
+	color: #8a2424;
+}
+
+@media (max-width: 782px) {
+	.llamahire-dataviews-summary {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.llamahire-dataviews-summary .button {
+		width: 100%;
+	}
+}

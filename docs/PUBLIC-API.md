@@ -1,6 +1,6 @@
 # LlamaHire Free public API
 
-API version: `1.0.0-alpha.4`
+API version: `1.0.0-alpha.8`
 Plugin version introduced: `0.1.0`
 Status: experimental until API 1.0
 
@@ -33,7 +33,7 @@ Extensions may add their own uniquely named service objects or replace a Free se
 add_action(
 	'llamahire_register_services',
 	static function ( $services, $api_version ) {
-		if ( version_compare( $api_version, '1.0.0-alpha.4', '<' ) ) {
+		if ( version_compare( $api_version, '1.0.0-alpha.8', '<' ) ) {
 			return;
 		}
 
@@ -58,7 +58,7 @@ Pro should begin normal runtime integration here:
 add_action(
 	'llamahire_ready',
 	static function ( $free ) {
-		if ( version_compare( $free->api_version(), '1.0.0-alpha.4', '<' ) ) {
+		if ( version_compare( $free->api_version(), '1.0.0-alpha.8', '<' ) ) {
 			return;
 		}
 
@@ -79,6 +79,7 @@ Use constants rather than copying identifier strings:
 |---|---|---|
 | `Service_IDs::APPLICATION_REPOSITORY` | `Contracts\Application_Repository` | Free |
 | `Service_IDs::APPLICATION_QUERY` | `Contracts\Application_Query` | Free |
+| `Service_IDs::CANDIDATE_DATA` | `Contracts\Candidate_Data_Lifecycle` | Free |
 | `Service_IDs::NOTIFICATIONS` | `Contracts\Notification_Service` | Free |
 | `Service_IDs::RESUME_STORAGE` | `Contracts\Resume_Storage` | Free |
 | `Service_IDs::SCHEMA_BUILDER` | `Contracts\Schema_Builder` | Free |
@@ -89,18 +90,21 @@ The repository owns application-record persistence:
 
 - `create( array $application ): int|WP_Error`
 - `create_once( array $application ): array|WP_Error`
+- `find_duplicate( $job_id, $email ): int`
 - `find( $application_id ): ?object`
 - `update( $application_id, array $changes ): bool|WP_Error`
 - `delete( $application_id ): bool`
 - `record_notification_result( $application_id, array $result ): bool|WP_Error`
 
-`create_once()` requires a UUID submission key and returns an `id` plus a `created` boolean. Reusing the same key converges on the original application, including concurrent requests through the database unique constraint. Extensions that receive public submissions should use this operation and send side effects only when `created` is true.
+`create_once()` requires a UUID submission key and returns an `id`, a `created` boolean, and, when applicable, a `reason`. Reusing the same key converges on the original application. By default, a different submission key with the same normalized candidate email and job also converges on the canonical application with reason `job_email`. Both identities are protected against concurrent requests by database uniqueness. `find_duplicate()` supports an early check before storing an uploaded resume. Extensions that receive public submissions should use `create_once()` and send side effects only when `created` is true.
+
+The `llamahire_duplicate_application_policy` filter receives the default `preserve` policy, job ID, sanitized email, and canonical existing application ID when known. Returning `allow` permits an additional job/email record while submission-key retries remain idempotent. The default public flow preserves the original fields and resume, sends no repeat notifications, and shows a neutral success message. `llamahire_duplicate_application_ignored` fires with the canonical application and job IDs when that policy handles a public request.
 
 `record_notification_result()` persists channel-level success, attempt count, aggregate status, and sanitized error codes. It never stores mail error messages or candidate content. Only `status` and `notes` are currently public update fields. Extensions must use this contract rather than relying on table names or direct SQL. Resume lifecycle operations belong to the separate resume-storage contract.
 
 ### Application query
 
-The bounded query service provides paginated `search()`, grouped `counts()`, bounded `recent()`, and batched `export_rows()` operations. It never exposes the private resume token/path. Extensions must not query the applications table directly.
+The bounded query service provides paginated `search()`, grouped `counts()`, bounded `recent()`, and batched `export_rows()` operations. Each accepts an optional `author_id` job-owner filter so multi-employer integrations can preserve tenant boundaries. It never exposes the private resume token/path. Extensions must not query the applications table directly.
 
 ### Resume storage
 
@@ -111,6 +115,26 @@ Storage tokens and filesystem paths are internal even when passed between Free s
 Resume uploads are restricted to 5 MB PDF, DOC, and DOCX files and must pass filename/MIME and content-signature validation. When `ZipArchive` is available, DOCX containers are also checked for the expected Word document entries, path traversal, and VBA macros. Trusted security extensions may perform additional inspection with `llamahire_validate_resume_upload`; return a `WP_Error` or `false` to reject the upload.
 
 Production storage fails closed when WordPress cannot create the private directory outside the web root. Local and development environments may use the protected uploads fallback. A production host with an independently verified server-level deny rule may opt in through `llamahire_allow_webroot_resume_storage`.
+
+### Candidate-data lifecycle
+
+The lifecycle service coordinates application records and their private resume files:
+
+- `cleanup_expired( $limit = 250, $now = null ): array` erases a bounded batch older than the configured retention period.
+- `erase( $application_id ): bool|WP_Error` permanently removes one application and its managed resume.
+- `delete_resume( $application_id ): bool|WP_Error` permanently removes only the resume and clears its record fields.
+- `replace_resume( $application_id, array $file ): bool|WP_Error` validates and stores a replacement before removing the previous managed file.
+
+The `retention_days` setting accepts disabled retention or a documented preset from 30 days through five years. A daily WordPress cron event runs the bounded cleanup; disabling retention keeps records until an authorized erasure. Host backups are outside the service boundary and may retain historical copies according to host policy.
+
+Lifecycle observation hooks receive sanitized IDs and aggregate results, never candidate content or private storage tokens:
+
+- `llamahire_retention_cleanup_completed`
+- `llamahire_application_erased`
+- `llamahire_application_resume_deleted`
+- `llamahire_application_resume_replaced`
+
+LlamaHire also registers with WordPress's native personal-data tools under the `llamahire-applications` exporter/eraser ID. The exporter returns each exact-email application as a separate item and includes stored candidate, application, hiring-note, resume-filename, and notification fields. It never returns the private resume token or filesystem path. The eraser processes bounded exact-email batches through this lifecycle service, so WordPress reports an item as retained when its private resume cannot be safely removed.
 
 ### Public submission defenses
 
@@ -124,7 +148,9 @@ These application-layer limits complement, rather than replace, host or edge rat
 
 ### Notification service
 
-`application_received( array $application, $job_id, array $channels = array( 'employer', 'candidate' ) ): array` attempts the requested messages after persistence. Its result contains `employer` and `candidate` booleans plus sanitized `error_codes`. Passing only the missing channel allows a retry without resending an email that already succeeded.
+`preview( array $application, $job_id ): array` composes the configured plain-text employer and candidate messages without sending them. `application_received( array $application, $job_id, array $channels = array( 'employer', 'candidate' ) ): array` attempts the requested messages after persistence. Its result contains `employer` and `candidate` booleans plus sanitized `error_codes`. Passing only the missing channel allows a retry without resending an email that already succeeded. `test_delivery( $to ): array` sends a candidate-free diagnostic message and returns a boolean plus sanitized error codes.
+
+Core templates support `{candidate_name}`, `{job_title}`, `{site_name}`, `{site_url}`, and `{applications_url}`. Messages remain plain text and sender headers are built only from sanitized settings. Diagnostic state stores the test time, boolean outcome, and sanitized codes; it does not retain the test recipient, mail-server response, or candidate content.
 
 Related observation hooks:
 
@@ -182,6 +208,7 @@ Candidate data must be authorized through LlamaHire’s granular capabilities, n
 | `Capabilities::EXPORT_APPLICATIONS` | `llamahire_export_applications` | Export candidate data |
 | `Capabilities::DOWNLOAD_RESUMES` | `llamahire_download_resumes` | Download protected resumes |
 | `Capabilities::RETRY_NOTIFICATIONS` | `llamahire_retry_notifications` | Retry undelivered application emails |
+| `Capabilities::ERASE_APPLICATIONS` | `llamahire_erase_applications` | Permanently erase applications or private resumes |
 
 Jobs use WordPress meta-cap mapping with the singular `llamahire_job` and plural `llamahire_jobs` capability types. Primitive capabilities include `edit_llamahire_jobs`, `publish_llamahire_jobs`, the private/published/others edit and delete variants, plus dedicated department term capabilities.
 
@@ -197,7 +224,7 @@ Pro must maintain its own schema/capability versions and migration runner for Pr
 
 ## Contract test
 
-The core smoke command asserts API version, boot timing, service conformance, registry immutability, idempotent application persistence, notification failure/retry state, query behavior, private-storage redaction/health, and schema generation:
+The core smoke command asserts API version, boot timing, service conformance, registry immutability, idempotent application persistence, notification failure/retry state, query behavior, private-storage redaction/health, retention cleanup, manual erasure, and schema generation:
 
 ```sh
 wp eval-file wp-content/plugins/llamahire/tests/smoke.php

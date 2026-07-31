@@ -13,9 +13,9 @@
 defined( 'ABSPATH' ) || exit;
 
 define( 'LLAMAHIRE_VERSION', '0.1.0' );
-define( 'LLAMAHIRE_API_VERSION', '1.0.0-alpha.4' );
-define( 'LLAMAHIRE_SCHEMA_VERSION', '6' );
-define( 'LLAMAHIRE_CAPABILITIES_VERSION', '2' );
+define( 'LLAMAHIRE_API_VERSION', '1.0.0-alpha.8' );
+define( 'LLAMAHIRE_SCHEMA_VERSION', '9' );
+define( 'LLAMAHIRE_CAPABILITIES_VERSION', '4' );
 define( 'LLAMAHIRE_FILE', __FILE__ );
 define( 'LLAMAHIRE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'LLAMAHIRE_URL', plugin_dir_url( __FILE__ ) );
@@ -24,7 +24,7 @@ require_once LLAMAHIRE_PATH . 'includes/class-plugin.php';
 require_once LLAMAHIRE_PATH . 'includes/class-activator.php';
 
 register_activation_hook( __FILE__, array( 'LlamaHire\\Activator', 'activate' ) );
-register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
+register_deactivation_hook( __FILE__, array( 'LlamaHire\\Activator', 'deactivate' ) );
 
 LlamaHire\Plugin::instance()->boot();
 

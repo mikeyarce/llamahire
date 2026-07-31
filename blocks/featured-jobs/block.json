@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "llamahire/featured-jobs",
+  "version": "0.1.0",
+  "title": "Featured Jobs",
+  "category": "widgets",
+  "icon": "star-filled",
+  "description": "Display a collection of open featured jobs.",
+  "textdomain": "llamahire",
+  "attributes": {
+    "perPage": { "type": "number", "default": 3 },
+    "heading": { "type": "string", "default": "Featured jobs" },
+    "showHeading": { "type": "boolean", "default": true },
+    "showExcerpt": { "type": "boolean", "default": true },
+    "showFeaturedBadge": { "type": "boolean", "default": true },
+    "showLocation": { "type": "boolean", "default": true },
+    "showWorkplace": { "type": "boolean", "default": true },
+    "showEmploymentType": { "type": "boolean", "default": true },
+    "showSalary": { "type": "boolean", "default": false },
+    "linkLabel": { "type": "string", "default": "View role" },
+    "headingLevel": { "type": "number", "default": 3 }
+  },
+  "supports": {
+    "align": ["wide", "full"],
+    "html": false,
+    "color": { "text": true, "background": true },
+    "spacing": { "margin": true, "padding": true },
+    "typography": { "fontSize": true, "lineHeight": true }
+  },
+  "editorScript": "llamahire-blocks-editor",
+  "style": "llamahire"
+}

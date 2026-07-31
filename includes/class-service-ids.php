@@ -11,6 +11,7 @@ final class Service_IDs {
 	const APPLICATION_QUERY      = 'llamahire.application_query';
 	const NOTIFICATIONS          = 'llamahire.notifications';
 	const RESUME_STORAGE         = 'llamahire.resume_storage';
+	const CANDIDATE_DATA         = 'llamahire.candidate_data';
 	const SCHEMA_BUILDER         = 'llamahire.schema_builder';
 
 	private function __construct() {}

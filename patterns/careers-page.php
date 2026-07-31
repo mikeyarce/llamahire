@@ -4,6 +4,9 @@
  * Slug: llamahire/careers-page
  * Categories: featured
  * Description: A polished careers page with a welcoming hero and searchable jobs directory.
+ * Keywords: careers, jobs, hiring
+ * Viewport Width: 1440
+ * Post Types: page
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -14,8 +17,8 @@ defined( 'ABSPATH' ) || exit;
 <!-- /wp:heading --><!-- wp:paragraph {"align":"center","fontSize":"large"} -->
 <p class="has-text-align-center has-large-font-size"><?php esc_html_e( 'Join a thoughtful team solving meaningful problems together.', 'llamahire' ); ?></p>
 <!-- /wp:paragraph --></div>
-<!-- /wp:group --><!-- wp:group {"align":"wide","style":{"spacing":{"padding":{"top":"var:preset|spacing|70","bottom":"var:preset|spacing|70"}}},"layout":{"type":"constrained"}} -->
-<div class="wp-block-group alignwide" style="padding-top:var(--wp--preset--spacing--70);padding-bottom:var(--wp--preset--spacing--70)"><!-- wp:heading -->
+<!-- /wp:group --><!-- wp:group {"anchor":"open-roles","align":"wide","style":{"spacing":{"padding":{"top":"var:preset|spacing|70","bottom":"var:preset|spacing|70"}}},"layout":{"type":"constrained"}} -->
+<div id="open-roles" class="wp-block-group alignwide" style="padding-top:var(--wp--preset--spacing--70);padding-bottom:var(--wp--preset--spacing--70)"><!-- wp:heading -->
 <h2 class="wp-block-heading"><?php esc_html_e( 'Open positions', 'llamahire' ); ?></h2>
 <!-- /wp:heading --><!-- wp:llamahire/job-search {"align":"wide"} /--><!-- wp:llamahire/job-filters {"align":"wide"} /--><!-- wp:llamahire/jobs-directory {"align":"wide","showFilters":false} /--></div>
 <!-- /wp:group -->

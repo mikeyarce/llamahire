@@ -1,6 +1,6 @@
 # LlamaHire validation record
 
-Last validated: July 20, 2026
+Last validated: July 23, 2026
 Plugin version: 0.1.0
 Environment: local WordPress 7.0.2, PHP 8.5.5, WP-CLI, Chrome
 
@@ -16,7 +16,7 @@ Run from the WordPress root:
 wp eval-file wp-content/plugins/llamahire/tests/smoke.php
 ```
 
-The disposable test creates and removes its own records. Eighty-nine checks now pass, covering:
+The disposable test creates and removes its own records. All 171 checks pass, covering:
 
 - Job post type, department taxonomy, blocks, publication, availability, directory, and form rendering.
 - Applications table creation, repository persistence, retrieval, status changes, and private notes.
@@ -39,13 +39,24 @@ The disposable test creates and removes its own records. Eighty-nine checks now 
 - Paginated application filtering and bounded export iteration.
 - Private resume-path redaction from public application records.
 - Writable private-storage health.
+- Configurable retention presets, daily cleanup scheduling, candidate-facing retention disclosure, bounded expired-record cleanup, resume-only deletion, and complete manual erasure.
+- WordPress personal-data exporter/eraser registration, exact-email matching, complete stored-field export, private resume-token redaction, no-match completion, and lifecycle-safe record/resume erasure.
+- Reversible company/job-board site-mode sanitization, company-mode compatibility defaults, and job-board candidate privacy guidance naming both the board operator and listing employer.
 - A unique, browser-generated submission key and database-enforced idempotent application creation.
+- A legacy-safe canonical job/email identity, case-insensitive preserve-original policy, concurrent-request uniqueness, and an extension filter that can allow future resubmissions.
 - Failed, partial, and successful notification attempts without exposing mail error messages or candidate content.
 - Missing-channel retries that preserve a previously successful delivery.
+- Configurable sender identity and plain-text employer/candidate templates with safe placeholder rendering.
+- Rendered notification previews, candidate-free delivery-test composition, and email-configuration Site Health guidance.
 - Administrator permission to retry missing notifications, with subscriber denial.
 - Candidate form help/privacy associations and assertive application errors.
+- Required, optional, and hidden phone/resume/cover-letter rendering backed by the same server validation rules.
+- Phone values require 7–15 core digits with a deliberately permissive international display format; alphabetic placeholders such as `abcd` are rejected by both the submission handler and repository.
+- Candidate text is bounded to the database contract, and all persisted scalar fields are sanitized again at the repository boundary before prepared insertion.
+- A native multipart POST fallback plus hidden, named upload-progress and status semantics for capable browsers.
 - Published-job sitemap inclusion with accurate modification time, historical closed-job URL retention, and deleted-job removal.
 - Registration and composition of standalone Job Search and Job Filters blocks.
+- Registration and composition of native single-job, jobs-archive, and department block templates when supported by WordPress.
 - Preserved URL query state, normalized employment/location filters, result counts, clear actions, recoverable empty states, and paginated job results.
 
 A full deactivate/reactivate cycle also completed successfully. Existing schema and capability versions remained current.
@@ -91,10 +102,15 @@ The authenticated recruiter workflow was also exercised against disposable appli
 - Changing an application to Reviewing and adding a private note survived a full redirect and reload.
 - A real multipart submission stored its PDF resume in protected fallback storage when the host's preferred outside-root directory was unavailable.
 - An authorized administrator could download that resume through the protected endpoint.
+- An authorized administrator could replace that resume, permanently delete it, and keep the remaining application record intact.
 - CSV export included the tested applications and neutralized a formula-like cover-letter value.
 - The disposable applications, jobs, and resume files were removed afterward.
 
-These workflows are now encoded in a repeatable `wp-env` and Playwright integration harness. A clean isolated WordPress 7.0.2 environment passed all 92 smoke checks and all four browser tests in one run. The browser suite covers first-run organization/privacy setup, composed Careers-page search/filter behavior, editor authoring, candidate application, and recruiter review before removing its own fixtures. CI retains failure traces, screenshots, video, and an HTML report. See [TESTING.md](TESTING.md).
+These workflows are now encoded in a repeatable `wp-env` and Playwright integration harness. The latest local environment passes all 171 smoke checks; the latest complete browser run passed all seven tests. The browser suite covers first-run site-purpose selection with live mode-aware copy and custom privacy-text preservation, organization/privacy/retention setup, email sender/template settings and rendered previews, composed Careers-page search/filter behavior, 360px hero/featured/department pattern layouts, editor authoring, configurable candidate fields, explicit invalid-phone rejection, accessible upload progress, focused connection-error recovery, one-redirect restoration of safe non-file values, candidate application and retention disclosure, neutral duplicate messaging with original-record and notification-attempt preservation, recruiter review, secure download, resume replacement, resume deletion, and employer job submission before removing its own fixtures. The connection failure retains the locally selected file for retry; later server-validation redirects confirm safe non-file values are restored and file inputs are cleared. The focused narrow-pattern test passes on the Twenty Twenty-Four block theme and Twenty Twenty-One classic theme. CI retains failure traces, screenshots, video, and an HTML report. See [TESTING.md](TESTING.md).
+
+## Theme and template validation
+
+WordPress 6.7+ registers native single-job, jobs-archive, and department block templates with standard hierarchy slugs. Live validation on the Twenty Twenty-Five Studio demo confirmed that the active theme supplies the header, footer, typography, spacing, and color foundation while the job archive excludes non-open roles and remains usable at 390px. A focused isolated Twenty Twenty-One check confirmed that the classic-theme fallback preserves theme structure and stays responsive without plugin-owned page wrappers. Research, decisions, and remaining theme evidence are recorded in [the July 21 theme-support review](audits/2026-07-21-theme-support-review/REVIEW.md).
 
 ## Focused accessibility review
 
@@ -110,7 +126,8 @@ The smoke suite also verifies that an open published job appears in WordPress XM
 
 The development-only `wp llamahire fixtures` command group was exercised against the isolated site. Validation confirmed:
 
-- All seven named scenarios (`small`, `large`, `remote`, `expired`, `closed`, `notification-failures`, and `edge-cases`) generate and can replace one another with `--force`.
+- All eight named scenarios (`demo`, `small`, `large`, `remote`, `expired`, `closed`, `notification-failures`, and `edge-cases`) generate and can replace one another with `--force`.
+- The curated `demo` scenario was generated on the WordPress Studio site at port 8896 with 16 jobs, 64 fictional applications, five departments, two pages, and a 512×512 Media Library logo. Its Careers page is the static homepage and includes the featured-jobs block.
 - The lifecycle suite created structured jobs, every application status, notification outcomes, private notes, departments, privacy/Careers pages, a Media Library image, and safe PDF resumes.
 - Edge fixtures include draft, expired, manually closed, exact-salary, and no-salary jobs.
 - Cleanup required both registry membership and record-level ownership proof, restored prior settings/setup options, and preserved an unrelated WordPress post.

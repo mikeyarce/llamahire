@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "llamahire/job-card",
+  "version": "0.1.0",
+  "title": "Job Card",
+  "category": "widgets",
+  "icon": "id-alt",
+  "description": "Display the current job supplied by a LlamaHire job collection.",
+  "textdomain": "llamahire",
+  "usesContext": ["llamahire/jobId"],
+  "attributes": {
+    "showExcerpt": { "type": "boolean", "default": true },
+    "showFeaturedBadge": { "type": "boolean", "default": true },
+    "showLocation": { "type": "boolean", "default": true },
+    "showWorkplace": { "type": "boolean", "default": true },
+    "showEmploymentType": { "type": "boolean", "default": true },
+    "showSalary": { "type": "boolean", "default": false },
+    "linkLabel": { "type": "string", "default": "View role" },
+    "headingLevel": { "type": "number", "default": 3 }
+  },
+  "supports": {
+    "html": false,
+    "color": { "text": true, "background": true, "link": true },
+    "spacing": { "margin": true, "padding": true },
+    "typography": { "fontSize": true, "lineHeight": true },
+    "border": { "color": true, "radius": true, "style": true, "width": true }
+  },
+  "editorScript": "llamahire-blocks-editor",
+  "style": "llamahire"
+}

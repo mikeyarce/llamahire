@@ -1,0 +1,390 @@
+<?php
+namespace LlamaHire;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Mode-aware operations dashboard and focused candidate pipeline.
+ */
+final class Admin_Workspaces {
+	public static function hiring_available() {
+		if ( ! current_user_can( Capabilities::MANAGE_APPLICATIONS ) ) {
+			return false;
+		}
+		return Settings::SITE_MODE_COMPANY === Settings::site_mode() || 0 < Ownership::current_author_scope();
+	}
+
+	public static function enqueue_assets() {
+		$page = sanitize_key( wp_unslash( $_GET['page'] ?? '' ) );
+		if ( ! in_array( $page, array( 'llamahire-dashboard', 'llamahire-hiring' ), true ) ) {
+			return;
+		}
+		wp_enqueue_style( 'llamahire-admin-workspaces', LLAMAHIRE_URL . 'assets/css/admin-workspaces.css', array(), LLAMAHIRE_VERSION );
+		if ( 'llamahire-hiring' === $page ) {
+			wp_enqueue_script( 'llamahire-admin-hiring', LLAMAHIRE_URL . 'assets/js/admin-hiring.js', array(), LLAMAHIRE_VERSION, true );
+			wp_localize_script(
+				'llamahire-admin-hiring',
+				'llamahireHiring',
+				array(
+					'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+					'nonce'        => wp_create_nonce( 'llamahire_move_application' ),
+					'errorMessage' => __( 'The candidate could not be moved. Please try again.', 'llamahire' ),
+					'movedMessage' => __( 'Candidate moved to %s.', 'llamahire' ),
+				)
+			);
+		}
+	}
+
+	public static function move_application_ajax() {
+		check_ajax_referer( 'llamahire_move_application', 'nonce' );
+		$application_id = absint( $_POST['application'] ?? 0 );
+		$status = sanitize_key( wp_unslash( $_POST['status'] ?? '' ) );
+		if ( ! Ownership::user_can_access_application( $application_id, Capabilities::MANAGE_APPLICATIONS ) ) {
+			wp_send_json_error( array( 'message' => __( 'You cannot move this candidate.', 'llamahire' ) ), 403 );
+		}
+		if ( ! array_key_exists( $status, Applications::workflow_statuses() ) ) {
+			wp_send_json_error( array( 'message' => __( 'That hiring stage is not valid.', 'llamahire' ) ), 400 );
+		}
+		$updated = Plugin::instance()->services()->get( Service_IDs::APPLICATION_REPOSITORY )->update( $application_id, array( 'status' => $status ) );
+		if ( is_wp_error( $updated ) || ! $updated ) {
+			wp_send_json_error( array( 'message' => __( 'The candidate could not be moved.', 'llamahire' ) ), 500 );
+		}
+		wp_send_json_success( array( 'status' => $status, 'label' => Applications::status_label( $status ) ) );
+	}
+
+	public static function hiring_url( array $arguments = array() ) {
+		return add_query_arg(
+			array_merge(
+				array(
+					'post_type' => Jobs::POST_TYPE,
+					'page'      => 'llamahire-hiring',
+				),
+				$arguments
+			),
+			admin_url( 'edit.php' )
+		);
+	}
+
+	public static function render_dashboard() {
+		$scope       = Ownership::query_arguments();
+		$query       = Plugin::instance()->services()->get( Service_IDs::APPLICATION_QUERY );
+		$counts      = $query->counts( $scope );
+		$author_id   = absint( $scope['author_id'] ?? 0 );
+		$board_mode  = Settings::SITE_MODE_JOB_BOARD === Settings::site_mode();
+		$is_operator = $board_mode && ! $author_id;
+		$open_count  = Jobs::open_count( $author_id );
+		$jobs        = self::dashboard_jobs( $author_id );
+		$job_ids     = wp_list_pluck( $jobs, 'ID' );
+		$job_counts  = $query->counts_by_job_and_status( $job_ids, $scope );
+		$pending     = self::job_count( 'pending', $author_id );
+		$expiring    = self::expiring_job_count( $author_id );
+		$activity    = Audit_Log::search( array_merge( array( 'per_page' => 5 ), $scope ) );
+		$title       = $is_operator ? __( 'Job board dashboard', 'llamahire' ) : __( 'Hiring dashboard', 'llamahire' );
+		$intro       = $is_operator
+			? __( 'Keep listings moving, resolve issues, and see what needs attention across your community.', 'llamahire' )
+			: __( 'See what needs attention across your jobs and applications, then jump into hiring when you need the full pipeline.', 'llamahire' );
+		$jobs_url    = admin_url( 'edit.php?post_type=' . Jobs::POST_TYPE );
+		$open_jobs_url = add_query_arg( 'llamahire_job_state', 'open', $jobs_url );
+		?>
+		<div class="wrap llamahire-workspace llamahire-dashboard">
+			<div class="llamahire-page-header">
+				<div><h1><?php echo esc_html( $title ); ?></h1><p><?php echo esc_html( $intro ); ?></p></div>
+				<div class="llamahire-header-actions">
+					<?php if ( self::hiring_available() ) : ?><a class="button" href="<?php echo esc_url( self::hiring_url() ); ?>"><?php esc_html_e( 'Open Hiring', 'llamahire' ); ?></a><?php endif; ?>
+					<a class="button button-primary" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . Jobs::POST_TYPE ) ); ?>"><?php esc_html_e( 'Add job', 'llamahire' ); ?></a>
+				</div>
+			</div>
+
+			<section class="llamahire-attention" aria-labelledby="llamahire-attention-title">
+				<div class="llamahire-section-heading"><div><h2 id="llamahire-attention-title"><?php esc_html_e( 'Needs your attention', 'llamahire' ); ?></h2><p><?php esc_html_e( 'The most useful work to pick up next.', 'llamahire' ); ?></p></div></div>
+				<div class="llamahire-attention-list">
+					<?php
+					if ( $is_operator ) {
+						self::attention_row( 'flag', sprintf( _n( '%d listing is waiting for review', '%d listings are waiting for review', $pending, 'llamahire' ), $pending ), __( 'Moderate submitted jobs before they appear publicly.', 'llamahire' ), $pending, add_query_arg( array( 'post_type' => Jobs::POST_TYPE, 'post_status' => 'pending' ), admin_url( 'edit.php' ) ), __( 'Review listings', 'llamahire' ) );
+					} else {
+						self::attention_row( 'groups', sprintf( _n( '%d new application', '%d new applications', $counts['new'], 'llamahire' ), $counts['new'] ), __( 'Candidates are waiting for an initial review.', 'llamahire' ), $counts['new'], self::hiring_available() ? self::hiring_url() : Admin::applications_url( array( 'status' => 'new' ) ), __( 'Review candidates', 'llamahire' ) );
+					}
+					self::attention_row( 'email-alt', sprintf( _n( '%d email needs attention', '%d emails need attention', $counts['notification_attention'], 'llamahire' ), $counts['notification_attention'] ), __( 'A candidate or employer notification may not have arrived.', 'llamahire' ), $counts['notification_attention'], Admin::applications_url( array( 'notification_statuses' => 'pending,partial,failed' ) ), __( 'Check email issues', 'llamahire' ) );
+					self::attention_row( 'calendar-alt', sprintf( _n( '%d job closes soon', '%d jobs close soon', $expiring, 'llamahire' ), $expiring ), __( 'These listings reach their deadline in the next seven days.', 'llamahire' ), $expiring, admin_url( 'edit.php?post_type=' . Jobs::POST_TYPE ), __( 'Review jobs', 'llamahire' ) );
+					?>
+				</div>
+			</section>
+
+			<section aria-labelledby="llamahire-summary-title">
+				<div class="llamahire-section-heading"><div><h2 id="llamahire-summary-title"><?php echo esc_html( $is_operator ? __( 'Board at a glance', 'llamahire' ) : __( 'Hiring at a glance', 'llamahire' ) ); ?></h2></div></div>
+				<div class="llamahire-metrics">
+					<?php
+					self::metric( $open_count, $is_operator ? __( 'Live listings', 'llamahire' ) : __( 'Open jobs', 'llamahire' ), 'portfolio', $open_jobs_url );
+					self::metric(
+						$is_operator ? $pending : $counts['new'],
+						$is_operator ? __( 'Awaiting review', 'llamahire' ) : __( 'New candidates', 'llamahire' ),
+						'visibility',
+						$is_operator
+							? add_query_arg( 'post_status', 'pending', $jobs_url )
+							: Admin::applications_url( array( 'status' => 'new' ) )
+					);
+					if ( $is_operator ) {
+						self::metric( self::active_employer_count(), __( 'Active employers', 'llamahire' ), 'businessperson', admin_url( 'users.php?role=' . Capabilities::EMPLOYER_ROLE ) );
+						self::metric( array_sum( array_intersect_key( $counts, Applications::workflow_statuses() ) ), __( 'Applications', 'llamahire' ), 'groups', Admin::applications_url() );
+					} else {
+						self::metric( $counts['interviewing'], __( 'Interviewing', 'llamahire' ), 'format-chat', Admin::applications_url( array( 'status' => 'interviewing' ) ) );
+						self::metric( $counts['offer'], __( 'Offers', 'llamahire' ), 'awards', Admin::applications_url( array( 'status' => 'offer' ) ) );
+					}
+					?>
+				</div>
+			</section>
+
+			<div class="llamahire-dashboard-grid">
+				<section class="llamahire-panel" aria-labelledby="llamahire-active-jobs-title">
+					<div class="llamahire-section-heading"><div><h2 id="llamahire-active-jobs-title"><?php echo esc_html( $is_operator ? __( 'Active listings', 'llamahire' ) : __( 'Active jobs', 'llamahire' ) ); ?></h2><p><?php esc_html_e( 'A quick view of demand and candidate flow.', 'llamahire' ); ?></p></div><a href="<?php echo esc_url( $jobs_url ); ?>"><?php esc_html_e( 'View all listings', 'llamahire' ); ?></a></div>
+					<?php if ( $jobs ) : ?>
+						<div class="llamahire-job-list"><?php foreach ( $jobs as $job ) : $meta = Jobs::get_meta( $job->ID ); $per_status = $job_counts[ $job->ID ] ?? array(); ?>
+							<article class="llamahire-job-row">
+								<div><h3><a href="<?php echo esc_url( get_edit_post_link( $job->ID ) ); ?>"><?php echo esc_html( $job->post_title ); ?></a></h3><p><?php echo esc_html( self::job_context( $job, $meta, $is_operator ) ); ?></p></div>
+								<?php $application_count = array_sum( $per_status ); ?>
+								<a class="llamahire-job-application-count" href="<?php echo esc_url( Admin::applications_url( array( 'job_id' => $job->ID ) ) ); ?>">
+									<strong><?php echo esc_html( $application_count ); ?></strong>
+									<span><?php echo esc_html( _n( 'application', 'applications', $application_count, 'llamahire' ) ); ?></span>
+								</a>
+							</article>
+						<?php endforeach; ?></div>
+					<?php else : ?><div class="llamahire-empty"><span class="dashicons dashicons-portfolio"></span><h3><?php esc_html_e( 'No active jobs yet', 'llamahire' ); ?></h3><p><?php esc_html_e( 'Publish a job to start tracking activity here.', 'llamahire' ); ?></p><a class="button button-primary" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . Jobs::POST_TYPE ) ); ?>"><?php esc_html_e( 'Add your first job', 'llamahire' ); ?></a></div><?php endif; ?>
+				</section>
+
+				<section class="llamahire-panel" aria-labelledby="llamahire-activity-title">
+					<div class="llamahire-section-heading"><div><h2 id="llamahire-activity-title"><?php esc_html_e( 'Recent activity', 'llamahire' ); ?></h2><p><?php esc_html_e( 'Operational changes across your workspace.', 'llamahire' ); ?></p></div><a href="<?php echo esc_url( add_query_arg( array( 'post_type' => Jobs::POST_TYPE, 'page' => 'llamahire-activity' ), admin_url( 'edit.php' ) ) ); ?>"><?php esc_html_e( 'View all activity', 'llamahire' ); ?></a></div>
+					<?php if ( $activity['items'] ) : ?><ol class="llamahire-activity-list"><?php foreach ( $activity['items'] as $event ) : ?>
+						<?php $activity_url = self::activity_url( $event ); ?>
+						<li><span class="llamahire-activity-dot" aria-hidden="true"></span><?php if ( $activity_url ) : ?><a class="llamahire-activity-link" href="<?php echo esc_url( $activity_url ); ?>"><?php else : ?><div><?php endif; ?><strong><?php echo esc_html( Audit_Log::describe( $event ) ); ?></strong><p><?php echo esc_html( $event->job_title ?: sprintf( __( 'Job #%d', 'llamahire' ), $event->job_id ) ); ?> · <?php echo esc_html( human_time_diff( strtotime( $event->created_at . ' UTC' ), current_time( 'timestamp', true ) ) ); ?> <?php esc_html_e( 'ago', 'llamahire' ); ?></p><?php if ( $activity_url ) : ?></a><?php else : ?></div><?php endif; ?></li>
+					<?php endforeach; ?></ol><?php else : ?><div class="llamahire-empty llamahire-empty--compact"><p><?php esc_html_e( 'Activity will appear as jobs and candidates move forward.', 'llamahire' ); ?></p></div><?php endif; ?>
+				</section>
+			</div>
+		</div>
+		<?php
+	}
+
+	public static function render_hiring() {
+		if ( ! self::hiring_available() ) {
+			wp_die( esc_html__( 'The Hiring workspace is available to company hiring teams and employers managing their own jobs.', 'llamahire' ), 403 );
+		}
+		$scope     = Ownership::query_arguments();
+		$search    = sanitize_text_field( wp_unslash( $_GET['candidate'] ?? '' ) );
+		$job_token = sanitize_text_field( wp_unslash( $_GET['job_id'] ?? '' ) );
+		$show_all  = '' === $job_token || 'all' === $job_token;
+		$job_id    = $show_all ? 0 : absint( $job_token );
+		$jobs      = Admin::application_filter_jobs( absint( $scope['author_id'] ?? 0 ) );
+		$query     = Plugin::instance()->services()->get( Service_IDs::APPLICATION_QUERY );
+		$job_argument = $show_all ? 'all' : $job_id;
+		$result = $query->search( array_merge( $scope, array( 'job_id' => $job_id, 'candidate' => $search, 'statuses' => array_keys( Applications::pipeline_statuses() ), 'per_page' => 100, 'orderby' => 'received', 'order' => 'desc' ) ) );
+		$columns = array_fill_keys( array_keys( Applications::pipeline_statuses() ), array() );
+		foreach ( $result['items'] as $candidate ) {
+			$columns[ $candidate->status ][] = $candidate;
+		}
+		$selected_id = absint( $_GET['application'] ?? 0 );
+		$selected = $selected_id && Ownership::user_can_access_application( $selected_id, Capabilities::VIEW_APPLICATIONS )
+			? Plugin::instance()->services()->get( Service_IDs::APPLICATION_REPOSITORY )->find( $selected_id )
+			: null;
+		?>
+		<div class="wrap llamahire-workspace llamahire-hiring<?php echo $selected ? ' has-drawer' : ''; ?>">
+			<div class="llamahire-page-header">
+				<div><h1><?php esc_html_e( 'Hiring', 'llamahire' ); ?></h1><p><?php esc_html_e( 'Move candidates through your hiring process.', 'llamahire' ); ?></p></div>
+				<div class="llamahire-header-actions"><a class="button" href="<?php echo esc_url( Admin::applications_url( array( 'job_id' => $job_id ) ) ); ?>"><?php esc_html_e( 'View applications', 'llamahire' ); ?></a></div>
+			</div>
+			<form class="llamahire-hiring-filters" method="get">
+				<input type="hidden" name="post_type" value="<?php echo esc_attr( Jobs::POST_TYPE ); ?>"><input type="hidden" name="page" value="llamahire-hiring">
+				<label class="llamahire-candidate-search"><span class="dashicons dashicons-search" aria-hidden="true"></span><span class="screen-reader-text"><?php esc_html_e( 'Search candidates', 'llamahire' ); ?></span><input type="search" name="candidate" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php esc_attr_e( 'Search candidates', 'llamahire' ); ?>"></label>
+				<label class="llamahire-job-filter"><span class="screen-reader-text"><?php esc_html_e( 'Job title', 'llamahire' ); ?></span><select name="job_id"><option value="all" <?php selected( $show_all ); ?>><?php esc_html_e( 'All job titles', 'llamahire' ); ?></option><?php foreach ( $jobs as $job ) : ?><option value="<?php echo esc_attr( $job->ID ); ?>" <?php selected( $job_id, $job->ID ); ?>><?php echo esc_html( $job->post_title ); ?></option><?php endforeach; ?></select></label>
+				<button class="button llamahire-filter-button"><?php esc_html_e( 'Apply', 'llamahire' ); ?></button>
+			</form>
+			<div class="llamahire-drag-help"><span class="dashicons dashicons-move"></span><?php esc_html_e( 'Drag candidates between stages.', 'llamahire' ); ?></div>
+			<div class="llamahire-hiring-toast" role="status" aria-live="polite" hidden></div>
+			<div class="llamahire-pipeline-layout">
+				<div class="llamahire-pipeline" data-hiring-pipeline aria-label="<?php esc_attr_e( 'Candidate pipeline', 'llamahire' ); ?>">
+					<?php foreach ( Applications::pipeline_statuses() as $status => $label ) : ?>
+						<section class="llamahire-stage llamahire-stage--<?php echo esc_attr( $status ); ?>" data-stage="<?php echo esc_attr( $status ); ?>">
+							<header><h2><?php echo esc_html( $label ); ?></h2><span data-stage-count><?php echo esc_html( count( $columns[ $status ] ) ); ?></span></header>
+							<div class="llamahire-stage-cards" data-stage-cards>
+								<?php if ( $columns[ $status ] ) : foreach ( $columns[ $status ] as $candidate ) : self::candidate_card( $candidate, $job_argument, $search, $selected ? (int) $selected->id : 0 ); endforeach; else : ?>
+									<div class="llamahire-stage-empty" data-stage-empty><span class="dashicons <?php echo 'hired' === $status ? 'dashicons-yes' : 'dashicons-admin-users'; ?>"></span><strong><?php esc_html_e( 'No candidates', 'llamahire' ); ?></strong><p><?php echo esc_html( self::empty_stage_copy( $status ) ); ?></p></div>
+								<?php endif; ?>
+							</div>
+						</section>
+					<?php endforeach; ?>
+				</div>
+				<?php if ( $selected ) : self::candidate_drawer( $selected, $job_argument, $search ); endif; ?>
+			</div>
+		</div>
+		<?php
+	}
+
+	private static function candidate_card( $candidate, $job_argument, $search, $selected_id ) {
+		$url = self::hiring_url( array_filter( array( 'job_id' => $job_argument, 'candidate' => $search, 'application' => $candidate->id ) ) );
+		?>
+		<article class="llamahire-candidate-card<?php echo (int) $selected_id === (int) $candidate->id ? ' is-selected' : ''; ?>" draggable="true" data-candidate-id="<?php echo esc_attr( $candidate->id ); ?>" data-candidate-status="<?php echo esc_attr( $candidate->status ); ?>">
+			<a class="llamahire-candidate-main" href="<?php echo esc_url( $url ); ?>"><strong><?php echo esc_html( $candidate->name ); ?></strong><small><?php echo esc_html( $candidate->job_title ); ?></small><small><?php printf( esc_html__( 'Applied %s', 'llamahire' ), esc_html( get_date_from_gmt( $candidate->created_at, get_option( 'date_format' ) ) ) ); ?></small><small><span class="dashicons dashicons-clock"></span><?php printf( esc_html__( '%s in stage', 'llamahire' ), esc_html( self::time_in_stage( $candidate ) ) ); ?></small></a>
+			<span class="llamahire-card-menu dashicons dashicons-move" title="<?php esc_attr_e( 'Drag candidate', 'llamahire' ); ?>" aria-hidden="true"></span>
+			<footer><span class="llamahire-avatar"><?php echo esc_html( self::initials( $candidate->name ) ); ?></span><?php if ( $candidate->notes ) : ?><span class="screen-reader-text"><?php esc_html_e( 'Has a private note', 'llamahire' ); ?></span><?php endif; ?></footer>
+		</article>
+		<?php
+	}
+
+	private static function candidate_drawer( $candidate, $job_argument, $search ) {
+		$return_url = self::hiring_url( array_filter( array( 'job_id' => $job_argument, 'candidate' => $search, 'application' => $candidate->id, 'updated' => 1 ) ) );
+		$history = Audit_Log::search( array( 'application_id' => $candidate->id, 'per_page' => 5 ) );
+		$close_url = self::hiring_url( array_filter( array( 'job_id' => $job_argument, 'candidate' => $search ) ) );
+		$next_status = self::next_pipeline_status( $candidate->status );
+		$updated = ! empty( $_GET['updated'] );
+		?>
+		<aside class="llamahire-candidate-drawer" aria-labelledby="llamahire-candidate-title">
+			<a href="<?php echo esc_url( $close_url ); ?>" class="llamahire-drawer-close" aria-label="<?php esc_attr_e( 'Close candidate details', 'llamahire' ); ?>"><span class="dashicons dashicons-no-alt"></span></a>
+			<div class="llamahire-candidate-heading"><div><h2 id="llamahire-candidate-title"><?php echo esc_html( $candidate->name ); ?></h2><p><?php echo esc_html( get_the_title( $candidate->job_id ) ); ?></p></div></div>
+			<div class="llamahire-contact"><a href="mailto:<?php echo esc_attr( $candidate->email ); ?>"><span class="dashicons dashicons-email"></span><?php echo esc_html( $candidate->email ); ?></a><?php if ( $candidate->has_resume && current_user_can( Capabilities::DOWNLOAD_RESUMES ) ) : ?><a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=llamahire_resume&application=' . $candidate->id ), 'llamahire_resume_' . $candidate->id ) ); ?>"><span class="dashicons dashicons-media-document"></span><?php esc_html_e( 'Download resume', 'llamahire' ); ?></a><?php endif; ?></div>
+			<?php if ( $updated ) : ?><div class="llamahire-save-confirmation" role="status"><span class="dashicons dashicons-yes-alt" aria-hidden="true"></span><span><?php esc_html_e( 'Changes saved.', 'llamahire' ); ?></span></div><?php endif; ?>
+			<form class="llamahire-drawer-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="llamahire_update_application"><input type="hidden" name="application" value="<?php echo esc_attr( $candidate->id ); ?>"><input type="hidden" name="redirect_to" value="<?php echo esc_attr( $return_url ); ?>"><?php wp_nonce_field( 'llamahire_update_' . $candidate->id ); ?>
+				<section><label for="llamahire-drawer-status"><strong><?php esc_html_e( 'Stage', 'llamahire' ); ?></strong></label><select id="llamahire-drawer-status" name="status"><?php foreach ( Applications::workflow_statuses() as $status => $label ) : ?><option value="<?php echo esc_attr( $status ); ?>" <?php selected( $candidate->status, $status ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></section>
+				<section><label for="llamahire-drawer-notes"><strong><?php esc_html_e( 'Private note', 'llamahire' ); ?></strong></label><textarea id="llamahire-drawer-notes" name="notes" rows="5" placeholder="<?php esc_attr_e( 'Interview feedback, next steps, or context for the team…', 'llamahire' ); ?>"><?php echo esc_textarea( $candidate->notes ); ?></textarea><small><?php printf( esc_html__( 'Updated %s', 'llamahire' ), esc_html( get_date_from_gmt( $candidate->updated_at, get_option( 'date_format' ) ) ) ); ?></small></section>
+				<button class="button"><?php esc_html_e( 'Save changes', 'llamahire' ); ?></button>
+			</form>
+			<div class="llamahire-drawer-activity"><h3><?php esc_html_e( 'Recent activity', 'llamahire' ); ?></h3><?php if ( $history['items'] ) : ?><ol><?php foreach ( $history['items'] as $event ) : ?><li><span></span><div><strong><?php echo esc_html( Audit_Log::describe( $event ) ); ?></strong><small><?php echo esc_html( get_date_from_gmt( $event->created_at, get_option( 'date_format' ) . ' · ' . get_option( 'time_format' ) ) ); ?></small></div></li><?php endforeach; ?></ol><?php else : ?><p><?php esc_html_e( 'No recorded changes yet.', 'llamahire' ); ?></p><?php endif; ?></div>
+			<div class="llamahire-drawer-actions"><?php if ( $next_status ) : self::quick_stage_form( $candidate->id, $next_status, $return_url, sprintf( __( 'Move to %s', 'llamahire' ), Applications::status_label( $next_status ) ) ); endif; ?><details><summary class="button"><?php esc_html_e( 'Move candidate', 'llamahire' ); ?></summary><?php self::stage_form( $candidate->id, $candidate->status, $return_url ); ?></details><button type="button" class="button-link-delete" data-open-reject-dialog="llamahire-reject-dialog-<?php echo esc_attr( $candidate->id ); ?>" aria-haspopup="dialog"><?php esc_html_e( 'Reject candidate', 'llamahire' ); ?></button></div>
+			<?php self::reject_dialog( $candidate, $return_url ); ?>
+		</aside>
+		<?php
+	}
+
+	private static function stage_form( $id, $current, $redirect ) {
+		?><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="llamahire_update_application"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><input type="hidden" name="redirect_to" value="<?php echo esc_attr( $redirect ); ?>"><?php wp_nonce_field( 'llamahire_update_' . $id ); ?><label><span class="screen-reader-text"><?php esc_html_e( 'New stage', 'llamahire' ); ?></span><select name="status"><?php foreach ( Applications::workflow_statuses() as $status => $label ) : ?><option value="<?php echo esc_attr( $status ); ?>" <?php selected( $current, $status ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label><button class="button button-small"><?php esc_html_e( 'Update', 'llamahire' ); ?></button></form><?php
+	}
+
+	private static function quick_stage_form( $id, $status, $redirect, $label ) {
+		?><form class="llamahire-quick-stage-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="llamahire_update_application"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><input type="hidden" name="status" value="<?php echo esc_attr( $status ); ?>"><input type="hidden" name="redirect_to" value="<?php echo esc_attr( $redirect ); ?>"><?php wp_nonce_field( 'llamahire_update_' . $id ); ?><button class="button button-primary"><?php echo esc_html( $label ); ?> <span aria-hidden="true">→</span></button></form><?php
+	}
+
+	private static function reject_dialog( $candidate, $redirect ) {
+		$dialog_id = 'llamahire-reject-dialog-' . absint( $candidate->id );
+		$title_id = $dialog_id . '-title';
+		$description_id = $dialog_id . '-description';
+		?>
+		<dialog id="<?php echo esc_attr( $dialog_id ); ?>" class="llamahire-reject-dialog" aria-labelledby="<?php echo esc_attr( $title_id ); ?>" aria-describedby="<?php echo esc_attr( $description_id ); ?>">
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="llamahire_update_application"><input type="hidden" name="application" value="<?php echo esc_attr( $candidate->id ); ?>"><input type="hidden" name="status" value="rejected"><input type="hidden" name="redirect_to" value="<?php echo esc_attr( $redirect ); ?>"><?php wp_nonce_field( 'llamahire_update_' . $candidate->id ); ?>
+				<header>
+					<h2 id="<?php echo esc_attr( $title_id ); ?>"><?php printf( esc_html__( 'Reject %s?', 'llamahire' ), esc_html( $candidate->name ) ); ?></h2>
+					<button type="button" class="llamahire-dialog-close" data-close-reject-dialog aria-label="<?php esc_attr_e( 'Close rejection confirmation', 'llamahire' ); ?>"><span class="dashicons dashicons-no-alt" aria-hidden="true"></span></button>
+				</header>
+				<p id="<?php echo esc_attr( $description_id ); ?>"><?php printf( esc_html__( '%1$s will be moved to Rejected for %2$s. You can change their stage later.', 'llamahire' ), esc_html( $candidate->name ), esc_html( get_the_title( $candidate->job_id ) ) ); ?></p>
+				<div class="llamahire-dialog-actions">
+					<button type="button" class="button" data-close-reject-dialog><?php esc_html_e( 'Cancel', 'llamahire' ); ?></button>
+					<button class="button llamahire-button-danger"><?php esc_html_e( 'Reject candidate', 'llamahire' ); ?></button>
+				</div>
+			</form>
+		</dialog>
+		<?php
+	}
+
+	private static function next_pipeline_status( $status ) {
+		$statuses = array_keys( Applications::pipeline_statuses() );
+		$index = array_search( $status, $statuses, true );
+		return false !== $index && isset( $statuses[ $index + 1 ] ) ? $statuses[ $index + 1 ] : '';
+	}
+
+	private static function empty_stage_copy( $status ) {
+		if ( 'offer' === $status ) {
+			return __( 'Move candidates here when you are ready to make an offer.', 'llamahire' );
+		}
+		if ( 'hired' === $status ) {
+			return __( 'Successful hires will appear here.', 'llamahire' );
+		}
+		return __( 'Drag a candidate here when they are ready.', 'llamahire' );
+	}
+
+	private static function attention_row( $icon, $title, $description, $count, $url, $action ) {
+		$quiet = ! $count;
+		$display_title = $quiet ? preg_replace( '/^0\s+/', __( 'No ', 'llamahire' ), $title ) : $title;
+		?><article class="llamahire-attention-row<?php echo $quiet ? ' is-clear' : ''; ?>"><span class="dashicons dashicons-<?php echo esc_attr( $quiet ? 'yes-alt' : $icon ); ?>" aria-hidden="true"></span><div><h3><?php echo esc_html( $display_title ); ?></h3><p><?php echo esc_html( $quiet ? __( 'Nothing needs action here right now.', 'llamahire' ) : $description ); ?></p></div><a class="button" href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $action ); ?></a></article><?php
+	}
+
+	private static function metric( $value, $label, $icon, $url ) {
+		?><a class="llamahire-metric" href="<?php echo esc_url( $url ); ?>"><span class="dashicons dashicons-<?php echo esc_attr( $icon ); ?>" aria-hidden="true"></span><span class="llamahire-metric-copy"><strong><?php echo esc_html( $value ); ?></strong><span><?php echo esc_html( $label ); ?></span></span></a><?php
+	}
+
+	private static function activity_url( $event ) {
+		$application_id = absint( $event->application_id ?? 0 );
+		if ( $application_id && Ownership::user_can_access_application( $application_id, Capabilities::VIEW_APPLICATIONS ) ) {
+			return Admin::applications_url( array( 'application' => $application_id ) );
+		}
+		$job_id = absint( $event->job_id ?? 0 );
+		if ( $job_id && Jobs::POST_TYPE === get_post_type( $job_id ) && current_user_can( 'edit_post', $job_id ) ) {
+			return get_edit_post_link( $job_id );
+		}
+		return '';
+	}
+
+	private static function dashboard_jobs( $author_id ) {
+		$args = array( 'post_type' => Jobs::POST_TYPE, 'post_status' => 'publish', 'posts_per_page' => 5, 'orderby' => 'date', 'order' => 'DESC', 'meta_query' => Jobs::open_meta_query() ); // phpcs:ignore WordPress.DB.SlowDBQuery
+		if ( $author_id ) {
+			$args['author'] = $author_id;
+		}
+		return get_posts( $args );
+	}
+
+	private static function job_count( $status, $author_id ) {
+		$args = array( 'post_type' => Jobs::POST_TYPE, 'post_status' => $status, 'posts_per_page' => 1, 'fields' => 'ids' );
+		if ( $author_id ) {
+			$args['author'] = $author_id;
+		}
+		$query = new \WP_Query( $args );
+		return (int) $query->found_posts;
+	}
+
+	private static function expiring_job_count( $author_id ) {
+		$args = array(
+			'post_type' => Jobs::POST_TYPE, 'post_status' => 'publish', 'posts_per_page' => 1, 'fields' => 'ids',
+			'meta_query' => array( array( 'key' => Jobs::META_DEADLINE, 'value' => array( current_time( 'Y-m-d' ), gmdate( 'Y-m-d', current_time( 'timestamp', true ) + 7 * DAY_IN_SECONDS ) ), 'compare' => 'BETWEEN', 'type' => 'DATE' ) ), // phpcs:ignore WordPress.DB.SlowDBQuery
+		);
+		if ( $author_id ) {
+			$args['author'] = $author_id;
+		}
+		$query = new \WP_Query( $args );
+		return (int) $query->found_posts;
+	}
+
+	private static function active_employer_count() {
+		global $wpdb;
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(DISTINCT post_author) FROM {$wpdb->posts} WHERE post_type = %s AND post_status IN ('publish','pending','draft','future','private')",
+				Jobs::POST_TYPE
+			)
+		); // phpcs:ignore WordPress.DB.PreparedSQL
+	}
+
+	private static function job_context( $job, array $meta, $show_organization ) {
+		$parts = array();
+		if ( $show_organization ) {
+			$parts[] = Jobs::organization( $meta )['name'];
+		}
+		$parts[] = Jobs::location_label( $meta );
+		if ( $meta['deadline'] ) {
+			$parts[] = sprintf( __( 'Closes %s', 'llamahire' ), date_i18n( get_option( 'date_format' ), strtotime( $meta['deadline'] ) ) );
+		}
+		return implode( ' · ', array_filter( $parts ) );
+	}
+
+	private static function initials( $name ) {
+		$words = preg_split( '/\s+/u', trim( $name ) );
+		$letters = '';
+		foreach ( array_slice( $words, 0, 2 ) as $word ) {
+			$letters .= function_exists( 'mb_substr' ) ? mb_substr( $word, 0, 1 ) : substr( $word, 0, 1 );
+		}
+		return strtoupper( $letters );
+	}
+
+	private static function time_in_stage( $candidate ) {
+		$changed = $candidate->stage_changed_at ?: $candidate->updated_at ?: $candidate->created_at;
+		return human_time_diff( strtotime( $changed . ' UTC' ), current_time( 'timestamp', true ) );
+	}
+
+	private function __construct() {}
+}

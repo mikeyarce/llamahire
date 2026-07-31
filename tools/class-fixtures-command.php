@@ -25,7 +25,7 @@ final class Fixtures_Command {
 	 * ## OPTIONS
 	 *
 	 * [--scenario=<scenario>]
-	 * : small, large, remote, expired, closed, notification-failures, or edge-cases. Default: small.
+	 * : demo, small, large, remote, expired, closed, notification-failures, or edge-cases. Default: small.
 	 *
 	 * [--seed=<seed>]
 	 * : Stable content seed. Default: demo.
@@ -42,6 +42,7 @@ final class Fixtures_Command {
 	 * ## EXAMPLES
 	 *
 	 *     wp llamahire fixtures generate --scenario=small
+	 *     wp llamahire fixtures generate --scenario=demo --force
 	 *     wp llamahire fixtures generate --scenario=edge-cases --seed=bug-142 --force
 	 *
 	 * @subcommand generate
@@ -51,7 +52,7 @@ final class Fixtures_Command {
 		$scenario = sanitize_key( $assoc_args['scenario'] ?? 'small' );
 		$scenarios = $this->scenarios();
 		if ( ! isset( $scenarios[ $scenario ] ) ) {
-			\WP_CLI::error( 'Unknown scenario. Use small, large, remote, expired, closed, notification-failures, or edge-cases.' );
+			\WP_CLI::error( 'Unknown scenario. Use demo, small, large, remote, expired, closed, notification-failures, or edge-cases.' );
 		}
 		if ( get_option( self::OPTION, false ) ) {
 			if ( ! \WP_CLI\Utils\get_flag_value( $assoc_args, 'force', false ) ) {
@@ -80,18 +81,21 @@ final class Fixtures_Command {
 				'settings'        => get_option( Settings::OPTION, false ),
 				'setup_exists'    => false !== get_option( Setup::OPTION, false ),
 				'setup'           => get_option( Setup::OPTION, false ),
+				'show_on_front'    => get_option( 'show_on_front' ),
+				'page_on_front'    => get_option( 'page_on_front' ),
 			),
 		);
 		update_option( self::OPTION, $registry, false );
 
 		try {
-			$attachment = $this->create_logo( $seed );
+			$attachment = $this->create_logo( $seed, $scenario );
 			$registry['attachments'][] = $attachment;
 			$this->save_registry( $registry );
 
 			$department_names = array( 'Engineering', 'Design', 'Marketing', 'Customer Success', 'Operations' );
 			foreach ( $department_names as $department_name ) {
-				$term = wp_insert_term( $department_name . ' ' . strtoupper( substr( md5( $seed ), 0, 4 ) ), 'llamahire_department' );
+				$term_name = 'demo' === $scenario ? $department_name . ' — Northstar Labs' : $department_name . ' ' . strtoupper( substr( md5( $seed ), 0, 4 ) );
+				$term = wp_insert_term( $term_name, 'llamahire_department' );
 				if ( is_wp_error( $term ) ) {
 					throw new \RuntimeException( $term->get_error_message() );
 				}
@@ -101,8 +105,12 @@ final class Fixtures_Command {
 			}
 			$this->save_registry( $registry );
 
-			$privacy_page = $this->create_page( 'Fixture candidate privacy', '<!-- wp:paragraph --><p>This test-site policy explains how fixture candidate data is used.</p><!-- /wp:paragraph -->', $seed . '-privacy' );
-			$careers_page = $this->create_page( 'Fixture careers', Setup::careers_page_content(), $seed . '-careers' );
+			$privacy_title = 'demo' === $scenario ? 'Candidate privacy at Northstar Labs' : 'Fixture candidate privacy';
+			$privacy_copy  = 'demo' === $scenario ? '<!-- wp:heading --><h2 class="wp-block-heading">How we use candidate information</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Northstar Labs uses application information only to evaluate candidates, coordinate interviews, and meet hiring obligations. This local demo contains fictional candidate data.</p><!-- /wp:paragraph -->' : '<!-- wp:paragraph --><p>This test-site policy explains how fixture candidate data is used.</p><!-- /wp:paragraph -->';
+			$careers_title = 'demo' === $scenario ? 'Careers at Northstar Labs' : 'Fixture careers';
+			$privacy_page = $this->create_page( $privacy_title, $privacy_copy, $seed . '-privacy' );
+			$careers_content = 'demo' === $scenario ? $this->demo_careers_content() : Setup::careers_page_content();
+			$careers_page = $this->create_page( $careers_title, $careers_content, $seed . '-careers' );
 			$registry['pages'] = array( $privacy_page, $careers_page );
 			$this->save_registry( $registry );
 
@@ -111,21 +119,25 @@ final class Fixtures_Command {
 				Settings::OPTION,
 				Settings::sanitize(
 					array(
-						'name'               => 'LlamaHire Fixture Company',
+						'name'               => 'demo' === $scenario ? 'Northstar Labs' : 'LlamaHire Fixture Company',
 						'website'            => home_url( '/' ),
 						'logo'               => $logo_url,
 						'default_locality'   => 'Vancouver',
 						'default_region'     => 'British Columbia',
 						'default_country'    => 'CA',
 						'default_currency'   => 'CAD',
-						'notification_email' => 'hiring-fixtures@example.test',
-						'privacy_text'       => 'Fixture candidate information is used only for product testing.',
+						'notification_email' => 'demo' === $scenario ? 'careers@northstar.example.test' : 'hiring-fixtures@example.test',
+						'privacy_text'       => 'demo' === $scenario ? 'We use your information only to review your application and coordinate the hiring process.' : 'Fixture candidate information is used only for product testing.',
 						'privacy_page_id'    => $privacy_page,
 						'careers_page_id'    => $careers_page,
 					)
 				)
 			);
 			update_option( Setup::OPTION, array( 'version' => Setup::VERSION, 'status' => 'completed' ), false );
+			if ( 'demo' === $scenario ) {
+				update_option( 'show_on_front', 'page' );
+				update_option( 'page_on_front', $careers_page );
+			}
 
 			for ( $index = 0; $index < $job_count; $index++ ) {
 				$job_id = $this->create_job( $scenario, $seed, $index, $attachment, $registry['terms'] );
@@ -199,6 +211,7 @@ final class Fixtures_Command {
 
 	private function scenarios() {
 		return array(
+			'demo'                  => array( 'jobs' => 16, 'applications' => 64 ),
 			'small'                 => array( 'jobs' => 8, 'applications' => 30 ),
 			'large'                 => array( 'jobs' => 60, 'applications' => 1000 ),
 			'remote'                => array( 'jobs' => 10, 'applications' => 40 ),
@@ -210,19 +223,25 @@ final class Fixtures_Command {
 	}
 
 	private function create_job( $scenario, $seed, $index, $attachment, array $terms ) {
-		$titles = array( 'Senior Product Designer', 'Backend Engineer', 'Customer Success Lead', 'Content Strategist', 'People Operations Partner', 'Data Analyst', 'Frontend Engineer', 'Growth Marketer' );
+		$titles = 'demo' === $scenario
+			? array( 'Senior Product Designer', 'Backend Platform Engineer', 'Customer Success Lead', 'Content Strategist', 'People Operations Partner', 'Data Analyst', 'Frontend Engineer', 'Growth Marketing Manager', 'Product Manager', 'Security Engineer', 'Technical Writer', 'Finance Operations Analyst', 'Developer Experience Engineer', 'Design Systems Lead', 'Community Programs Manager', 'Support Engineer' )
+			: array( 'Senior Product Designer', 'Backend Engineer', 'Customer Success Lead', 'Content Strategist', 'People Operations Partner', 'Data Analyst', 'Frontend Engineer', 'Growth Marketer' );
 		$workplaces = array( 'onsite', 'hybrid', 'remote' );
 		$employment = array( 'FULL_TIME', 'PART_TIME', 'CONTRACTOR', 'TEMPORARY', 'INTERN', 'VOLUNTEER', 'PER_DIEM', 'OTHER' );
 		$workplace = 'remote' === $scenario ? 'remote' : $workplaces[ $index % count( $workplaces ) ];
-		$status = 'edge-cases' === $scenario && 0 === $index % 5 ? 'draft' : 'publish';
+		$status = ( 'edge-cases' === $scenario && 0 === $index % 5 ) || ( 'demo' === $scenario && 11 === $index ) ? 'draft' : 'publish';
+		$title  = $titles[ $index % count( $titles ) ];
+		if ( 'demo' !== $scenario ) {
+			$title .= ' — Fixture ' . ( $index + 1 );
+		}
 		$job_id = wp_insert_post(
 			array(
 				'post_type'    => Jobs::POST_TYPE,
 				'post_status'  => $status,
-				'post_title'   => $titles[ $index % count( $titles ) ] . ' — Fixture ' . ( $index + 1 ),
+				'post_title'   => $title,
 				'post_name'    => 'llamahire-fixture-' . $seed . '-' . ( $index + 1 ),
-				'post_excerpt' => 'A deterministic ' . $scenario . ' scenario role for LlamaHire testing.',
-				'post_content' => '<!-- wp:heading --><h2 class="wp-block-heading">About the role</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Help the fixture company test a complete, realistic hiring workflow.</p><!-- /wp:paragraph --><!-- wp:heading --><h2 class="wp-block-heading">What you will do</h2><!-- /wp:heading --><!-- wp:list --><ul><li>Own meaningful work</li><li>Collaborate across teams</li><li>Improve the candidate experience</li></ul><!-- /wp:list -->',
+				'post_excerpt' => 'demo' === $scenario ? 'Join Northstar Labs and help thoughtful teams do ambitious work.' : 'A deterministic ' . $scenario . ' scenario role for LlamaHire testing.',
+				'post_content' => 'demo' === $scenario ? '<!-- wp:heading --><h2 class="wp-block-heading">About the role</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Northstar Labs builds practical tools for modern teams. You will join a collaborative group that values clear thinking, kind communication, and measurable customer impact.</p><!-- /wp:paragraph --><!-- wp:heading --><h2 class="wp-block-heading">What you will do</h2><!-- /wp:heading --><!-- wp:list --><ul><li>Own meaningful work from discovery through delivery</li><li>Collaborate across product, design, engineering, and go-to-market teams</li><li>Improve the experience for customers and teammates</li></ul><!-- /wp:list --><!-- wp:heading --><h2 class="wp-block-heading">What we offer</h2><!-- /wp:heading --><!-- wp:list --><ul><li>Flexible hybrid and remote work</li><li>Learning and wellness budgets</li><li>Transparent compensation and growth paths</li></ul><!-- /wp:list -->' : '<!-- wp:heading --><h2 class="wp-block-heading">About the role</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Help the fixture company test a complete, realistic hiring workflow.</p><!-- /wp:paragraph --><!-- wp:heading --><h2 class="wp-block-heading">What you will do</h2><!-- /wp:heading --><!-- wp:list --><ul><li>Own meaningful work</li><li>Collaborate across teams</li><li>Improve the candidate experience</li></ul><!-- /wp:list -->',
 			),
 			true
 		);
@@ -232,16 +251,16 @@ final class Fixtures_Command {
 		update_post_meta( $job_id, self::META, self::OWNER );
 		$deadline_days = 20 + ( $index % 50 );
 		$deadline = wp_date( 'Y-m-d', current_time( 'timestamp' ) + DAY_IN_SECONDS * $deadline_days );
-		if ( 'expired' === $scenario || ( 'edge-cases' === $scenario && 1 === $index % 5 ) ) {
+		if ( 'expired' === $scenario || ( 'edge-cases' === $scenario && 1 === $index % 5 ) || ( 'demo' === $scenario && 12 === $index ) ) {
 			$deadline = wp_date( 'Y-m-d', current_time( 'timestamp' ) - DAY_IN_SECONDS * ( 1 + $index ) );
 		}
-		$closed = 'closed' === $scenario || ( 'edge-cases' === $scenario && 2 === $index % 5 ) ? '1' : '0';
+		$closed = 'closed' === $scenario || ( 'edge-cases' === $scenario && 2 === $index % 5 ) || ( 'demo' === $scenario && 13 === $index ) ? '1' : '0';
 		$salary_min = 50000 + ( $index % 8 ) * 7500;
 		$salary_max = $salary_min + 15000;
-		if ( 'edge-cases' === $scenario && 3 === $index % 5 ) {
+		if ( ( 'edge-cases' === $scenario && 3 === $index % 5 ) || ( 'demo' === $scenario && 14 === $index ) ) {
 			$salary_max = $salary_min;
 		}
-		if ( 'edge-cases' === $scenario && 4 === $index % 5 ) {
+		if ( ( 'edge-cases' === $scenario && 4 === $index % 5 ) || ( 'demo' === $scenario && 15 === $index ) ) {
 			$salary_min = '';
 			$salary_max = '';
 		}
@@ -265,8 +284,8 @@ final class Fixtures_Command {
 				'address_country'     => 'CA',
 				'applicant_countries' => 'CA, US, GB',
 				'job_identifier'      => 'fixture-' . $seed . '-job-' . ( $index + 1 ),
-				'organization_name'   => 0 === $index % 3 ? 'LlamaHire Fixture Studio' : '',
-				'organization_url'    => 0 === $index % 3 ? home_url( '/fixture-studio/' ) : '',
+				'organization_name'   => 0 === $index % 3 ? ( 'demo' === $scenario ? 'Northstar Product Studio' : 'LlamaHire Fixture Studio' ) : '',
+				'organization_url'    => 0 === $index % 3 ? ( 'demo' === $scenario ? home_url( '/product-studio/' ) : home_url( '/fixture-studio/' ) ) : '',
 				'organization_logo'   => 0 === $index % 3 ? wp_get_attachment_url( $attachment ) : '',
 			)
 		);
@@ -280,18 +299,19 @@ final class Fixtures_Command {
 		$job_id = $jobs[ $index % count( $jobs ) ];
 		$key = $this->uuid( $seed . '|application|' . $index );
 		$resume = 0 === $index % 4 ? $this->create_resume( $seed, $index ) : array( 'token' => '', 'name' => '' );
-		$statuses = array( 'new', 'reviewing', 'rejected', 'hired' );
-		$status = $statuses[ $index % count( $statuses ) ];
+		$statuses = array( 'new', 'reviewing', 'interviewing', 'offer', 'hired', 'rejected' );
+		$status = $statuses[ ( $index + ( 'demo' === $scenario ? 1 : 0 ) ) % count( $statuses ) ];
+		$candidate_name = 'demo' === $scenario ? array( 'Avery Chen', 'Maya Patel', 'Jordan Williams', 'Sofia Garcia', 'Noah Kim', 'Amara Okafor', 'Theo Martin', 'Priya Shah', 'Lucas Silva', 'Emma Wilson', 'Kai Anderson', 'Nina Rossi', 'Owen Brown', 'Leila Haddad', 'Mateo Rivera', 'Zoe Thompson' )[ $index % 16 ] . ( $index >= 16 ? ' ' . ( 1 + intdiv( $index, 16 ) ) : '' ) : 'Fixture Candidate ' . ( $index + 1 );
 		$created = $repository->create_once(
 			array(
 				'job_id'        => $job_id,
-				'name'          => 'Fixture Candidate ' . ( $index + 1 ),
-				'email'         => 'fixture+' . $seed . '-' . ( $index + 1 ) . '@example.test',
+				'name'          => $candidate_name,
+				'email'         => ( 'demo' === $scenario ? 'candidate' : 'fixture+' . $seed . '-' ) . ( $index + 1 ) . '@example.test',
 				'phone'         => '+1 604 555 ' . str_pad( (string) ( 1000 + $index ), 4, '0', STR_PAD_LEFT ),
-				'cover_letter'  => 'I am applying through the deterministic ' . $scenario . ' fixture scenario. Candidate index: ' . ( $index + 1 ) . '.',
+				'cover_letter'  => 'demo' === $scenario ? 'I am excited about Northstar Labs because the role combines meaningful ownership, cross-functional collaboration, and a thoughtful approach to customer impact.' : 'I am applying through the deterministic ' . $scenario . ' fixture scenario. Candidate index: ' . ( $index + 1 ) . '.',
 				'resume_token'  => $resume['token'],
 				'resume_name'   => $resume['name'],
-				'status'        => $status,
+				'status'        => 'new',
 				'submission_key'=> $key,
 			)
 		);
@@ -320,6 +340,7 @@ final class Fixtures_Command {
 			array(
 				'created_at'               => $created,
 				'updated_at'               => $created,
+				'stage_changed_at'         => $created,
 				'notification_status'      => $state,
 				'notification_attempts'    => $attempts,
 				'employer_notified_at'     => $employer,
@@ -327,13 +348,27 @@ final class Fixtures_Command {
 				'notification_error_code'  => 'failed' === $state ? 'fixture_mail_failure' : ( 'partial' === $state ? 'candidate_mail_failure' : '' ),
 			),
 			array( 'id' => $application_id ),
-			array( '%s', '%s', '%s', '%d', '%s', '%s', '%s' ),
+			array( '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' ),
 			array( '%d' )
 		);
 	}
 
-	private function create_logo( $seed ) {
+	private function create_logo( $seed, $scenario ) {
 		$png = base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=' );
+		if ( 'demo' === $scenario && function_exists( 'imagecreatetruecolor' ) ) {
+			$image = imagecreatetruecolor( 512, 512 );
+			$navy  = imagecolorallocate( $image, 25, 38, 63 );
+			$coral = imagecolorallocate( $image, 244, 111, 96 );
+			$white = imagecolorallocate( $image, 255, 255, 255 );
+			imagefill( $image, 0, 0, $navy );
+			imagefilledellipse( $image, 256, 230, 260, 260, $coral );
+			imagestring( $image, 5, 215, 220, 'NL', $white );
+			imagestring( $image, 4, 166, 400, 'NORTHSTAR', $white );
+			ob_start();
+			imagepng( $image );
+			$png = ob_get_clean();
+			imagedestroy( $image );
+		}
 		$upload = wp_upload_bits( 'llamahire-fixture-' . $seed . '.png', null, $png );
 		if ( ! empty( $upload['error'] ) ) {
 			throw new \RuntimeException( $upload['error'] );
@@ -342,8 +377,25 @@ final class Fixtures_Command {
 		if ( is_wp_error( $attachment ) ) {
 			throw new \RuntimeException( $attachment->get_error_message() );
 		}
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		$metadata = wp_generate_attachment_metadata( $attachment, $upload['file'] );
+		if ( is_array( $metadata ) ) {
+			wp_update_attachment_metadata( $attachment, $metadata );
+		}
 		update_post_meta( $attachment, self::META, self::OWNER );
 		return (int) $attachment;
+	}
+
+	private function demo_careers_content() {
+		$featured = '<!-- wp:group {"align":"wide","style":{"spacing":{"padding":{"top":"var:preset|spacing|50","bottom":"var:preset|spacing|50"}}},"layout":{"type":"constrained"}} -->'
+			. '<div class="wp-block-group alignwide" style="padding-top:var(--wp--preset--spacing--50);padding-bottom:var(--wp--preset--spacing--50)">'
+			. '<!-- wp:heading {"textAlign":"center"} --><h2 class="wp-block-heading has-text-align-center">Featured opportunities</h2><!-- /wp:heading -->'
+			. '<!-- wp:paragraph {"align":"center"} --><p class="has-text-align-center">Start with a few of the roles where Northstar Labs is growing fastest.</p><!-- /wp:paragraph -->'
+			. '<!-- wp:llamahire/featured-jobs {"align":"wide","showHeading":false,"perPage":3} /-->'
+			. '</div><!-- /wp:group -->';
+		$marker = '<!-- wp:group {"anchor":"open-roles"';
+
+		return str_replace( $marker, $featured . $marker, Setup::careers_page_content() );
 	}
 
 	private function create_page( $title, $content, $slug ) {
@@ -430,6 +482,12 @@ final class Fixtures_Command {
 			update_option( Setup::OPTION, $options['setup'], false );
 		} else {
 			delete_option( Setup::OPTION );
+		}
+		if ( array_key_exists( 'show_on_front', $options ) ) {
+			update_option( 'show_on_front', $options['show_on_front'] );
+		}
+		if ( array_key_exists( 'page_on_front', $options ) ) {
+			update_option( 'page_on_front', absint( $options['page_on_front'] ) );
 		}
 		delete_option( self::OPTION );
 		return $counts;
