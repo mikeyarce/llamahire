@@ -1,6 +1,6 @@
 # LlamaHire Free public API
 
-API version: `1.0.0-alpha.8`
+API version: `1.0.0-alpha.12`
 Plugin version introduced: `0.1.0`
 Status: experimental until API 1.0
 
@@ -98,13 +98,17 @@ The repository owns application-record persistence:
 
 `create_once()` requires a UUID submission key and returns an `id`, a `created` boolean, and, when applicable, a `reason`. Reusing the same key converges on the original application. By default, a different submission key with the same normalized candidate email and job also converges on the canonical application with reason `job_email`. Both identities are protected against concurrent requests by database uniqueness. `find_duplicate()` supports an early check before storing an uploaded resume. Extensions that receive public submissions should use `create_once()` and send side effects only when `created` is true.
 
-The `llamahire_duplicate_application_policy` filter receives the default `preserve` policy, job ID, sanitized email, and canonical existing application ID when known. Returning `allow` permits an additional job/email record while submission-key retries remain idempotent. The default public flow preserves the original fields and resume, sends no repeat notifications, and shows a neutral success message. `llamahire_duplicate_application_ignored` fires with the canonical application and job IDs when that policy handles a public request.
+The `llamahire_duplicate_application_policy` filter receives the default `preserve` policy, job ID, sanitized email, and canonical existing application ID when known. Returning `allow` permits an additional job/email record while submission-key retries remain idempotent. The default public flow preserves the original fields and resume, sends no repeat notifications, consumes the normal submission rate limit, and returns exactly the same generic success state as a new application. `llamahire_duplicate_application_ignored` fires with the canonical application and job IDs when that policy handles a public request.
 
-`record_notification_result()` persists channel-level success, attempt count, aggregate status, and sanitized error codes. It never stores mail error messages or candidate content. Only `status` and `notes` are currently public update fields. Extensions must use this contract rather than relying on table names or direct SQL. Resume lifecycle operations belong to the separate resume-storage contract.
+`record_notification_result()` persists channel-level success, attempt count, aggregate status, and sanitized error codes. It never stores mail error messages or candidate content. `status` is the public mutable update field. For backward compatibility, a non-empty `notes` value passed to the repository appends a private note; it never replaces or clears prior notes. Extensions must use this contract rather than relying on table names or direct SQL. Resume lifecycle operations belong to the separate resume-storage contract.
 
 ### Application query
 
 The bounded query service provides paginated `search()`, grouped `counts()`, bounded `recent()`, and batched `export_rows()` operations. Each accepts an optional `author_id` job-owner filter so multi-employer integrations can preserve tenant boundaries. It never exposes the private resume token/path. Extensions must not query the applications table directly.
+
+### Recruiter REST endpoints
+
+`GET /llamahire/v1/applications` requires `llamahire_view_applications` and returns the bounded, ownership-scoped recruiter list without notes, cover letters, phone numbers, or resume identifiers. `GET /llamahire/v1/applications/{id}` requires ownership-scoped application-view permission and returns one review record with status, up to 20 append-only private notes, available application materials, and up to 20 privacy-safe activity entries for the bounded history modals. Resume responses expose only the original filename, type, a capability-checked nonce download URL, and—when the saved file is a browser-renderable PDF—a separate nonce preview URL. Preview delivery remains ownership checked, private, non-cacheable, and inline only for validated PDFs; DOCX files continue to download. Storage tokens and paths remain private. `POST /llamahire/v1/applications/{id}` requires ownership-scoped application-management permission and updates only the allow-listed `status` field. `POST /llamahire/v1/applications/{id}/notes` requires the same ownership-scoped management permission and appends one private note of up to 5,000 characters. It never edits or deletes earlier notes. `POST /llamahire/v1/applications/bulk-status` requires `llamahire_manage_applications`, accepts up to 100 numeric `application_ids` plus one allow-listed workflow `status`, and verifies access to every selected record before updating any of them. Status changes preserve private notes and use the repository contract so the normal privacy-safe audit events are recorded.
 
 ### Resume storage
 
@@ -112,9 +116,26 @@ The resume service owns validation, opaque storage tokens, deletion, availabilit
 
 Storage tokens and filesystem paths are internal even when passed between Free services. Pro must store application IDs, not resume paths.
 
-Resume uploads are restricted to 5 MB PDF, DOC, and DOCX files and must pass filename/MIME and content-signature validation. When `ZipArchive` is available, DOCX containers are also checked for the expected Word document entries, path traversal, and VBA macros. Trusted security extensions may perform additional inspection with `llamahire_validate_resume_upload`; return a `WP_Error` or `false` to reject the upload.
+Resume uploads are restricted to 5 MB PDF and DOCX files and must pass filename/MIME and content-signature validation. DOCX fails closed when `ZipArchive` is unavailable and otherwise must contain the expected Word document entries without path traversal or VBA macros. Trusted security extensions may perform additional inspection with `llamahire_validate_resume_upload`; return a `WP_Error` or `false` to reject the upload. Legacy DOC is disabled for new uploads by default because its OLE container cannot be inspected deeply here. A trusted scanner integration may opt in with `llamahire_allow_legacy_doc_uploads`, but it must also reject unsafe content through `llamahire_validate_resume_upload`. Existing DOC resumes from an earlier release remain recognized as `application/msword` when delivered through the protected download endpoint.
 
-Production storage fails closed when WordPress cannot create the private directory outside the web root. Local and development environments may use the protected uploads fallback. A production host with an independently verified server-level deny rule may opt in through `llamahire_allow_webroot_resume_storage`.
+The default `local_private` driver stores new production resumes outside the WordPress web root and fails closed when that directory is unavailable. It uses the WordPress Filesystem API for directory, read, write, and delete operations. Local and development environments retain a deny-file-protected `uploads/llamahire-private` fallback for disposable development systems; production environments cannot opt into that fallback.
+
+WordPress VIP sites may explicitly select the `vip_acl` driver before LlamaHire initializes:
+
+```php
+add_filter(
+	'llamahire_resume_storage_driver',
+	static function () {
+		return 'vip_acl';
+	}
+);
+```
+
+Put that filter in a client MU plugin so it is registered before the normal `init` hook. The driver requires WordPress VIP Access-Controlled Files to be activated for the environment and either the restrict-all or restrict-unpublished mode to be enabled. If those platform signals are unavailable, storage health is critical and new uploads fail closed.
+
+The VIP driver writes through the WordPress Filesystem API to the dedicated `uploads/llamahire-private` prefix, creates a WordPress attachment record for lifecycle compatibility with VIP's object store, and stores only an opaque `attachment:<id>` token with the application. Its `vip_files_acl_file_visibility` rule always marks that prefix private and denied, including when the attachment has no parent post. Authorized recruiters still download through LlamaHire's nonce-, capability-, and ownership-protected endpoint; they never receive the underlying Media Library URL.
+
+General custom storage implementations should continue to replace `Service_IDs::RESUME_STORAGE` during `llamahire_register_services` and implement `Contracts\Resume_Storage`. A driver that stores its own opaque tokens must also register `llamahire_uninstall_delete_resume_token` from an active companion or MU-plugin bootstrap, because normal LlamaHire runtime hooks do not run during uninstall. The filter receives `null`, the sensitive opaque token, and the current site ID. Return `true` only after deletion succeeds, `false` on a deletion failure, or the incoming value when the token belongs to another integration. Tokens must never be logged.
 
 ### Candidate-data lifecycle
 
@@ -126,6 +147,8 @@ The lifecycle service coordinates application records and their private resume f
 - `replace_resume( $application_id, array $file ): bool|WP_Error` validates and stores a replacement before removing the previous managed file.
 
 The `retention_days` setting accepts disabled retention or a documented preset from 30 days through five years. A daily WordPress cron event runs the bounded cleanup; disabling retention keeps records until an authorized erasure. Host backups are outside the service boundary and may retain historical copies according to host policy.
+
+Uninstall retains data by default. On multisite, uninstall clears scheduled tasks and plugin capabilities on every site, including when LlamaHire was network activated. When a network owner explicitly defines `LLAMAHIRE_REMOVE_DATA` as `true`, that full removal also runs independently for every site. LlamaHire deletes referenced local, VIP, and handled custom-driver resumes before dropping application records, then removes job posts, taxonomy terms, plugin-owned employer metadata and roles, tables, options, and rate-limit transients. Taxonomy cleanup does not depend on the inactive plugin runtime having registered its taxonomies. WordPress user accounts and unrelated Media Library items are retained. If any private resume cannot be removed safely, that site's database records and storage tokens are retained so cleanup can be retried without orphaning the file.
 
 Lifecycle observation hooks receive sanitized IDs and aggregate results, never candidate content or private storage tokens:
 
@@ -161,7 +184,7 @@ These hooks are for additive behavior and observability. A failed message does n
 
 ### Schema builder
 
-`build( $job_id ): array` returns one `JobPosting` entity for an eligible, open, schema-ready job or an empty array when markup must not be emitted. Physical and hybrid jobs need a locality and two-letter country code. Fully remote jobs need at least one eligible applicant country. The builder supports stable identifiers, organization overrides, structured addresses, remote eligibility, employer-provided salary ranges, and `HOUR`, `DAY`, `WEEK`, `MONTH`, or `YEAR` pay units.
+`build( $job_id ): array` returns one `JobPosting` entity for an eligible, open, schema-ready job or an empty array when markup must not be emitted. Physical and hybrid jobs need a locality and two-letter country code. Fully remote jobs need at least one eligible applicant country. The builder supports stable identifiers, organization overrides, structured addresses, remote eligibility, employer-provided salary ranges, and `HOUR`, `DAY`, `WEEK`, `MONTH`, or `YEAR` pay units. When both an application deadline and listing expiration exist, `validThrough` uses the earlier saved date and the public facts display both meanings separately.
 
 The public job page renders organization, location, workplace, employment type, salary/pay period, publication date, deadline, and stable reference from the same saved model. Extensions must preserve this visible-page/schema parity.
 
@@ -210,9 +233,23 @@ Candidate data must be authorized through LlamaHire’s granular capabilities, n
 | `Capabilities::RETRY_NOTIFICATIONS` | `llamahire_retry_notifications` | Retry undelivered application emails |
 | `Capabilities::ERASE_APPLICATIONS` | `llamahire_erase_applications` | Permanently erase applications or private resumes |
 
-Jobs use WordPress meta-cap mapping with the singular `llamahire_job` and plural `llamahire_jobs` capability types. Primitive capabilities include `edit_llamahire_jobs`, `publish_llamahire_jobs`, the private/published/others edit and delete variants, plus dedicated department term capabilities.
+Jobs use WordPress meta-cap mapping with the singular `llamahire_job` and plural `llamahire_jobs` capability types. Primitive capabilities include `edit_llamahire_jobs`, `publish_llamahire_jobs`, the private/published/others edit and delete variants, plus dedicated department and job-type term capabilities. Administrators can manage job types; employer accounts can assign existing job types without creating or changing the operator's shared vocabulary.
 
-Administrators receive the full set during installation and schema maintenance. No other role receives hiring access by default. A future setup flow may create or configure hiring roles, but extensions can already grant only the capabilities their users need.
+## Employer registration hooks
+
+The Free registration flow owns account creation, email verification, and the restricted Employer role. Extensions may tune its bounded abuse baseline with `llamahire_employer_registration_ip_limit` and `llamahire_employer_registration_email_limit`; each filter receives the default hourly request count. Returning `0` disables only that application-layer limit and should be paired with equivalent host or edge enforcement.
+
+Observation hooks expose numeric user IDs and delivery outcomes, never passwords or verification tokens:
+
+- `llamahire_employer_verification_sent( bool $result, int $user_id )`
+- `llamahire_employer_operator_notification_sent( bool $result, int $user_id, bool $approved )`
+- `llamahire_employer_account_approved( int $user_id, bool $notification_result )`
+
+Registration status, token hashes, policy versions, and company metadata are renderer internals rather than extension contracts. Extensions should observe the hooks or check the documented Employer role and job capabilities instead of reading those meta keys.
+
+Public employer registration and candidate applications can optionally use Cloudflare Turnstile or Google reCAPTCHA. Provider verification requires a successful response for the WordPress site's exact hostname; Turnstile also requires the expected form action. Domain-mapped and staging installations may add normalized hostnames with `llamahire_anti_spam_allowed_hostnames`. The `llamahire_anti_spam_pre_verify` filter receives `null`, the context (`employer_registration` or `job_application`), and the configured provider (`turnstile` or `recaptcha`). Return `true` only after an equivalent trusted verification, return `false` to block the request, or leave the value `null` to use LlamaHire's configured provider. Site and secret keys are private settings and must not be read as an extension contract.
+
+Administrators receive the full set during installation and schema maintenance. The built-in Hiring Manager role receives site-wide job and candidate workflow capabilities, but not site settings or permanent candidate erasure. The built-in Employer role receives only author-scoped job and candidate capabilities after verification and approval and is routed through the frontend My Jobs workflow. Menu visibility and frontend-only routing are experience boundaries; capabilities plus ownership checks remain authoritative. Other roles receive no hiring access by default. Extensions can grant only the capabilities their users need.
 
 Pro-specific operations require Pro-owned capabilities. Pro may require a Free capability in addition to its own when an operation reads or changes Free-owned candidate data.
 

@@ -1,3 +1,288 @@
+# Job Filter Chips and Automatic Filtering Design QA
+
+**Source visual truth**
+
+- Approved interactive concept: `/Users/mikeyarce/.codex/visualizations/2026/07/31/019fb625-4d1a-7061-9e43-fdb3e61853f7/job-filter-chips-concept.html`
+- Browser-rendered source capture: `docs/audits/2026-07-31-job-filter-chips/01-approved-concept.jpg`
+- Source capture: 1280 × 720 pixels/CSS pixels at `devicePixelRatio: 1`.
+
+**Implementation evidence**
+
+- Live Studio page: `http://localhost:8896/`
+- Desktop: `docs/audits/2026-07-31-job-filter-chips/02-implementation-desktop.jpg`
+- Equal-size focused crop: `docs/audits/2026-07-31-job-filter-chips/02-implementation-focus.jpg`
+- Active-filter state: `docs/audits/2026-07-31-job-filter-chips/03-implementation-filtered.jpg`
+- Mobile: `docs/audits/2026-07-31-job-filter-chips/04-implementation-mobile.jpg`
+- Side-by-side: `docs/audits/2026-07-31-job-filter-chips/05-comparison.png`
+- Revised disclosure controls: `docs/audits/2026-07-31-job-filter-chips/06-multi-select-default.jpg`
+- Two-value menu state: `docs/audits/2026-07-31-job-filter-chips/07-multi-select-open.jpg`
+- Revised mobile: `docs/audits/2026-07-31-job-filter-chips/08-multi-select-mobile.jpg`
+- Revised side-by-side: `docs/audits/2026-07-31-job-filter-chips/09-multi-select-comparison.png`
+- Pagination before/after: `docs/audits/2026-07-31-job-filter-chips/10-pagination-before.jpg` and `docs/audits/2026-07-31-job-filter-chips/11-pagination-after.jpg`
+- Pagination mobile: `docs/audits/2026-07-31-job-filter-chips/12-pagination-mobile.jpg`
+- Pagination comparison: `docs/audits/2026-07-31-job-filter-chips/13-pagination-comparison.png`
+- Desktop browser viewport: 1440 × 1100 CSS pixels at `devicePixelRatio: 1`; browser capture: 1425 × 1089 pixels. The component-focused implementation crop and source capture are both 1280 × 720 pixels for the combined comparison.
+- Mobile browser viewport: 390 × 844 CSS pixels at `devicePixelRatio: 1`; browser capture: 375 × 812 pixels. The difference is browser chrome/scrollbar allocation, not density scaling.
+- State: Twenty Twenty-Five block theme, default query for the full-view comparison; Design department selected for the active-chip capture.
+
+**Full-view comparison evidence**
+
+- The implementation reproduces the selected concept's search-first hierarchy, one-row desktop chip controls, compact featured toggle, result count, clear action, and card transition into results.
+- The source intentionally demonstrates a dark theme while the live page uses the active theme's light palette. The implementation inherits WordPress theme colors and typography instead of fixing the component to the concept's palette, which satisfies the requested theme customizability.
+- Real fixture data produces four cards per row rather than the concept's illustrative two cards. This is data and container-width variation outside the filter component, not design drift.
+
+**Focused comparison evidence**
+
+- Search and filter controls have comparable height, spacing, pill radii, and visual order in the equal-size combined image.
+- Active disclosure controls invert to the theme contrast color and separate removable active-filter chips appear below the result summary. Controls and chips use the WordPress Dashicons icon family rather than handcrafted marks.
+- Each categorical menu opens to native checkboxes, keeps enough trailing space for its arrow, and truncates unusually long summary text before the arrow rather than underneath it.
+- At 390 px, the search action stacks below the keyword field, Department and longer controls use full rows, Job type and Workplace share a row, and there is no document-level horizontal overflow.
+- Fonts and typography inherit the active theme at readable native weights and line heights. Spacing uses low-specificity defaults and WordPress block supports. Colors map to theme presets and exposed LlamaHire custom properties. No raster imagery is present in either filter design, so image quality is not applicable. App-specific copy remains concise and accessible.
+
+**Findings**
+
+- No actionable P0, P1, or P2 issues remain.
+- P3: the concept includes a small descriptive subtitle beside the heading. The production pattern leaves surrounding heading copy to the site editor, so the filter block does not manufacture this content.
+
+**Interaction and quality checks**
+
+- Selecting Design updated the URL to `?department=design-northstar-labs`, replaced only the result region, displayed `2 open roles`, and exposed a removable `Design — Northstar Labs` chip without a form submission.
+- Removing that chip restored the canonical unfiltered URL. Typing `Product Manager` updated after the debounce to `?job_search=Product+Manager` and returned `3 open roles`.
+- Selecting Full time and Part time together produced `?employment_type=full_time%2Cpart_time`, returned the OR-combined four matching roles, changed the menu summary to `Job type · 2`, and displayed individually removable chips. Removing Full time preserved Part time in the URL and results.
+- Clicking outside a menu closes it; Escape closes it and restores focus to its summary.
+- Selecting Marketing preserved focus on the checked `marketing-northstar-labs` checkbox after the router update; it did not move focus to the first Department option.
+- Pagination uses equal 42px page buttons, a wider text action for Previous/Next, no inherited link underlines, a clear contrast-color current state, and consistent hover/focus treatments. Page 2 correctly moves the current state and exposes Previous.
+- The server-rendered GET forms, real clear links, and submit controls remain in the markup; JavaScript hides only the filter submit fallback after the Interactivity API module starts.
+- Browser console: no errors or warnings.
+- PHP syntax, JavaScript syntax, block metadata validation, PHP 7.4 compatibility, and `git diff --check`: passed. Focused PHP coding standards: 0 errors; 9 existing public-query advisories.
+
+**Comparison history**
+
+1. First responsive review finding (P2): the separate Search and Filters blocks retained the theme's block gap, making the intended shared panel look disconnected; the Department label also clipped at 390 px.
+2. Fix: strengthened the adjacent-block margin rule and tightened narrow-screen select padding/type size.
+3. Post-fix evidence: `docs/audits/2026-07-31-job-filter-chips/04-implementation-mobile.jpg` and `docs/audits/2026-07-31-job-filter-chips/05-comparison.png`; the panel is continuous, labels are readable, and horizontal overflow remains absent.
+4. User-review finding (P2): native select arrows sat too close to the right edge, long values ran into the arrow area, and each category accepted only one value.
+5. Fix: replaced the three categorical selects with compact disclosure menus containing native checkboxes, added 42–46px reserved trailing space with arrows inset 14–16px, implemented OR-based multi-value query parsing, and made each selected value independently removable.
+6. Post-fix evidence: `docs/audits/2026-07-31-job-filter-chips/07-multi-select-open.jpg`, `docs/audits/2026-07-31-job-filter-chips/08-multi-select-mobile.jpg`, and `docs/audits/2026-07-31-job-filter-chips/09-multi-select-comparison.png`; desktop and mobile geometry is clear, two-value selection works, and no horizontal overflow is present.
+7. User-review finding (P2): after selecting a checkbox, focus restoration remembered only the filter category and moved to its first option.
+8. Fix: pass the initiating checkbox value through router navigation and restore focus by both normalized field name and exact value.
+9. Post-fix evidence: the live Marketing selection retained focus on the checked `department[]` control with value `marketing-northstar-labs`; browser console remained clear.
+10. User-review finding (P2): pagination mixed one oversized current button with underlined text links because the shared `page-numbers` class styled both the list and its children as flex containers.
+11. Fix: separated list, list-item, link, and current-page selectors; normalized all controls to a 42px height, centered the group, removed theme underline leakage, and added theme-token hover/focus/current states.
+12. Post-fix evidence: `docs/audits/2026-07-31-job-filter-chips/13-pagination-comparison.png` and `docs/audits/2026-07-31-job-filter-chips/12-pagination-mobile.jpg`; geometry is consistent at desktop and 390px with no horizontal overflow.
+
+**Follow-up polish**
+
+- Themes can tune control surfaces, active colors, focus color, radius, and gap through the documented `--llamahire-*` properties without changing markup or behavior.
+
+final result: passed
+
+---
+
+# Applications Inline Review Design QA
+
+**Source visual truth**
+
+- User-selected option 1: `docs/audits/2026-08-10-applications-inline-review/01-selected-direction.png`
+- Source dimensions: 1487 × 1058 px at 1× density. This is the selected composition; the later append-only note-history behavior was explicitly approved in conversation.
+
+**Implementation evidence**
+
+- Live Studio page: `http://localhost:8896/wp-admin/edit.php?post_type=llamahire_job&page=llamahire-applications`
+- Final aligned browser capture: `docs/audits/2026-08-10-applications-inline-review/10-notes-history-aligned.png`
+- Equal-size side-by-side comparison: `docs/audits/2026-08-10-applications-inline-review/11-notes-history-aligned-comparison.png`
+- Approved two-row implementation: `docs/audits/2026-08-10-applications-inline-review/13-two-row-review-desktop.png`
+- Notes modal: `docs/audits/2026-08-10-applications-inline-review/14-notes-history-modal.png`
+- Narrow stacked state: `docs/audits/2026-08-10-applications-inline-review/15-two-row-review-narrow.png`
+- Browser viewport: 1488 × 1059 CSS px at 1× density; captured implementation: 1473 × 1048 px after browser scrollbar/chrome allocation. It was normalized to 1487 × 1058 px for the combined comparison.
+- State: authenticated WordPress administrator with Avery Chen's review expanded; latest activity and latest note visible, full histories available in modals.
+
+**Full-view comparison evidence**
+
+- The production screen follows the selected composition while incorporating the approved refinement: a compact status/latest-activity summary row followed by a two-column materials/notes row.
+- The expanded panel does not repeat candidate, contact, or job information already visible in the row.
+- Application materials now use one consistent verb: `View` for readable PDF and cover-letter content, and `Download` for file retrieval. DOC and DOCX files remain download-only.
+- Review separates status saving from note creation. The panel shows only the newest note and newest activity entry; bounded newest-first histories open in focused modals.
+- The implementation uses WordPress admin typography, controls, Dashicons, colors, and DataViews composition instead of reproducing the illustrative admin shell.
+
+**Focused comparison evidence**
+
+- The combined image keeps materials, review, activity, row attachment, borders, and action hierarchy readable at equal pixel dimensions, so no additional crop was needed.
+- The approved two-row implementation is shorter than the intermediate three-column history design because full histories have moved into modals.
+
+**Required fidelity surfaces**
+
+- Fonts and typography: WordPress admin system typography, core control sizes, weights, and muted metadata hierarchy remain consistent with the selected native-admin direction.
+- Spacing and layout rhythm: two balanced rows, consistent central dividers, material cards, status section, composer, latest-note card, and modal lists use a compact 14–22 px rhythm without desktop clipping.
+- Colors and visual tokens: core admin blue, neutral borders, muted metadata, and semantic green success text use WordPress tokens and retain sufficient contrast.
+- Image quality and asset fidelity: no raster product imagery is present; file and cover-letter indicators use WordPress Dashicons rather than approximated assets.
+- Copy and content: `View`, `Download`, `Save status`, `Add private note`, `Add note`, `Private notes`, and `Recent activity` accurately describe their distinct behavior.
+
+**Findings and refinements**
+
+1. Initial comparison finding (P2): programmatic focus placed a heavy double-blue focus ring around the entire expanded panel, making the row attachment look visually harsher than the selected direction.
+2. Fix: left focus on the disclosure button after expansion while retaining a keyboard-only focus treatment on the review region. The final panel uses the selected thin blue border.
+3. Initial comparison finding (P3): default application rows were taller than the selected compact list.
+4. Fix: reduced default, compact, and comfortable vertical padding while retaining all three DataViews density choices.
+5. File-actions follow-up finding (P2): the first narrow review capture retained a 980 px table minimum width, clipping the right edge of the expanded review at the available 873 px content width.
+6. Fix: reduced the desktop table minimum to 860 px. The matched desktop capture retains the selected three-column composition, while the narrow capture uses the intended two-column review layout without clipping.
+7. User follow-up finding (P2): `Preview` for PDFs and `Open` for cover letters described the same read action inconsistently, and the single saved-notes textarea implied destructive replacement.
+8. Fix: standardized readable materials to `View`; split status and note actions; introduced an append-only, newest-first note list with a blank composer, author, timestamp, migration, ownership checks, privacy export, and erasure coverage.
+9. Post-fix evidence: `10-notes-history-aligned.png` and `11-notes-history-aligned-comparison.png`; the composer clears after adding, both notes remain visible, and the latest activity reflects the addition without copying note content.
+10. User refinement (P2): three equal columns gave status, notes, materials, and activity similar visual weight and made the expanded row unnecessarily tall.
+11. Fix: moved Status and the latest activity into the summary row; placed Application materials and Notes below; limited the inline histories to one entry each; added full activity and private-notes modals.
+12. Post-fix evidence: `13-two-row-review-desktop.png`, `14-notes-history-modal.png`, and `15-two-row-review-narrow.png`. Desktop hierarchy is compact and clear, modal histories are readable, and the stacked state has no document-level horizontal overflow.
+13. No actionable P0, P1, or P2 visual differences remain.
+
+**Interaction and quality checks**
+
+- Expanding and collapsing the first application: passed.
+- Protected résumé View and Download actions and cover-letter modal View/Close flow: passed.
+- Adding `Follow up with design portfolio.` appended a second note, retained the original fixture note, attributed the new note to admin, cleared the composer, and added a content-free activity event.
+- Status saving remains a separate action.
+- Latest activity summary, full activity modal, latest-note summary, and full notes modal: passed.
+- Compiled asset build, PHP syntax, focused coding standards, PHP 7.4 compatibility, translation catalog generation, and `git diff --check`: passed.
+- Browser console retained the page's pre-existing WordPress `core/rich-text` duplicate-registration message; no interaction error was produced by the inline review flow.
+- Isolated smoke suite: 260 checks passed. The Playwright hiring workflow completed successfully after fixture setup.
+
+final result: passed
+
+---
+
+# Job Card Metadata Chips Design QA
+
+**Source visual truth**
+
+- Selected ImageGen option: `/Users/mikeyarce/.codex/generated_images/019fdcbf-0813-7ea3-b1c4-15544ee7412f/exec-9f2c0f81-3f47-45dc-be50-9f6f536c93be.png`
+- Source dimensions: 1448 × 1086 px. The source shows the same pale, rounded, non-interactive metadata chips in one-row and two-row card states.
+- Selected Featured refinement: `/Users/mikeyarce/.codex/generated_images/019fdcbf-0813-7ea3-b1c4-15544ee7412f/exec-7fee6131-ec86-4ef9-9848-1392b87d3198.png`. It keeps every title on the same starting line, places a quiet uppercase label at the top-right, and distinguishes Featured cards with a darker neutral border.
+
+**Implementation evidence**
+
+- One-row state: `docs/audits/2026-08-07-job-card-metadata-chips/implementation-one-row.png`
+- Two-row state: `docs/audits/2026-08-07-job-card-metadata-chips/implementation-two-row.png`
+- Aligned card actions: `docs/audits/2026-08-07-job-card-metadata-chips/implementation-aligned-actions.png`
+- Combined comparison: `docs/audits/2026-08-07-job-card-metadata-chips/comparison.png`
+- Featured desktop state: `docs/audits/2026-08-07-job-card-metadata-chips/implementation-featured-final.png`
+- Featured narrow state: `docs/audits/2026-08-07-job-card-metadata-chips/implementation-featured-mobile.png`
+- Featured source/live comparison: `docs/audits/2026-08-07-job-card-metadata-chips/comparison-featured-final.png`
+- One-row browser viewport: 620 × 900 CSS px at 1× density; capture: 605 × 878 px after browser chrome/scrollbar allocation.
+- Two-row browser viewport: 1280 × 720 CSS px at 2× reported page density; browser capture: 1265 × 712 px. The in-app browser normalized the capture to CSS-like pixel dimensions.
+- State: authenticated Twenty Twenty-Five careers page with the deterministic `Demo draft listing` fixture visible.
+
+**Full-view comparison evidence**
+
+- The live cards reproduce the selected direction's pale neutral chip surface, compact rounded corners, punctuation-free grouping, and understated relationship to the title.
+- At a 543 px card width, all three metadata items share one row. At a 376 px card width, `Full Time` wraps as a whole chip to a second row with consistent left alignment and no orphan separator.
+- Cards use a vertical flex layout so each row's `View role` links share the same baseline despite different title, metadata, and excerpt wrapping. The Featured label is removed from normal flow and anchored at the top-right, so Featured and standard titles retain the same starting position.
+- Featured cards use a darker neutral border (`38%` ink mixed with the surface) while standard cards retain the lighter theme border (`15%` ink mixed with the surface). The distinction is visible without adding a new layout row or decorative accent color.
+- The live page retains the active WordPress theme's typography, card proportions, and surrounding job-discovery layout rather than hardcoding the illustrative mock's larger type scale.
+
+**Focused comparison evidence**
+
+- The combined image places the selected source beside both responsive live states. Chip shape, neutral surface, spacing, text order, and wrapping behavior are directly readable without a separate crop.
+- Computed live styles use a 6 px radius, the existing `--llamahire-soft` theme token, 0.28em × 0.6em padding, and a 7 px × 8 px flex gap.
+
+**Required fidelity surfaces**
+
+- Fonts and typography: the existing 0.88rem metadata size, inherited theme family, muted color, and 1.3 line height remain readable and subordinate to the job title.
+- Spacing and layout rhythm: complete chip units wrap through the existing flex layout; both responsive states keep even row and item gaps without punctuation artifacts.
+- Colors and visual tokens: chip backgrounds use `--llamahire-soft`, which already adapts to the active WordPress theme; text continues to use `--llamahire-muted`.
+- Image quality and asset fidelity: no raster imagery, logos, decorative marks, or custom icons are part of this selected treatment.
+- Copy and content: location, workplace, and employment labels remain unchanged and in the same semantic order.
+
+**Findings**
+
+- No actionable P0, P1, or P2 differences remain.
+- P3: the generated concept uses a slightly larger illustrative type scale. The implementation intentionally preserves the plugin's existing theme-inherited card typography.
+
+**Interaction and quality checks**
+
+- Card links and server-rendered metadata markup remain unchanged; only presentation changed.
+- The 620 px state has zero document-level horizontal overflow.
+- The three cards in each verified desktop row had identical card bottoms and link top/bottom positions. The 390 × 844 state retained compact badges and zero document-level horizontal overflow.
+- All three Featured desktop headings had the same measured top position. At 390 × 844, `Product Manager` remained one line while longer titles wrapped cleanly with an 18.7 px measured gap before the label.
+- Browser console: no errors or warnings.
+- `git diff --check`: passed.
+
+**Comparison history**
+
+1. First live comparison: passed with no actionable P0, P1, or P2 findings; no corrective visual iteration was required.
+2. Follow-up polish: converted cards to vertical flex containers and used an automatic top margin on the existing card link so actions align at the bottom without changing markup or interaction behavior.
+3. Featured refinement: replaced the pill with a quiet top-right typographic label and darkened the card border. The first pass reserved 7rem beside the label and caused unnecessary narrow-card wrapping; the final pass reduced that reserve to 5rem, keeping a safe gap while allowing shorter titles to remain on one line.
+
+**Follow-up polish**
+
+- None required for this component.
+
+final result: passed
+
+---
+
+# Job Facts Mockup Design QA
+
+**Source visual truth**
+
+- User-selected mockup: `/var/folders/vk/rsn6lrb97t19mrdsg80py_gr0000gn/T/codex-clipboard-5cda1c88-f785-4551-a435-ba4b95e3c248.png`
+- Source dimensions: 1580 × 564 px. The selected target is the divided, text-first job-facts treatment; the surrounding dark preview shell is illustrative rather than a fixed theme requirement.
+
+**Implementation evidence**
+
+- Desktop: `docs/audits/2026-08-05-job-facts-mockup/04-implementation-desktop-final.png`
+- Mobile: `docs/audits/2026-08-05-job-facts-mockup/06-implementation-mobile-final.png`
+- Focused source/implementation comparison: `docs/audits/2026-08-05-job-facts-mockup/05-focused-comparison-final.png`
+- Desktop browser viewport: 1280 × 900 CSS px at 1× density; capture: 1265 × 889 px after browser chrome/scrollbar allocation.
+- Mobile browser viewport: 390 × 844 CSS px at 1× density; capture: 375 × 812 px after browser chrome/scrollbar allocation.
+- State: authenticated draft preview for job 1677 in the Twenty Twenty-Five theme.
+
+**Full-view comparison evidence**
+
+- The implementation adopts the mockup’s text-only cells, subtle one-pixel dividers, rounded outer frame, compact uppercase labels, strong values, and generous internal padding.
+- The active WordPress theme continues to own the light/dark palette and typography. The source’s dark shell was not hardcoded into the plugin.
+- Populated company information remains as an additional full-width adaptive row because the production details block exposes organization as a configurable fact. Missing rows still collapse without reserved space.
+
+**Focused comparison evidence**
+
+- The combined comparison shows the same label/value hierarchy, border rhythm, cell separation, and text alignment at readable scale.
+- The first implementation retained the longer `Employment type` label and wrapped it at the real content width. The final implementation uses the mockup’s `Employment` label and keeps it on one line.
+- No raster imagery or decorative icons are present in the selected facts treatment. Image quality and custom-asset fidelity are therefore not applicable.
+
+**Required fidelity surfaces**
+
+- Fonts and typography: inherits the active theme while matching the source’s uppercase label hierarchy, stronger value weight, line height, and letter spacing.
+- Spacing and layout rhythm: 20 × 22 px desktop cell padding, 17 × 16 px narrow padding, one-pixel dividers, and a 12 px outer radius reproduce the source’s density without crowding.
+- Colors and visual tokens: surfaces, borders, text, and muted labels map to LlamaHire/WordPress theme tokens rather than hardcoded source colors.
+- Image quality and asset fidelity: not applicable; the chosen component is deliberately text-only.
+- Copy and content: `Location`, `Location type`, `Employment`, and `Posted` match the source vocabulary; real job values replace illustrative mock data.
+
+**Findings**
+
+- No actionable P0, P1, or P2 differences remain.
+- Acceptable product difference: the automatic production panel retains Company as a full-width row when populated, while the illustrative source places company beside the title.
+
+**Interaction and quality checks**
+
+- Empty-fact filtering and adaptive wrapping remain server-rendered.
+- Desktop and 390 px mobile states have no document-level horizontal overflow.
+- Definition-list semantics and visible term/value reading order remain intact.
+- Browser console: no errors or warnings.
+
+**Comparison history**
+
+1. First comparison finding (P2): icon-led production cells and sentence-case labels differed materially from the selected text-first mockup.
+2. Fix: removed decorative fact icons, adopted divided text cells, uppercase labels, stronger values, consistent padding, and a rounded outer frame.
+3. First post-fix comparison finding (P2): `Employment type` wrapped at the real content width while the source used `Employment` on one line.
+4. Fix: aligned the frontend and block-editor label to `Employment`.
+5. Post-fix evidence: `04-implementation-desktop-final.png`, `06-implementation-mobile-final.png`, and `05-focused-comparison-final.png` show the selected hierarchy with no crowding or overflow.
+
+**Follow-up polish**
+
+- None required for this component.
+
+final result: passed
+
+---
+
 # Settings Option 1 Design QA
 
 **Source visual truth**

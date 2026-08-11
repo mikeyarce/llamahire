@@ -71,7 +71,7 @@ The endpoint must derive author scope from the authenticated user rather than tr
 2. Add the build pipeline and a fixture-backed DataViews spike to validate bundle loading, WordPress 6.5 compatibility, RTL styles, table/list density, responsive behavior, and accessibility.
 3. Add the read-only Applications REST endpoint and connect search, job/status/date filters, sorting, and pagination.
 4. Preserve the existing candidate-detail page and navigate to it from a DataViews row action.
-5. Persist safe per-user view preferences such as visible columns, column order, density, and page size.
+5. Completed: persist safe per-user view preferences through WordPress preferences, including visible columns, column order, density, layout, and page size. Search, filters, sorting, and pagination remain shareable URL state; the native Reset view action clears both persisted and URL-backed state so the complete panel returns to its default.
 6. Add bulk status changes only after capability, ownership, confirmation, partial-failure, audit-log, and keyboard-flow tests pass.
 7. Make filtered export consume the same normalized server query as the current DataViews state.
 8. Remove the legacy inbox renderer only after the new screen passes supported-version, no-JavaScript fallback, 10,000-record, mobile, RTL, and assistive-technology checks.
