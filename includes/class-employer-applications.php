@@ -103,9 +103,12 @@ final class Employer_Applications {
 				<button type="submit"><?php esc_html_e( 'Filter applications', 'llamahire' ); ?></button>
 				<?php if ( $state['search'] || $state['status'] || $state['job_id'] ) : ?><a href="<?php echo esc_url( self::url() ); ?>"><?php esc_html_e( 'Clear filters', 'llamahire' ); ?></a><?php endif; ?>
 			</form>
-			<p class="llamahire-employer-applications__results" role="status"><?php echo esc_html( self::results_label( $query ) ); ?></p>
-			<?php if ( $application ) : self::render_detail( $application ); endif; ?>
-			<?php self::render_list( $query, $state ); ?>
+			<?php if ( $application ) : ?>
+				<?php self::render_detail( $application ); ?>
+			<?php else : ?>
+				<p class="llamahire-employer-applications__results" role="status"><?php echo esc_html( self::results_label( $query ) ); ?></p>
+				<?php self::render_list( $query, $state ); ?>
+			<?php endif; ?>
 		</div>
 		<?php
 		return ob_get_clean();
