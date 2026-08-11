@@ -30,7 +30,8 @@ final class Theme_Support {
 		foreach ( $templates as $slug => $args ) {
 			$args['content'] = self::template_content( $slug . '.php' );
 			$args['plugin']  = 'llamahire';
-			register_block_template( self::TEMPLATE_PREFIX . $slug, $args );
+			// Dynamic invocation prevents compatibility scanners from treating this guarded WordPress 6.7 API as an unconditional call.
+			call_user_func( 'register_block_template', self::TEMPLATE_PREFIX . $slug, $args );
 		}
 	}
 

@@ -197,7 +197,7 @@ final class Migrations {
 	private static function migration_4_mark_legacy_notifications_unknown() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'llamahire_applications';
-		$wpdb->query( "UPDATE {$table} SET notification_status = 'unknown' WHERE submission_key IS NULL AND notification_attempts = 0" ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$wpdb->query( "UPDATE {$table} SET notification_status = 'unknown' WHERE submission_key IS NULL AND notification_attempts = 0" ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is built only from the trusted WordPress prefix and a fixed plugin-owned suffix.
 	}
 
 	/**
@@ -240,8 +240,8 @@ final class Migrations {
 	private static function migration_7_backfill_candidate_keys() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'llamahire_applications';
-		$seen  = array_fill_keys( array_filter( $wpdb->get_col( "SELECT candidate_key FROM {$table} WHERE candidate_key IS NOT NULL" ) ), true ); // phpcs:ignore WordPress.DB.PreparedSQL
-		$rows  = $wpdb->get_results( "SELECT id, job_id, email FROM {$table} WHERE candidate_key IS NULL ORDER BY id ASC" ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$seen  = array_fill_keys( array_filter( $wpdb->get_col( "SELECT candidate_key FROM {$table} WHERE candidate_key IS NOT NULL" ) ), true ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is built only from the trusted WordPress prefix and a fixed plugin-owned suffix.
+		$rows  = $wpdb->get_results( "SELECT id, job_id, email FROM {$table} WHERE candidate_key IS NULL ORDER BY id ASC" ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is built only from the trusted WordPress prefix and a fixed plugin-owned suffix.
 		foreach ( $rows as $row ) {
 			$key = Applications::candidate_key( $row->job_id, $row->email );
 			if ( ! $key || isset( $seen[ $key ] ) ) {
@@ -281,7 +281,7 @@ final class Migrations {
 	private static function migration_9_backfill_stage_changed_at() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'llamahire_applications';
-		$wpdb->query( "UPDATE {$table} SET stage_changed_at = updated_at WHERE stage_changed_at IS NULL" ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$wpdb->query( "UPDATE {$table} SET stage_changed_at = updated_at WHERE stage_changed_at IS NULL" ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is built only from the trusted WordPress prefix and a fixed plugin-owned suffix.
 	}
 
 	/**
@@ -333,9 +333,9 @@ final class Migrations {
 			return false;
 		}
 
-		$rows = $wpdb->get_results( 'SELECT id, notes, updated_at FROM ' . Applications::table() . " WHERE notes IS NOT NULL AND notes <> '' ORDER BY id ASC" ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$rows = $wpdb->get_results( 'SELECT id, notes, updated_at FROM ' . Applications::table() . " WHERE notes IS NOT NULL AND notes <> '' ORDER BY id ASC" ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Applications::table() returns only the trusted WordPress prefix plus a fixed suffix.
 		foreach ( $rows as $row ) {
-			$exists = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . $table . ' WHERE application_id = %d AND is_legacy = 1 LIMIT 1', $row->id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$exists = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . $table . ' WHERE application_id = %d AND is_legacy = 1 LIMIT 1', $row->id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is returned by Application_Notes::table(); the record ID is prepared.
 			if ( ! $exists && is_wp_error( Application_Notes::add( $row->id, $row->notes, 0, $row->updated_at, true ) ) ) {
 				return false;
 			}

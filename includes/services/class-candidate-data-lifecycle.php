@@ -30,7 +30,7 @@ final class Candidate_Data_Lifecycle implements Candidate_Data_Lifecycle_Contrac
 		$now    = null === $now ? current_time( 'timestamp', true ) : absint( $now );
 		$cutoff = gmdate( 'Y-m-d H:i:s', $now - $days * DAY_IN_SECONDS );
 		global $wpdb;
-		$ids = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM ' . Applications::table() . ' WHERE created_at < %s ORDER BY created_at ASC, id ASC LIMIT %d', $cutoff, $limit ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$ids = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM ' . Applications::table() . ' WHERE created_at < %s ORDER BY created_at ASC, id ASC LIMIT %d', $cutoff, $limit ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Applications::table() returns only the trusted WordPress prefix plus a fixed suffix; values are prepared.
 		foreach ( $ids as $application_id ) {
 			$result['examined']++;
 			$erased = $this->erase( $application_id );
@@ -123,6 +123,6 @@ final class Candidate_Data_Lifecycle implements Candidate_Data_Lifecycle_Contrac
 
 	private function private_record( $application_id ) {
 		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( 'SELECT id, job_id, resume_path, resume_name FROM ' . Applications::table() . ' WHERE id = %d', absint( $application_id ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT id, job_id, resume_path, resume_name FROM ' . Applications::table() . ' WHERE id = %d', absint( $application_id ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Applications::table() returns only the trusted WordPress prefix plus a fixed suffix; the ID is prepared.
 	}
 }

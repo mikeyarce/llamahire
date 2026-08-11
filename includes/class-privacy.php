@@ -96,7 +96,7 @@ final class Privacy {
 	private static function export_fields( $application ) {
 		$fields = array(
 			array( 'name' => __( 'Application ID', 'llamahire' ), 'value' => (string) absint( $application->id ) ),
-			// Translators: %d is the numeric WordPress job post ID.
+			// translators: %d is the numeric WordPress job post ID.
 			array( 'name' => __( 'Job', 'llamahire' ), 'value' => $application->job_title ?: sprintf( __( 'Deleted job #%d', 'llamahire' ), absint( $application->job_id ) ) ),
 			array( 'name' => __( 'Candidate name', 'llamahire' ), 'value' => $application->name ),
 			array( 'name' => __( 'Candidate email', 'llamahire' ), 'value' => $application->email ),

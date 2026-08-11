@@ -9,46 +9,46 @@
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
 require_once __DIR__ . '/includes/class-capabilities.php';
-$remove_data = defined( 'LLAMAHIRE_REMOVE_DATA' ) && true === LLAMAHIRE_REMOVE_DATA;
+$llamahire_remove_data = defined( 'LLAMAHIRE_REMOVE_DATA' ) && true === LLAMAHIRE_REMOVE_DATA;
 
-if ( $remove_data ) {
+if ( $llamahire_remove_data ) {
 	require_once __DIR__ . '/includes/contracts/interface-resume-storage.php';
 	require_once __DIR__ . '/includes/services/class-resume-storage.php';
 	require_once __DIR__ . '/includes/services/class-vip-acl-resume-storage.php';
 	require_once __DIR__ . '/includes/class-uninstaller.php';
 }
 
-$uninstall_current_site = static function () use ( $remove_data ) {
+$llamahire_uninstall_current_site = static function () use ( $llamahire_remove_data ) {
 	wp_clear_scheduled_hook( 'llamahire_cleanup_expired_applications' );
 	wp_clear_scheduled_hook( 'llamahire_send_expiring_listing_notices' );
 
-	if ( $remove_data ) {
+	if ( $llamahire_remove_data ) {
 		\LlamaHire\Uninstaller::remove_data();
 	}
 	\LlamaHire\Capabilities::remove();
 };
 
 if ( ! is_multisite() ) {
-	$uninstall_current_site();
+	$llamahire_uninstall_current_site();
 	return;
 }
 
-$offset = 0;
+$llamahire_uninstall_offset = 0;
 do {
-	$site_ids = get_sites(
+	$llamahire_uninstall_site_ids = get_sites(
 		array(
 			'fields' => 'ids',
 			'number' => 100,
-			'offset' => $offset,
+			'offset' => $llamahire_uninstall_offset,
 		)
 	);
-	foreach ( $site_ids as $site_id ) {
-		switch_to_blog( $site_id );
+	foreach ( $llamahire_uninstall_site_ids as $llamahire_uninstall_site_id ) {
+		switch_to_blog( $llamahire_uninstall_site_id );
 		try {
-			$uninstall_current_site();
+			$llamahire_uninstall_current_site();
 		} finally {
 			restore_current_blog();
 		}
 	}
-	$offset += count( $site_ids );
-} while ( 100 === count( $site_ids ) );
+	$llamahire_uninstall_offset += count( $llamahire_uninstall_site_ids );
+} while ( 100 === count( $llamahire_uninstall_site_ids ) );

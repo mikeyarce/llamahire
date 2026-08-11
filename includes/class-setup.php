@@ -129,6 +129,14 @@ final class Setup {
 			3 => __( 'Applications & privacy', 'llamahire' ),
 			4 => __( 'Public jobs page', 'llamahire' ),
 		);
+		$progress_value_text = __( 'Not complete', 'llamahire' );
+		if ( 1 !== $initial_step ) {
+			$progress_value_text = sprintf(
+				/* translators: %d: Current setup step. */
+				__( 'Step %d of 4', 'llamahire' ),
+				$initial_step
+			);
+		}
 		delete_transient( 'llamahire_setup_error_' . get_current_user_id() );
 		?>
 		<div class="wrap llamahire-setup-screen" data-llamahire-setup data-initial-step="<?php echo esc_attr( $initial_step ); ?>">
@@ -147,7 +155,7 @@ final class Setup {
 					);
 					?>
 				</p>
-				<progress class="screen-reader-text" value="<?php echo esc_attr( $initial_step - 1 ); ?>" max="4" aria-label="<?php esc_attr_e( 'Setup progress: purpose, identity and defaults, applications and privacy, and public jobs page', 'llamahire' ); ?>" aria-valuetext="<?php echo esc_attr( 1 === $initial_step ? __( 'Not complete', 'llamahire' ) : sprintf( __( 'Step %d of 4', 'llamahire' ), $initial_step ) ); ?>"><?php echo esc_html( ( $initial_step - 1 ) * 25 ); ?>%</progress>
+				<progress class="screen-reader-text" value="<?php echo esc_attr( $initial_step - 1 ); ?>" max="4" aria-label="<?php esc_attr_e( 'Setup progress: purpose, identity and defaults, applications and privacy, and public jobs page', 'llamahire' ); ?>" aria-valuetext="<?php echo esc_attr( $progress_value_text ); ?>"><?php echo esc_html( ( $initial_step - 1 ) * 25 ); ?>%</progress>
 				<ol class="llamahire-setup-steps" aria-label="<?php esc_attr_e( 'Setup steps', 'llamahire' ); ?>">
 					<?php foreach ( $step_names as $step_number => $step_name ) : ?><li data-llamahire-step-indicator="<?php echo esc_attr( $step_number ); ?>"><span class="llamahire-setup-steps__marker" aria-hidden="true"><?php echo esc_html( $step_number ); ?></span><span><?php echo esc_html( $step_name ); ?></span></li><?php endforeach; ?>
 				</ol>

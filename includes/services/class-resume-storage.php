@@ -218,7 +218,7 @@ class Resume_Storage implements Resume_Storage_Contract {
 	protected function record( $application_id ) {
 		global $wpdb;
 
-		return $wpdb->get_row( $wpdb->prepare( 'SELECT resume_path, resume_name FROM ' . Applications::table() . ' WHERE id = %d', absint( $application_id ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Private storage tokens are deliberately excluded from the public repository model and must be current for downloads.
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT resume_path, resume_name FROM ' . Applications::table() . ' WHERE id = %d', absint( $application_id ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Applications::table() is trusted; private storage tokens must be read directly and remain current for downloads.
 	}
 
 	/**

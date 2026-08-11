@@ -39,7 +39,7 @@ final class Application_Notes {
 		}
 
 		global $wpdb;
-		$job_id = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT job_id FROM ' . Applications::table() . ' WHERE id = %d', $application_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$job_id = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT job_id FROM ' . Applications::table() . ' WHERE id = %d', $application_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Applications::table() returns only the trusted WordPress prefix plus a fixed suffix; the ID is prepared.
 		if ( ! $job_id ) {
 			return new \WP_Error( 'llamahire_application_not_found', __( 'Application not found.', 'llamahire' ) );
 		}
@@ -69,14 +69,14 @@ final class Application_Notes {
 	public static function find( $note_id ) {
 		global $wpdb;
 
-		return $wpdb->get_row( $wpdb->prepare( 'SELECT id, application_id, author_user_id, body, is_legacy, created_at FROM ' . self::table() . ' WHERE id = %d', absint( $note_id ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT id, application_id, author_user_id, body, is_legacy, created_at FROM ' . self::table() . ' WHERE id = %d', absint( $note_id ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- self::table() returns only the trusted WordPress prefix plus a fixed suffix; the ID is prepared.
 	}
 
 	public static function for_application( $application_id, $limit = 50 ) {
 		global $wpdb;
 		$limit = min( 500, max( 1, absint( $limit ) ) );
 
-		return $wpdb->get_results( $wpdb->prepare( 'SELECT id, application_id, author_user_id, body, is_legacy, created_at FROM ' . self::table() . ' WHERE application_id = %d ORDER BY created_at DESC, id DESC LIMIT %d', absint( $application_id ), $limit ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		return $wpdb->get_results( $wpdb->prepare( 'SELECT id, application_id, author_user_id, body, is_legacy, created_at FROM ' . self::table() . ' WHERE application_id = %d ORDER BY created_at DESC, id DESC LIMIT %d', absint( $application_id ), $limit ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- self::table() returns only the trusted WordPress prefix plus a fixed suffix; values are prepared.
 	}
 
 	public static function delete_for_application( $application_id ) {

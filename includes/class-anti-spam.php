@@ -42,11 +42,11 @@ final class Anti_Spam {
 		$provider = self::sanitize_provider( $settings['anti_spam_provider'] );
 		$site_key = $settings['anti_spam_site_key'];
 		if ( self::PROVIDER_TURNSTILE === $provider ) {
-			wp_enqueue_script( 'llamahire-turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js', array(), null, true );
+			wp_enqueue_script( 'llamahire-turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js', array(), LLAMAHIRE_VERSION, true ); // phpcs:ignore PluginCheck.CodeAnalysis.EnqueuedResourceOffloading.OffloadedContent -- Optional third-party anti-spam service enabled explicitly by the site owner and documented in readme.txt.
 			wp_script_add_data( 'llamahire-turnstile', 'strategy', 'async' );
 			echo '<div class="llamahire-anti-spam cf-turnstile" data-sitekey="' . esc_attr( $site_key ) . '" data-action="' . esc_attr( $context ) . '"></div>';
 		} else {
-			wp_enqueue_script( 'llamahire-recaptcha', 'https://www.google.com/recaptcha/api.js', array(), null, true );
+			wp_enqueue_script( 'llamahire-recaptcha', 'https://www.google.com/recaptcha/api.js', array(), LLAMAHIRE_VERSION, true ); // phpcs:ignore PluginCheck.CodeAnalysis.EnqueuedResourceOffloading.OffloadedContent -- Optional third-party anti-spam service enabled explicitly by the site owner and documented in readme.txt.
 			wp_script_add_data( 'llamahire-recaptcha', 'strategy', 'async' );
 			echo '<div class="llamahire-anti-spam g-recaptcha" data-sitekey="' . esc_attr( $site_key ) . '"></div>';
 		}

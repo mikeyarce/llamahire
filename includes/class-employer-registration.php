@@ -326,7 +326,7 @@ final class Employer_Registration {
 				'fields'     => 'ids',
 				'number'     => 1,
 				'count_total' => true,
-				'meta_key'   => self::STATUS_META,
+				'meta_key'   => self::STATUS_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Bounded admin approval queue over plugin-owned user metadata.
 				'meta_value' => self::STATUS_APPROVAL, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- The status is intentionally stored as user metadata and the query is limited to the approval queue.
 			)
 		);

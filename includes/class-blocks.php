@@ -792,11 +792,19 @@ endif;
 			'resume_size'    => __( 'Your resume must be smaller than 5 MB.', 'llamahire' ),
 			'resume_type'    => __( 'Please upload a PDF or DOCX resume.', 'llamahire' ),
 			'resume_storage' => __( 'Resume uploads are temporarily unavailable. Please contact the employer.', 'llamahire' ),
-				'rate_limited'   => __( 'Too many applications were submitted recently. Please wait and try again.', 'llamahire' ),
-				'anti_spam'      => __( 'Complete the spam protection check and try again.', 'llamahire' ),
-				'error'          => __( 'We could not save your application. Please try again.', 'llamahire' ),
+			'rate_limited'   => __( 'Too many applications were submitted recently. Please wait and try again.', 'llamahire' ),
+			'anti_spam'      => __( 'Complete the spam protection check and try again.', 'llamahire' ),
+			'error'          => __( 'We could not save your application. Please try again.', 'llamahire' ),
 			'invalid'        => __( 'This application link is no longer valid.', 'llamahire' ),
 		);
+		$recipient_notice = '';
+		if ( Settings::SITE_MODE_JOB_BOARD === Settings::site_mode() && $organization['name'] ) {
+			$recipient_notice = sprintf(
+				/* translators: %s: Hiring organization name. */
+				__( 'Your application will be shared with %s for hiring review.', 'llamahire' ),
+				$organization['name']
+			);
+		}
 		wp_enqueue_style( 'llamahire' );
 		wp_enqueue_style( 'dashicons' );
 		wp_enqueue_script( 'llamahire-application-form' );
@@ -804,7 +812,7 @@ endif;
 		?>
 		<div <?php echo get_block_wrapper_attributes( array( 'class' => 'llamahire-application' ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?> id="llamahire-application" data-llamahire-application="<?php echo esc_attr( $job_id ); ?>" data-application-result="<?php echo esc_attr( $result ); ?>">
 			<h2><?php echo esc_html( $attributes['heading'] ?? __( 'Apply for this role', 'llamahire' ) ); ?></h2>
-			<?php if ( Settings::SITE_MODE_JOB_BOARD === Settings::site_mode() && $organization['name'] ) : ?><p class="llamahire-application-recipient"><?php echo esc_html( sprintf( __( 'Your application will be shared with %s for hiring review.', 'llamahire' ), $organization['name'] ) ); ?></p><?php endif; ?>
+			<?php if ( $recipient_notice ) : ?><p class="llamahire-application-recipient"><?php echo esc_html( $recipient_notice ); ?></p><?php endif; ?>
 			<?php
 			if ( isset( $messages[ $result ] ) ) :
 				?>

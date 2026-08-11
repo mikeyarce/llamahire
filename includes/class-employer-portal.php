@@ -797,11 +797,16 @@ final class Employer_Portal {
 
 	private static function render_job_actions( $job, array $meta, $submit_url, $application_count = 0 ) {
 		$edit_url = add_query_arg( 'job_id', $job->ID, $submit_url );
+		$application_count_label = sprintf(
+			/* translators: %s: Number of applications for a job. */
+			_n( '%s application', '%s applications', $application_count, 'llamahire' ),
+			number_format_i18n( $application_count )
+		);
 		?>
 		<div class="llamahire-employer-portal__job-actions">
 			<a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Edit', 'llamahire' ); ?></a>
 			<a href="<?php echo esc_url( get_preview_post_link( $job ) ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Preview', 'llamahire' ); ?></a>
-			<?php if ( 'internal' === $meta['application_method'] ) : ?><a href="<?php echo esc_url( Employer_Applications::url( array( 'job_id' => $job->ID ) ) ); ?>"><?php echo esc_html( sprintf( _n( '%s application', '%s applications', $application_count, 'llamahire' ), number_format_i18n( $application_count ) ) ); ?></a><?php endif; ?>
+			<?php if ( 'internal' === $meta['application_method'] ) : ?><a href="<?php echo esc_url( Employer_Applications::url( array( 'job_id' => $job->ID ) ) ); ?>"><?php echo esc_html( $application_count_label ); ?></a><?php endif; ?>
 			<?php if ( Jobs::listing_expires_soon( $job->ID ) && Settings::listing_duration_days( Settings::get()['listing_duration_days'] ) ) : ?>
 				<form method="post"><input type="hidden" name="llamahire_employer_action" value="renew_job"><input type="hidden" name="job_id" value="<?php echo esc_attr( $job->ID ); ?>"><?php wp_nonce_field( 'llamahire_employer_renew_job_' . $job->ID, 'llamahire_employer_nonce' ); ?><button type="submit" class="llamahire-link-button"><?php esc_html_e( 'Renew', 'llamahire' ); ?></button></form>
 			<?php endif; ?>

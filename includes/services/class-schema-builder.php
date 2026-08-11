@@ -15,7 +15,7 @@ final class Schema_Builder implements Schema_Builder_Contract {
 
 		$meta        = Jobs::get_meta( $job_id );
 		$title       = get_the_title( $job_id );
-		$description = wp_kses_post( apply_filters( 'the_content', get_post_field( 'post_content', $job_id ) ) );
+		$description = wp_kses_post( apply_filters( 'the_content', get_post_field( 'post_content', $job_id ) ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress core content filter.
 		$organization = Jobs::organization( $meta );
 		$is_remote    = 'remote' === $meta['workplace'];
 		$has_address  = $meta['address_locality'] && $meta['address_country'];

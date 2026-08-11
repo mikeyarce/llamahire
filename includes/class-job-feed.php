@@ -100,18 +100,23 @@ final class Job_Feed {
 		);
 		$last_build = $modified ? gmdate( 'r', max( $modified ) ) : gmdate( 'r', strtotime( get_lastpostmodified( 'GMT' ) ) );
 		$charset = get_option( 'blog_charset' );
+		$feed_title = sprintf(
+			/* translators: %s: WordPress site name. */
+			__( '%s open jobs', 'llamahire' ),
+			get_bloginfo( 'name' )
+		);
 		header( 'Content-Type: ' . feed_content_type( 'rss-http' ) . '; charset=' . $charset, true );
 		echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- XML declaration uses the saved WordPress charset.
 		?>
 		<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 		<channel>
-			<title><?php echo esc_html( sprintf( __( '%s open jobs', 'llamahire' ), get_bloginfo( 'name' ) ) ); ?></title>
+			<title><?php echo esc_html( $feed_title ); ?></title>
 			<atom:link href="<?php echo esc_url( self::url( $state ) ); ?>" rel="self" type="application/rss+xml" />
 			<link><?php echo esc_url( self::directory_url( $state ) ); ?></link>
 			<description><?php esc_html_e( 'Currently open job listings.', 'llamahire' ); ?></description>
 			<language><?php echo esc_html( get_bloginfo( 'language' ) ); ?></language>
 			<lastBuildDate><?php echo esc_html( $last_build ); ?></lastBuildDate>
-			<?php do_action( 'rss2_head' ); ?>
+			<?php do_action( 'rss2_head' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress core RSS extension point. ?>
 			<?php while ( $query->have_posts() ) : $query->the_post(); ?>
 			<item>
 				<title><?php the_title_rss(); ?></title>
@@ -120,7 +125,7 @@ final class Job_Feed {
 				<pubDate><?php echo esc_html( get_post_time( 'r', true ) ); ?></pubDate>
 				<description><![CDATA[<?php echo self::item_description( get_the_ID() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped HTML is wrapped safely for RSS CDATA. ?>]]></description>
 				<?php self::item_categories( get_the_ID() ); ?>
-				<?php do_action( 'rss2_item' ); ?>
+				<?php do_action( 'rss2_item' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress core RSS extension point. ?>
 			</item>
 			<?php endwhile; ?>
 		</channel>

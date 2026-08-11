@@ -17,7 +17,7 @@ final class Application_Query implements Application_Query_Contract {
 		list( $where, $params ) = $this->where( $args );
 		$table = Applications::table();
 		$count_sql = "SELECT COUNT(*) FROM {$table} applications LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = applications.job_id WHERE {$where}";
-		$total = (int) ( $params ? $wpdb->get_var( $wpdb->prepare( $count_sql, $params ) ) : $wpdb->get_var( $count_sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$total = (int) ( $params ? $wpdb->get_var( $wpdb->prepare( $count_sql, $params ) ) : $wpdb->get_var( $count_sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL uses trusted table names, fixed clauses, and prepared values.
 		$order_columns = array(
 			'candidate'           => 'applications.name',
 			'job'                 => 'jobs.post_title',
@@ -29,7 +29,7 @@ final class Application_Query implements Application_Query_Contract {
 		$order   = 'asc' === strtolower( $args['order'] ) ? 'ASC' : 'DESC';
 		$sql = "SELECT applications.id, applications.job_id, jobs.post_title AS job_title, applications.name, applications.email, applications.phone, applications.cover_letter, applications.resume_name, (applications.resume_path <> '') AS has_resume, applications.status, applications.notes, EXISTS (SELECT 1 FROM " . \LlamaHire\Application_Notes::table() . " private_notes WHERE private_notes.application_id = applications.id) AS has_notes, applications.created_at, applications.updated_at, applications.stage_changed_at, applications.notification_status, applications.notification_attempts, applications.employer_notified_at, applications.candidate_notified_at, applications.notification_error_code FROM {$table} applications LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = applications.job_id WHERE {$where} ORDER BY {$orderby} {$order}, applications.id {$order} LIMIT %d OFFSET %d";
 		$query_params = array_merge( $params, array( $per_page, ( $page - 1 ) * $per_page ) );
-		$items = $wpdb->get_results( $wpdb->prepare( $sql, $query_params ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$items = $wpdb->get_results( $wpdb->prepare( $sql, $query_params ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL uses trusted table names, allowlisted ordering, and prepared values.
 		return array( 'items' => $items, 'total' => $total, 'page' => $page, 'per_page' => $per_page, 'pages' => max( 1, (int) ceil( $total / $per_page ) ) );
 	}
 
@@ -38,7 +38,7 @@ final class Application_Query implements Application_Query_Contract {
 		$table = Applications::table();
 		list( $where, $params ) = $this->where( $arguments );
 		$sql = "SELECT SUM(CASE WHEN applications.status = 'new' THEN 1 ELSE 0 END) AS new_count, SUM(CASE WHEN applications.status = 'reviewing' THEN 1 ELSE 0 END) AS reviewing_count, SUM(CASE WHEN applications.status = 'interviewing' THEN 1 ELSE 0 END) AS interviewing_count, SUM(CASE WHEN applications.status = 'offer' THEN 1 ELSE 0 END) AS offer_count, SUM(CASE WHEN applications.status = 'rejected' THEN 1 ELSE 0 END) AS rejected_count, SUM(CASE WHEN applications.status = 'hired' THEN 1 ELSE 0 END) AS hired_count, SUM(CASE WHEN applications.notification_status IN ('pending','partial','failed') THEN 1 ELSE 0 END) AS notification_attention FROM {$table} applications LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = applications.job_id WHERE {$where}";
-		$row = $params ? $wpdb->get_row( $wpdb->prepare( $sql, $params ) ) : $wpdb->get_row( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$row = $params ? $wpdb->get_row( $wpdb->prepare( $sql, $params ) ) : $wpdb->get_row( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL uses trusted table names, fixed aggregate clauses, and prepared values.
 		return array(
 			'new' => (int) ( $row->new_count ?? 0 ), 'reviewing' => (int) ( $row->reviewing_count ?? 0 ),
 			'interviewing' => (int) ( $row->interviewing_count ?? 0 ), 'offer' => (int) ( $row->offer_count ?? 0 ),
@@ -53,7 +53,7 @@ final class Application_Query implements Application_Query_Contract {
 		$limit = min( 20, max( 1, absint( $limit ) ) );
 		list( $where, $params ) = $this->where( $arguments );
 		$sql = "SELECT applications.id, applications.job_id, jobs.post_title AS job_title, applications.name, applications.email, applications.phone, applications.cover_letter, applications.resume_name, (applications.resume_path <> '') AS has_resume, applications.status, applications.notes, EXISTS (SELECT 1 FROM " . \LlamaHire\Application_Notes::table() . " private_notes WHERE private_notes.application_id = applications.id) AS has_notes, applications.created_at, applications.updated_at, applications.stage_changed_at, applications.notification_status, applications.notification_attempts, applications.employer_notified_at, applications.candidate_notified_at, applications.notification_error_code FROM {$table} applications LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = applications.job_id WHERE {$where} ORDER BY applications.created_at DESC, applications.id DESC LIMIT %d";
-		return $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, array( $limit ) ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+		return $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, array( $limit ) ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL uses trusted table names, fixed ordering, and prepared values.
 	}
 
 	public function counts_by_job( array $job_ids, array $arguments = array() ) {
@@ -66,7 +66,7 @@ final class Application_Query implements Application_Query_Contract {
 		$table = Applications::table();
 		$placeholders = implode( ', ', array_fill( 0, count( $job_ids ), '%d' ) );
 		$sql = "SELECT applications.job_id, COUNT(*) AS application_count FROM {$table} applications LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = applications.job_id WHERE {$where} AND applications.job_id IN ({$placeholders}) GROUP BY applications.job_id";
-		$rows = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, $job_ids ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- SQL contains only trusted table names, fixed clauses, and placeholders generated from a bounded integer list; all values are prepared.
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, $job_ids ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL contains only trusted table names, fixed clauses, and placeholders generated from a bounded integer list; all values are prepared.
 		$counts = array_fill_keys( $job_ids, 0 );
 		foreach ( $rows as $row ) {
 			$counts[ (int) $row->job_id ] = (int) $row->application_count;
@@ -84,7 +84,7 @@ final class Application_Query implements Application_Query_Contract {
 		$table = Applications::table();
 		$placeholders = implode( ', ', array_fill( 0, count( $job_ids ), '%d' ) );
 		$sql = "SELECT applications.job_id, applications.status, COUNT(*) AS application_count FROM {$table} applications LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = applications.job_id WHERE {$where} AND applications.job_id IN ({$placeholders}) GROUP BY applications.job_id, applications.status";
-		$rows = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, $job_ids ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- SQL contains only trusted table names, fixed clauses, and placeholders generated from a bounded integer list; all values are prepared.
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, $job_ids ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL contains only trusted table names, fixed clauses, and placeholders generated from a bounded integer list; all values are prepared.
 		$counts = array();
 		foreach ( $job_ids as $job_id ) {
 			$counts[ $job_id ] = array_fill_keys( array_keys( Applications::workflow_statuses() ), 0 );
@@ -105,7 +105,7 @@ final class Application_Query implements Application_Query_Contract {
 		$last_id = PHP_INT_MAX;
 		do {
 			$sql = "SELECT applications.id, applications.job_id, jobs.post_title AS job_title, applications.name, applications.email, applications.phone, applications.cover_letter, applications.status, applications.created_at FROM {$table} applications LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = applications.job_id WHERE {$where} AND applications.id < %d ORDER BY applications.id DESC LIMIT 500";
-			$batch = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, array( $last_id ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL
+			$batch = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, array( $last_id ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL uses trusted table names, fixed ordering, and prepared values.
 			foreach ( $batch as $row ) {
 				$last_id = (int) $row['id'];
 				yield $row;

@@ -15,17 +15,17 @@ msgstr ""
 "X-Domain: llamahire\n"
 
 #. Plugin Name of the plugin
-#: llamahire.php
+#: llamahire.php:3
 msgid "LlamaHire – Job Board & Careers"
 msgstr ""
 
 #. Description of the plugin
-#: llamahire.php
+#: llamahire.php:4
 msgid "Modern hiring for WordPress: publish jobs, build a careers page, and collect applications."
 msgstr ""
 
 #. Author of the plugin
-#: llamahire.php
+#: llamahire.php:8
 #: includes/class-applications.php:283
 #: includes/class-blocks.php:32
 #: includes/class-settings.php:549
@@ -36,58 +36,59 @@ msgstr ""
 msgid "The candidate could not be moved. Please try again."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:32
+#. translators: %s: Destination hiring stage.
+#: includes/class-admin-workspaces.php:33
 #, php-format
 msgid "Candidate moved to %s."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:43
+#: includes/class-admin-workspaces.php:44
 msgid "You cannot move this candidate."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:46
+#: includes/class-admin-workspaces.php:47
 msgid "That hiring stage is not valid."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:50
+#: includes/class-admin-workspaces.php:51
 msgid "The candidate could not be moved."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:83
+#: includes/class-admin-workspaces.php:84
 msgid "Job board dashboard"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:83
+#: includes/class-admin-workspaces.php:84
 #: includes/class-admin.php:141
 msgid "Hiring dashboard"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:85
+#: includes/class-admin-workspaces.php:86
 msgid "Keep listings moving, resolve issues, and see what needs attention across your community."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:86
+#: includes/class-admin-workspaces.php:87
 msgid "See what needs attention across your jobs and applications, then jump into hiring when you need the full pipeline."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:94
+#: includes/class-admin-workspaces.php:95
 msgid "Open Hiring"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:95
+#: includes/class-admin-workspaces.php:96
 msgid "Add job"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:100
+#: includes/class-admin-workspaces.php:101
 msgid "Needs your attention"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:100
+#: includes/class-admin-workspaces.php:101
 msgid "The most useful work to pick up next."
 msgstr ""
 
 #. translators: %d: Number of employer accounts awaiting approval.
-#: includes/class-admin-workspaces.php:105
+#: includes/class-admin-workspaces.php:106
 #, php-format
 msgid "%d employer account is awaiting approval"
 msgid_plural "%d employer accounts are awaiting approval"
@@ -95,17 +96,17 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: Number of employer accounts awaiting approval.
-#: includes/class-admin-workspaces.php:105
+#: includes/class-admin-workspaces.php:106
 msgid "Review verified employers before they can submit job listings."
 msgstr ""
 
 #. translators: %d: Number of employer accounts awaiting approval.
-#: includes/class-admin-workspaces.php:105
+#: includes/class-admin-workspaces.php:106
 msgid "Review employers"
 msgstr ""
 
 #. translators: %d: Number of submitted job listings awaiting review.
-#: includes/class-admin-workspaces.php:107
+#: includes/class-admin-workspaces.php:108
 #, php-format
 msgid "%d job listing is waiting for review"
 msgid_plural "%d job listings are waiting for review"
@@ -113,92 +114,101 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: Number of submitted job listings awaiting review.
-#: includes/class-admin-workspaces.php:107
+#: includes/class-admin-workspaces.php:108
 msgid "Moderate submitted jobs before they appear publicly."
 msgstr ""
 
 #. translators: %d: Number of submitted job listings awaiting review.
-#: includes/class-admin-workspaces.php:107
+#: includes/class-admin-workspaces.php:108
 msgid "Review listings"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:109
+#. translators: %d: Number of new applications.
+#: includes/class-admin-workspaces.php:111
 #, php-format
 msgid "%d new application"
 msgid_plural "%d new applications"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-admin-workspaces.php:109
+#. translators: %d: Number of new applications.
+#: includes/class-admin-workspaces.php:111
 msgid "Candidates are waiting for an initial review."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:109
+#. translators: %d: Number of new applications.
+#: includes/class-admin-workspaces.php:111
 msgid "Review candidates"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:111
+#. translators: %d: Number of notification emails needing attention.
+#: includes/class-admin-workspaces.php:114
 #, php-format
 msgid "%d email needs attention"
 msgid_plural "%d emails need attention"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-admin-workspaces.php:111
+#. translators: %d: Number of notification emails needing attention.
+#: includes/class-admin-workspaces.php:114
 msgid "A candidate or employer notification may not have arrived."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:111
+#. translators: %d: Number of notification emails needing attention.
+#: includes/class-admin-workspaces.php:114
 msgid "Check email issues"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:112
+#. translators: %d: Number of jobs closing soon.
+#: includes/class-admin-workspaces.php:116
 #, php-format
 msgid "%d job closes soon"
 msgid_plural "%d jobs close soon"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-admin-workspaces.php:112
+#. translators: %d: Number of jobs closing soon.
+#: includes/class-admin-workspaces.php:116
 msgid "These listings reach their application deadline or listing expiration in the next seven days."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:112
+#. translators: %d: Number of jobs closing soon.
+#: includes/class-admin-workspaces.php:116
 msgid "Review jobs"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:118
+#: includes/class-admin-workspaces.php:122
 msgid "Board at a glance"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:118
+#: includes/class-admin-workspaces.php:122
 msgid "Hiring at a glance"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:121
+#: includes/class-admin-workspaces.php:125
 msgid "Live listings"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:121
+#: includes/class-admin-workspaces.php:125
 msgid "Open jobs"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:124
+#: includes/class-admin-workspaces.php:128
 #: includes/class-admin.php:64
 #: includes/class-employer-portal.php:694
 #: includes/class-employer-portal.php:773
 msgid "Awaiting review"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:124
+#: includes/class-admin-workspaces.php:128
 msgid "New candidates"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:131
+#: includes/class-admin-workspaces.php:135
 msgid "Active employers"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:132
+#: includes/class-admin-workspaces.php:136
 #: includes/class-admin.php:142
 #: includes/class-admin.php:336
 #: includes/class-employer-applications.php:95
@@ -206,287 +216,292 @@ msgstr ""
 msgid "Applications"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:134
+#: includes/class-admin-workspaces.php:138
 #: includes/class-applications.php:17
 #: src/admin-applications.js:16
 msgid "Interviewing"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:135
+#: includes/class-admin-workspaces.php:139
 msgid "Offers"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:143
+#: includes/class-admin-workspaces.php:147
 msgid "Active listings"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:143
+#: includes/class-admin-workspaces.php:147
 msgid "Active jobs"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:143
+#: includes/class-admin-workspaces.php:147
 msgid "A quick view of demand and candidate flow."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:143
+#: includes/class-admin-workspaces.php:147
 msgid "View all listings"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:151
+#: includes/class-admin-workspaces.php:155
 msgid "application"
 msgid_plural "applications"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-admin-workspaces.php:155
+#: includes/class-admin-workspaces.php:159
 msgid "No active jobs yet"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:155
+#: includes/class-admin-workspaces.php:159
 msgid "Publish a job to start tracking activity here."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:155
+#: includes/class-admin-workspaces.php:159
 msgid "Add your first job"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:159
-#: includes/class-admin-workspaces.php:262
+#: includes/class-admin-workspaces.php:163
+#: includes/class-admin-workspaces.php:291
 msgid "Recent activity"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:159
+#: includes/class-admin-workspaces.php:163
 msgid "Operational changes across your workspace."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:159
+#: includes/class-admin-workspaces.php:163
 #: includes/class-employer-applications.php:173
 #: src/admin-applications.js:600
 msgid "View all activity"
 msgstr ""
 
 #. translators: %d is the numeric WordPress job post ID.
-#: includes/class-admin-workspaces.php:162
+#: includes/class-admin-workspaces.php:169
 #: includes/class-rest-api.php:262
 #, php-format
 msgid "Job #%d"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:162
+#: includes/class-admin-workspaces.php:173
 msgid "ago"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:163
+#: includes/class-admin-workspaces.php:174
 msgid "Activity will appear as jobs and candidates move forward."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:172
+#: includes/class-admin-workspaces.php:183
 msgid "The Hiring workspace is available to company hiring teams and employers managing their own jobs."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:194
+#: includes/class-admin-workspaces.php:205
 #: includes/class-admin.php:144
 msgid "Hiring"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:194
+#: includes/class-admin-workspaces.php:205
 msgid "Move candidates through your hiring process."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:195
+#: includes/class-admin-workspaces.php:206
 msgid "View applications"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:199
+#: includes/class-admin-workspaces.php:210
 #: includes/class-employer-applications.php:100
 #: src/admin-applications.js:1262
 #: src/admin-applications.js:1277
 msgid "Search candidates"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:200
+#: includes/class-admin-workspaces.php:211
 #: includes/class-employer-portal.php:556
 msgid "Job title"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:200
+#: includes/class-admin-workspaces.php:211
 msgid "All job titles"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:201
+#: includes/class-admin-workspaces.php:212
 msgid "Apply"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:203
+#: includes/class-admin-workspaces.php:214
 msgid "Drag candidates between stages."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:206
+#: includes/class-admin-workspaces.php:217
 msgid "Candidate pipeline"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:212
+#: includes/class-admin-workspaces.php:223
 msgid "No candidates"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:228
+#. translators: %s: Date the candidate applied.
+#: includes/class-admin-workspaces.php:239
 #, php-format
 msgid "Applied %s"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:228
+#. translators: %s: Human-readable time in the current hiring stage.
+#: includes/class-admin-workspaces.php:244
 #, php-format
 msgid "%s in stage"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:229
+#: includes/class-admin-workspaces.php:250
 msgid "Drag candidate"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:230
+#: includes/class-admin-workspaces.php:251
 msgid "Has a private note"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:246
+#. translators: %s: Destination hiring stage.
+#: includes/class-admin-workspaces.php:267
+#, php-format
+msgid "Move to %s"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:275
 msgid "Close candidate details"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:248
+#: includes/class-admin-workspaces.php:277
 #: includes/class-admin.php:390
 msgid "View resume"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:248
+#: includes/class-admin-workspaces.php:277
 #: includes/class-admin.php:390
 msgid "Download resume"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:249
+#: includes/class-admin-workspaces.php:278
 msgid "Changes saved."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:250
+#: includes/class-admin-workspaces.php:279
 #: includes/class-admin.php:386
 #: includes/class-employer-applications.php:97
 #: src/admin-applications.js:514
 msgid "Private note added."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:253
+#: includes/class-admin-workspaces.php:282
 msgid "Stage"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:254
+#: includes/class-admin-workspaces.php:283
 #: includes/class-admin.php:391
 #: includes/class-employer-applications.php:166
 #: src/admin-applications.js:584
 msgid "Save status"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:258
+#: includes/class-admin-workspaces.php:287
 #: includes/class-admin.php:391
 #: src/admin-applications.js:690
 msgid "Add private note"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:258
+#: includes/class-admin-workspaces.php:287
 msgid "Interview feedback, next steps, or context for the team…"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:259
+#: includes/class-admin-workspaces.php:288
 #: includes/class-admin.php:391
 #: includes/class-employer-applications.php:171
 #: src/admin-applications.js:708
 msgid "Add note"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:261
+#: includes/class-admin-workspaces.php:290
 #: includes/class-admin.php:391
 #: includes/class-employer-applications.php:171
 #: src/admin-applications.js:759
 msgid "Private notes"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:261
+#: includes/class-admin-workspaces.php:290
 #: includes/class-admin.php:391
 #: includes/class-employer-applications.php:171
 #: src/admin-applications.js:726
 msgid "No private notes yet."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:262
+#: includes/class-admin-workspaces.php:291
 msgid "No recorded changes yet."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:263
-#, php-format
-msgid "Move to %s"
-msgstr ""
-
-#: includes/class-admin-workspaces.php:263
+#: includes/class-admin-workspaces.php:292
 msgid "Move candidate"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:263
 #: includes/class-admin-workspaces.php:292
+#: includes/class-admin-workspaces.php:332
 msgid "Reject candidate"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:270
+#: includes/class-admin-workspaces.php:299
 msgid "New stage"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:270
+#: includes/class-admin-workspaces.php:299
 msgid "Update"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:286
+#. translators: %s: Candidate name.
+#: includes/class-admin-workspaces.php:312
 #, php-format
 msgid "Reject %s?"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:287
-msgid "Close rejection confirmation"
-msgstr ""
-
-#: includes/class-admin-workspaces.php:289
+#. translators: 1: Candidate name. 2: Job title.
+#: includes/class-admin-workspaces.php:317
 #, php-format
 msgid "%1$s will be moved to Rejected for %2$s. You can change their stage later."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:291
+#: includes/class-admin-workspaces.php:327
+msgid "Close rejection confirmation"
+msgstr ""
+
+#: includes/class-admin-workspaces.php:331
 #: src/admin-applications.js:382
 msgid "Cancel"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:307
+#: includes/class-admin-workspaces.php:347
 msgid "Move candidates here when you are ready to make an offer."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:310
+#: includes/class-admin-workspaces.php:350
 msgid "Successful hires will appear here."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:312
+#: includes/class-admin-workspaces.php:352
 msgid "Drag a candidate here when they are ready."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:317
+#: includes/class-admin-workspaces.php:357
 msgid "No "
 msgstr ""
 
-#: includes/class-admin-workspaces.php:318
+#: includes/class-admin-workspaces.php:358
 msgid "Nothing needs action here right now."
 msgstr ""
 
 #. translators: %s: formatted application deadline.
-#: includes/class-admin-workspaces.php:385
+#: includes/class-admin-workspaces.php:425
 #, php-format
 msgid "Closes %s"
 msgstr ""
 
 #. translators: %s: formatted listing-expiration date.
-#: includes/class-admin-workspaces.php:388
+#: includes/class-admin-workspaces.php:428
 #, php-format
 msgid "Listing ends %s"
 msgstr ""
@@ -631,7 +646,7 @@ msgid "Applied for:"
 msgstr ""
 
 #: includes/class-admin.php:390
-#: includes/class-blocks.php:821
+#: includes/class-blocks.php:829
 #: includes/class-privacy.php:111
 #: includes/class-settings.php:430
 #: src/admin-applications.js:665
@@ -773,7 +788,7 @@ msgstr ""
 
 #. translators: %s: Number of applications for a job.
 #: includes/class-admin.php:545
-#: includes/class-employer-portal.php:804
+#: includes/class-employer-portal.php:802
 #, php-format
 msgid "%s application"
 msgid_plural "%s applications"
@@ -1109,7 +1124,7 @@ msgstr ""
 #: includes/class-blocks.php:154
 #: includes/class-blocks.php:777
 #: includes/class-blocks.php:781
-#: includes/class-blocks.php:806
+#: includes/class-blocks.php:814
 msgid "Apply for this role"
 msgstr ""
 
@@ -1159,13 +1174,13 @@ msgid "Job results pages"
 msgstr ""
 
 #: includes/class-blocks.php:299
-#: includes/class-employer-applications.php:183
+#: includes/class-employer-applications.php:184
 #: includes/class-employer-portal.php:755
 msgid "Previous"
 msgstr ""
 
 #: includes/class-blocks.php:300
-#: includes/class-employer-applications.php:183
+#: includes/class-employer-applications.php:184
 #: includes/class-employer-portal.php:756
 msgid "Next"
 msgstr ""
@@ -1381,110 +1396,111 @@ msgstr ""
 msgid "This application link is no longer valid."
 msgstr ""
 
-#: includes/class-blocks.php:807
+#. translators: %s: Hiring organization name.
+#: includes/class-blocks.php:804
 #, php-format
 msgid "Your application will be shared with %s for hiring review."
 msgstr ""
 
-#: includes/class-blocks.php:817
+#: includes/class-blocks.php:825
 msgid "Name"
 msgstr ""
 
-#: includes/class-blocks.php:817
-#: includes/class-blocks.php:818
-#: includes/class-blocks.php:819
-#: includes/class-blocks.php:820
-#: includes/class-blocks.php:821
-#: includes/class-setup.php:178
-#: includes/class-setup.php:192
-#: includes/class-setup.php:204
-#: includes/class-setup.php:205
-#: includes/class-setup.php:226
-#: includes/class-setup.php:228
+#: includes/class-blocks.php:825
+#: includes/class-blocks.php:826
+#: includes/class-blocks.php:827
+#: includes/class-blocks.php:828
+#: includes/class-blocks.php:829
+#: includes/class-setup.php:186
+#: includes/class-setup.php:200
+#: includes/class-setup.php:212
+#: includes/class-setup.php:213
+#: includes/class-setup.php:234
+#: includes/class-setup.php:236
 msgid "(required)"
 msgstr ""
 
-#: includes/class-blocks.php:817
+#: includes/class-blocks.php:825
 msgid "Enter your full name"
 msgstr ""
 
-#: includes/class-blocks.php:818
+#: includes/class-blocks.php:826
 msgid "Email"
 msgstr ""
 
-#: includes/class-blocks.php:818
+#: includes/class-blocks.php:826
 msgid "Enter your email address"
 msgstr ""
 
-#: includes/class-blocks.php:819
+#: includes/class-blocks.php:827
 #: includes/class-privacy.php:110
 #: includes/class-settings.php:428
 msgid "Phone"
 msgstr ""
 
-#: includes/class-blocks.php:819
+#: includes/class-blocks.php:827
 msgid "Enter your phone number"
 msgstr ""
 
-#: includes/class-blocks.php:820
+#: includes/class-blocks.php:828
 #: includes/class-settings.php:429
 msgid "Resume"
 msgstr ""
 
-#: includes/class-blocks.php:820
+#: includes/class-blocks.php:828
 msgid "Drag and drop a file here or"
 msgstr ""
 
-#: includes/class-blocks.php:820
+#: includes/class-blocks.php:828
 msgid "choose a file"
 msgstr ""
 
-#: includes/class-blocks.php:820
+#: includes/class-blocks.php:828
 msgid "PDF or DOCX. Maximum 5 MB."
 msgstr ""
 
-#: includes/class-blocks.php:821
+#: includes/class-blocks.php:829
 msgid "Tell us why you are a great fit"
 msgstr ""
 
-#: includes/class-blocks.php:826
+#: includes/class-blocks.php:834
 #: includes/class-settings.php:151
 msgid "Your information will be used by the employer to evaluate your application."
 msgstr ""
 
 #. translators: %s: privacy policy URL.
-#: includes/class-blocks.php:830
+#: includes/class-blocks.php:838
 #, php-format
 msgid "<a href=\"%s\">Read our privacy policy.</a>"
 msgstr ""
 
 #. translators: %s: configured number of retention days.
-#: includes/class-blocks.php:837
+#: includes/class-blocks.php:845
 #, php-format
 msgid "Application records are scheduled for deletion from this site after %s days."
 msgstr ""
 
-#: includes/class-blocks.php:844
+#: includes/class-blocks.php:852
 msgid "Uploading resume…"
 msgstr ""
 
-#: includes/class-blocks.php:845
+#: includes/class-blocks.php:853
 msgid "Submitting application…"
 msgstr ""
 
-#: includes/class-blocks.php:846
+#: includes/class-blocks.php:854
 msgid "Upload complete. Processing application…"
 msgstr ""
 
-#: includes/class-blocks.php:847
+#: includes/class-blocks.php:855
 msgid "We could not submit your application. Check your connection and try again."
 msgstr ""
 
-#: includes/class-blocks.php:849
+#: includes/class-blocks.php:857
 msgid "Resume upload progress"
 msgstr ""
 
-#: includes/class-blocks.php:853
+#: includes/class-blocks.php:861
 msgid "Submit application"
 msgstr ""
 
@@ -1532,7 +1548,7 @@ msgstr ""
 msgid "Filter applications"
 msgstr ""
 
-#. Translators: %d is the numeric WordPress job post ID.
+#. translators: %d is the numeric WordPress job post ID.
 #: includes/class-employer-applications.php:101
 #: includes/class-employer-applications.php:153
 #: includes/class-employer-portal.php:659
@@ -1589,7 +1605,7 @@ msgstr ""
 
 #: includes/class-employer-applications.php:170
 #: includes/class-employer-portal.php:149
-#: includes/class-employer-portal.php:803
+#: includes/class-employer-portal.php:808
 msgid "Preview"
 msgstr ""
 
@@ -1606,7 +1622,7 @@ msgstr ""
 msgid "No files or cover letter were provided."
 msgstr ""
 
-#: includes/class-employer-applications.php:185
+#: includes/class-employer-applications.php:186
 msgid "Application pages"
 msgstr ""
 
@@ -1996,37 +2012,37 @@ msgid "Remove the current company logo from this listing"
 msgstr ""
 
 #: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:901
+#: includes/class-employer-portal.php:906
 #: assets/js/job-editor.js:177
 msgid "Notification email"
 msgstr ""
 
 #: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:908
+#: includes/class-employer-portal.php:913
 msgid "Candidate notifications from the LlamaHire form will be sent to this inbox."
 msgstr ""
 
 #: includes/class-employer-portal.php:589
 #: includes/class-employer-portal.php:590
-#: includes/class-employer-portal.php:901
+#: includes/class-employer-portal.php:906
 #: assets/js/job-editor.js:173
 #: assets/js/job-editor.js:177
 msgid "Application email"
 msgstr ""
 
 #: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:908
+#: includes/class-employer-portal.php:913
 msgid "Candidates will apply by email to this address."
 msgstr ""
 
 #: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:899
+#: includes/class-employer-portal.php:904
 #: assets/js/job-editor.js:177
 msgid "Application website URL"
 msgstr ""
 
 #: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:906
+#: includes/class-employer-portal.php:911
 msgid "Candidates will be sent to this website to apply."
 msgstr ""
 
@@ -2143,61 +2159,61 @@ msgstr ""
 msgid "Listing expires %s"
 msgstr ""
 
-#: includes/class-employer-portal.php:802
-#: includes/class-setup.php:237
-#: includes/class-setup.php:238
-#: includes/class-setup.php:239
-#: includes/class-setup.php:240
+#: includes/class-employer-portal.php:807
+#: includes/class-setup.php:245
+#: includes/class-setup.php:246
+#: includes/class-setup.php:247
+#: includes/class-setup.php:248
 msgid "Edit"
 msgstr ""
 
-#: includes/class-employer-portal.php:806
+#: includes/class-employer-portal.php:811
 msgid "Renew"
 msgstr ""
 
-#: includes/class-employer-portal.php:809
+#: includes/class-employer-portal.php:814
 msgid "Relist"
 msgstr ""
 
-#: includes/class-employer-portal.php:811
+#: includes/class-employer-portal.php:816
 #: includes/class-jobs.php:503
 msgid "Duplicate"
 msgstr ""
 
-#: includes/class-employer-portal.php:813
+#: includes/class-employer-portal.php:818
 msgid "Close"
 msgstr ""
 
-#: includes/class-employer-portal.php:815
+#: includes/class-employer-portal.php:820
 msgid "Delete"
 msgstr ""
 
-#: includes/class-employer-portal.php:815
+#: includes/class-employer-portal.php:820
 msgid "Delete this listing?"
 msgstr ""
 
-#: includes/class-employer-portal.php:815
+#: includes/class-employer-portal.php:820
 msgid "Move this listing to the trash and remove it from My Jobs."
 msgstr ""
 
-#: includes/class-employer-portal.php:815
+#: includes/class-employer-portal.php:820
 msgid "Confirm delete"
 msgstr ""
 
 #. translators: 1: active listing count, 2: maximum active listings.
-#: includes/class-employer-portal.php:883
+#: includes/class-employer-portal.php:888
 #, php-format
 msgid "%1$d of %2$d active listings used."
 msgstr ""
 
 #. translators: %s: formatted listing-expiration date.
-#: includes/class-employer-portal.php:887
+#: includes/class-employer-portal.php:892
 #, php-format
 msgid "This listing expires on %s."
 msgstr ""
 
 #. translators: %d: default listing duration in days.
-#: includes/class-employer-portal.php:890
+#: includes/class-employer-portal.php:895
 #, php-format
 msgid "New submissions remain active for %d day after submission."
 msgid_plural "New submissions remain active for %d days after submission."
@@ -2377,18 +2393,18 @@ msgstr ""
 
 #. translators: %s: WordPress site name.
 #: includes/class-job-feed.php:88
-#: includes/class-job-feed.php:108
+#: includes/class-job-feed.php:105
 #, php-format
 msgid "%s open jobs"
 msgstr ""
 
-#: includes/class-job-feed.php:111
+#: includes/class-job-feed.php:116
 msgid "Currently open job listings."
 msgstr ""
 
 #: includes/class-jobs.php:24
 #: includes/class-setup.php:113
-#: includes/class-setup.php:226
+#: includes/class-setup.php:234
 msgid "Jobs"
 msgstr ""
 
@@ -2493,7 +2509,6 @@ msgstr ""
 msgid "Application ID"
 msgstr ""
 
-#. Translators: %d is the numeric WordPress job post ID.
 #. translators: %d is the numeric WordPress job post ID.
 #: includes/class-privacy.php:100
 #: includes/class-rest-api.php:256
@@ -2761,7 +2776,7 @@ msgstr ""
 #: includes/class-settings.php:320
 #: includes/class-settings.php:363
 #: includes/class-setup.php:127
-#: includes/class-setup.php:165
+#: includes/class-setup.php:173
 msgid "Site purpose"
 msgstr ""
 
@@ -2778,7 +2793,7 @@ msgstr ""
 
 #: includes/class-settings.php:322
 #: includes/class-settings.php:404
-#: includes/class-setup.php:186
+#: includes/class-setup.php:194
 msgid "Job defaults"
 msgstr ""
 
@@ -2790,8 +2805,8 @@ msgstr ""
 #: includes/class-settings.php:324
 #: includes/class-settings.php:424
 #: includes/class-setup.php:129
-#: includes/class-setup.php:199
-#: includes/class-setup.php:239
+#: includes/class-setup.php:207
+#: includes/class-setup.php:247
 msgid "Applications & privacy"
 msgstr ""
 
@@ -2837,12 +2852,12 @@ msgid "How do you use LlamaHire?"
 msgstr ""
 
 #: includes/class-settings.php:366
-#: includes/class-setup.php:166
+#: includes/class-setup.php:174
 msgid "Company careers site"
 msgstr ""
 
 #: includes/class-settings.php:366
-#: includes/class-setup.php:166
+#: includes/class-setup.php:174
 msgid "Publish jobs for one organization using shared employer defaults."
 msgstr ""
 
@@ -2904,12 +2919,12 @@ msgid "These details identify the employer on job pages and in Google Jobs."
 msgstr ""
 
 #: includes/class-settings.php:397
-#: includes/class-setup.php:178
+#: includes/class-setup.php:186
 msgid "Job board name"
 msgstr ""
 
 #: includes/class-settings.php:397
-#: includes/class-setup.php:178
+#: includes/class-setup.php:186
 msgid "Organization name"
 msgstr ""
 
@@ -2922,7 +2937,7 @@ msgid "The employer name shown on job pages."
 msgstr ""
 
 #: includes/class-settings.php:398
-#: includes/class-setup.php:179
+#: includes/class-setup.php:187
 msgid "Organization website"
 msgstr ""
 
@@ -2931,12 +2946,12 @@ msgid "Optional. Use the organization’s canonical website when this careers si
 msgstr ""
 
 #: includes/class-settings.php:399
-#: includes/class-setup.php:181
+#: includes/class-setup.php:189
 msgid "Job board logo"
 msgstr ""
 
 #: includes/class-settings.php:399
-#: includes/class-setup.php:181
+#: includes/class-setup.php:189
 msgid "Organization logo"
 msgstr ""
 
@@ -2945,22 +2960,22 @@ msgid "New jobs start with these location and compensation values. Editors can o
 msgstr ""
 
 #: includes/class-settings.php:406
-#: includes/class-setup.php:189
+#: includes/class-setup.php:197
 msgid "Default city or locality"
 msgstr ""
 
 #: includes/class-settings.php:407
-#: includes/class-setup.php:190
+#: includes/class-setup.php:198
 msgid "Default state, province, or region"
 msgstr ""
 
 #: includes/class-settings.php:408
-#: includes/class-setup.php:191
+#: includes/class-setup.php:199
 msgid "Default country"
 msgstr ""
 
 #: includes/class-settings.php:409
-#: includes/class-setup.php:192
+#: includes/class-setup.php:200
 msgid "Default currency"
 msgstr ""
 
@@ -3027,7 +3042,7 @@ msgid "Shown beside the application form. Describe how candidate information wil
 msgstr ""
 
 #: includes/class-settings.php:435
-#: includes/class-setup.php:206
+#: includes/class-setup.php:214
 msgid "Privacy policy page"
 msgstr ""
 
@@ -3036,7 +3051,7 @@ msgid "Use the WordPress privacy policy"
 msgstr ""
 
 #: includes/class-settings.php:436
-#: includes/class-setup.php:207
+#: includes/class-setup.php:215
 msgid "Application retention"
 msgstr ""
 
@@ -3129,12 +3144,12 @@ msgid "Choose where application alerts are sent and customize the messages candi
 msgstr ""
 
 #: includes/class-settings.php:451
-#: includes/class-setup.php:204
+#: includes/class-setup.php:212
 msgid "Hiring inbox"
 msgstr ""
 
 #: includes/class-settings.php:451
-#: includes/class-setup.php:204
+#: includes/class-setup.php:212
 msgid "New application notifications are sent here."
 msgstr ""
 
@@ -3347,7 +3362,7 @@ msgid "Do not ask"
 msgstr ""
 
 #: includes/class-setup.php:65
-#: includes/class-setup.php:135
+#: includes/class-setup.php:143
 msgid "Set up LlamaHire"
 msgstr ""
 
@@ -3356,13 +3371,13 @@ msgid "Setup"
 msgstr ""
 
 #: includes/class-setup.php:93
-#: includes/class-setup.php:288
-#: includes/class-setup.php:406
+#: includes/class-setup.php:296
+#: includes/class-setup.php:414
 msgid "You cannot configure LlamaHire."
 msgstr ""
 
 #: includes/class-setup.php:113
-#: includes/class-setup.php:226
+#: includes/class-setup.php:234
 msgid "Careers"
 msgstr ""
 
@@ -3377,252 +3392,253 @@ msgid "No WordPress privacy policy is configured"
 msgstr ""
 
 #: includes/class-setup.php:128
-#: includes/class-setup.php:238
+#: includes/class-setup.php:246
 msgid "Identity & defaults"
 msgstr ""
 
 #: includes/class-setup.php:130
-#: includes/class-setup.php:220
-#: includes/class-setup.php:240
+#: includes/class-setup.php:228
+#: includes/class-setup.php:248
 msgid "Public jobs page"
 msgstr ""
 
-#. translators: 1: Current setup step. 2: Total setup steps. 3: Current step name.
-#: includes/class-setup.php:142
-#, php-format
-msgid "Step %1$d of %2$d — %3$s"
-msgstr ""
-
-#: includes/class-setup.php:150
-msgid "Setup progress: purpose, identity and defaults, applications and privacy, and public jobs page"
-msgstr ""
-
-#: includes/class-setup.php:150
+#: includes/class-setup.php:132
 msgid "Not complete"
 msgstr ""
 
-#: includes/class-setup.php:150
+#. translators: %d: Current setup step.
+#: includes/class-setup.php:136
 #, php-format
 msgid "Step %d of 4"
 msgstr ""
 
-#: includes/class-setup.php:151
+#. translators: 1: Current setup step. 2: Total setup steps. 3: Current step name.
+#: includes/class-setup.php:150
+#, php-format
+msgid "Step %1$d of %2$d — %3$s"
+msgstr ""
+
+#: includes/class-setup.php:158
+msgid "Setup progress: purpose, identity and defaults, applications and privacy, and public jobs page"
+msgstr ""
+
+#: includes/class-setup.php:159
 msgid "Setup steps"
 msgstr ""
 
-#: includes/class-setup.php:156
+#: includes/class-setup.php:164
 msgid "Your saved Setup progress has been restored."
 msgstr ""
 
-#: includes/class-setup.php:162
+#: includes/class-setup.php:170
 msgid "How will you use LlamaHire?"
 msgstr ""
 
-#: includes/class-setup.php:163
+#: includes/class-setup.php:171
 msgid "Choose the setup that matches how this site publishes jobs."
 msgstr ""
 
-#: includes/class-setup.php:167
+#: includes/class-setup.php:175
 msgid "Multi-employer job board"
 msgstr ""
 
-#: includes/class-setup.php:167
+#: includes/class-setup.php:175
 msgid "Publish listings from multiple employers with approved employer accounts, submission pages, and per-job application routing."
 msgstr ""
 
-#: includes/class-setup.php:172
+#: includes/class-setup.php:180
 msgid "Identity & job defaults"
 msgstr ""
 
-#: includes/class-setup.php:173
+#: includes/class-setup.php:181
 msgid "Set the employer identity and the values new jobs start with."
 msgstr ""
 
-#: includes/class-setup.php:173
+#: includes/class-setup.php:181
 msgid "Set the board-operator identity and the values new listings start with. Employers can replace them per listing."
 msgstr ""
 
-#: includes/class-setup.php:176
+#: includes/class-setup.php:184
 msgid "Organization identity"
 msgstr ""
 
-#: includes/class-setup.php:176
+#: includes/class-setup.php:184
 msgid "Job board identity"
 msgstr ""
 
-#: includes/class-setup.php:178
+#: includes/class-setup.php:186
 msgid "This is the name candidates will see on job postings."
 msgstr ""
 
-#: includes/class-setup.php:179
+#: includes/class-setup.php:187
 msgid "Optional. Use the organization’s main website only when this careers site is on a different domain or subdomain."
 msgstr ""
 
-#: includes/class-setup.php:182
+#: includes/class-setup.php:190
 msgid "This logo will appear on job postings and careers pages."
 msgstr ""
 
-#: includes/class-setup.php:187
+#: includes/class-setup.php:195
 msgid "Editors can override these values on every job."
 msgstr ""
 
-#: includes/class-setup.php:200
+#: includes/class-setup.php:208
 msgid "Choose where application alerts go and review the privacy notice candidates will see."
 msgstr ""
 
-#: includes/class-setup.php:204
+#: includes/class-setup.php:212
 msgid "Board notification inbox"
 msgstr ""
 
-#: includes/class-setup.php:204
+#: includes/class-setup.php:212
 msgid "Board-level notifications use this address; employer routing is configured per job."
 msgstr ""
 
-#: includes/class-setup.php:205
+#: includes/class-setup.php:213
 msgid "Candidate privacy text"
 msgstr ""
 
-#: includes/class-setup.php:205
+#: includes/class-setup.php:213
 msgid "Shown beside every application form. This operational preview is not legal advice."
 msgstr ""
 
-#: includes/class-setup.php:206
+#: includes/class-setup.php:214
 msgid "Choose a published page, or use the page selected in WordPress Settings → Privacy."
 msgstr ""
 
-#: includes/class-setup.php:207
+#: includes/class-setup.php:215
 msgid "Older applications and private resumes are permanently deleted by the daily cleanup task."
 msgstr ""
 
-#: includes/class-setup.php:211
+#: includes/class-setup.php:219
 msgid "Candidate-facing preview"
 msgstr ""
 
-#: includes/class-setup.php:212
+#: includes/class-setup.php:220
 msgid "Application privacy notice"
 msgstr ""
 
-#: includes/class-setup.php:213
+#: includes/class-setup.php:221
 msgid "Read our privacy policy."
 msgstr ""
 
-#: includes/class-setup.php:221
+#: includes/class-setup.php:229
 msgid "Choose the compatible page where candidates will discover open jobs, then review everything before completion."
 msgstr ""
 
-#: includes/class-setup.php:223
+#: includes/class-setup.php:231
 msgid "Public jobs page choice"
 msgstr ""
 
-#: includes/class-setup.php:224
+#: includes/class-setup.php:232
 msgid "Create and publish a new public jobs page"
 msgstr ""
 
-#: includes/class-setup.php:225
+#: includes/class-setup.php:233
 msgid "The new page includes job search, filters, and the jobs directory. You can edit it after Setup."
 msgstr ""
 
-#: includes/class-setup.php:226
+#: includes/class-setup.php:234
 msgid "New page title"
 msgstr ""
 
-#: includes/class-setup.php:227
+#: includes/class-setup.php:235
 msgid "Use an existing published page"
 msgstr ""
 
-#: includes/class-setup.php:228
+#: includes/class-setup.php:236
 msgid "Existing public jobs page"
 msgstr ""
 
-#: includes/class-setup.php:231
+#: includes/class-setup.php:239
 msgid "Employer access pages"
 msgstr ""
 
-#: includes/class-setup.php:232
+#: includes/class-setup.php:240
 msgid "Completing Setup also publishes Submit a Job and My Jobs pages when compatible pages do not already exist. Employer accounts remain administrator-approved."
 msgstr ""
 
-#: includes/class-setup.php:235
+#: includes/class-setup.php:243
 msgid "Setup summary"
 msgstr ""
 
-#: includes/class-setup.php:237
+#: includes/class-setup.php:245
 msgid "Purpose"
 msgstr ""
 
-#: includes/class-setup.php:237
+#: includes/class-setup.php:245
 msgid "Edit site purpose"
 msgstr ""
 
-#: includes/class-setup.php:238
+#: includes/class-setup.php:246
 msgid "Edit identity and defaults"
 msgstr ""
 
-#: includes/class-setup.php:239
+#: includes/class-setup.php:247
 msgid "Edit applications and privacy"
 msgstr ""
 
-#: includes/class-setup.php:240
+#: includes/class-setup.php:248
 msgid "Edit public jobs page"
 msgstr ""
 
-#: includes/class-setup.php:246
+#: includes/class-setup.php:254
 msgid "Back"
 msgstr ""
 
-#: includes/class-setup.php:247
+#: includes/class-setup.php:255
 msgid "Save and finish later"
 msgstr ""
 
-#: includes/class-setup.php:249
+#: includes/class-setup.php:257
 msgid "Continue"
 msgstr ""
 
-#: includes/class-setup.php:250
+#: includes/class-setup.php:258
 msgid "Complete setup"
 msgstr ""
 
 #. translators: %s: Careers page URL.
-#: includes/class-setup.php:267
+#: includes/class-setup.php:275
 #, php-format
 msgid "LlamaHire setup is complete. <a href=\"%s\">View your public jobs page</a> or add your first job."
 msgstr ""
 
-#: includes/class-setup.php:271
+#: includes/class-setup.php:279
 msgid "LlamaHire setup is complete. Add your first job when you are ready."
 msgstr ""
 
 #. translators: %s: setup page URL.
-#: includes/class-setup.php:276
+#: includes/class-setup.php:284
 #, php-format
 msgid "Setup progress saved. You can <a href=\"%s\">resume setup</a> at any time."
 msgstr ""
 
-#: includes/class-setup.php:317
+#: includes/class-setup.php:325
 msgid "Enter an organization name and choose a default currency."
 msgstr ""
 
-#: includes/class-setup.php:320
+#: includes/class-setup.php:328
 msgid "Enter a valid hiring inbox and candidate privacy text."
 msgstr ""
 
-#: includes/class-setup.php:323
+#: includes/class-setup.php:331
 msgid "Choose a published privacy policy page."
 msgstr ""
 
-#: includes/class-setup.php:334
+#: includes/class-setup.php:342
 msgid "Create a public jobs page or select a published page containing the LlamaHire Jobs Directory block."
 msgstr ""
 
-#: includes/class-setup.php:350
+#: includes/class-setup.php:358
 msgid "Enter a title for the new Careers page."
 msgstr ""
 
-#: includes/class-setup.php:353
+#: includes/class-setup.php:361
 msgid "You cannot create and publish a Careers page."
 msgstr ""
 
-#: includes/class-setup.php:384
+#: includes/class-setup.php:392
 msgid "Select a page with a LlamaHire jobs directory"
 msgstr ""
 

@@ -57,7 +57,7 @@ final class Application_Repository implements Application_Repository_Contract {
 		$now            = current_time( 'mysql', true );
 		global $wpdb;
 		if ( $submission_key ) {
-			$existing = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Applications::table() . ' WHERE submission_key = %s', $submission_key ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+			$existing = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Applications::table() . ' WHERE submission_key = %s', $submission_key ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Applications::table() returns only the trusted WordPress prefix plus a fixed suffix; the key is prepared.
 			if ( $existing ) {
 				return array( 'id' => (int) $existing, 'created' => false );
 			}
@@ -92,13 +92,13 @@ final class Application_Repository implements Application_Repository_Contract {
 
 		if ( ! $created ) {
 			if ( $submission_key ) {
-				$existing = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Applications::table() . ' WHERE submission_key = %s', $submission_key ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+				$existing = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Applications::table() . ' WHERE submission_key = %s', $submission_key ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Applications::table() returns only the trusted WordPress prefix plus a fixed suffix; the key is prepared.
 				if ( $existing ) {
 					return array( 'id' => (int) $existing, 'created' => false );
 				}
 			}
 			if ( $candidate_key ) {
-				$existing = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Applications::table() . ' WHERE candidate_key = %s', $candidate_key ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+				$existing = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Applications::table() . ' WHERE candidate_key = %s', $candidate_key ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Applications::table() returns only the trusted WordPress prefix plus a fixed suffix; the key is prepared.
 				if ( $existing ) {
 					return array( 'id' => (int) $existing, 'created' => false, 'reason' => 'job_email' );
 				}
@@ -115,12 +115,12 @@ final class Application_Repository implements Application_Repository_Contract {
 			return 0;
 		}
 		global $wpdb;
-		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Applications::table() . ' WHERE job_id = %d AND email = %s ORDER BY id ASC LIMIT 1', $job_id, $email ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Applications::table() . ' WHERE job_id = %d AND email = %s ORDER BY id ASC LIMIT 1', $job_id, $email ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Applications::table() returns only the trusted WordPress prefix plus a fixed suffix; values are prepared.
 	}
 
 	public function find( $application_id ) {
 		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( "SELECT id, job_id, name, email, phone, cover_letter, resume_name, (resume_path <> '') AS has_resume, status, notes, created_at, updated_at, stage_changed_at, notification_status, notification_attempts, employer_notified_at, candidate_notified_at, notification_error_code FROM " . Applications::table() . ' WHERE id = %d', absint( $application_id ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+		return $wpdb->get_row( $wpdb->prepare( "SELECT id, job_id, name, email, phone, cover_letter, resume_name, (resume_path <> '') AS has_resume, status, notes, created_at, updated_at, stage_changed_at, notification_status, notification_attempts, employer_notified_at, candidate_notified_at, notification_error_code FROM " . Applications::table() . ' WHERE id = %d', absint( $application_id ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Applications::table() returns only the trusted WordPress prefix plus a fixed suffix; the ID is prepared.
 	}
 
 	public function update( $application_id, array $changes ) {
@@ -171,7 +171,7 @@ final class Application_Repository implements Application_Repository_Contract {
 	public function record_notification_result( $application_id, array $result ) {
 		global $wpdb;
 		$table = Applications::table();
-		$current = $wpdb->get_row( $wpdb->prepare( "SELECT employer_notified_at, candidate_notified_at, notification_attempts FROM {$table} WHERE id = %d", absint( $application_id ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$current = $wpdb->get_row( $wpdb->prepare( "SELECT employer_notified_at, candidate_notified_at, notification_attempts FROM {$table} WHERE id = %d", absint( $application_id ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name comes from Applications::table(); the ID is prepared.
 		if ( ! $current ) {
 			return new \WP_Error( 'llamahire_application_not_found', __( 'Application not found.', 'llamahire' ) );
 		}

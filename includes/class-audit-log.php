@@ -157,7 +157,7 @@ final class Audit_Log {
 		$table = self::table();
 		$join = " LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = audit.job_id";
 		$count_sql = "SELECT COUNT(*) FROM {$table} audit{$join} WHERE {$where_sql}";
-		$total = (int) ( $params ? $wpdb->get_var( $wpdb->prepare( $count_sql, $params ) ) : $wpdb->get_var( $count_sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$total = (int) ( $params ? $wpdb->get_var( $wpdb->prepare( $count_sql, $params ) ) : $wpdb->get_var( $count_sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL uses trusted table names, fixed clauses, allowlisted columns, and prepared values.
 		$orderby = sanitize_key( $args['orderby'] );
 		$orderby_sql = array(
 			'event'    => 'audit.event_type',
@@ -167,7 +167,7 @@ final class Audit_Log {
 		$order_sql = 'asc' === strtolower( sanitize_key( $args['order'] ) ) ? 'ASC' : 'DESC';
 		$order_column = $orderby_sql[ $orderby ] ?? $orderby_sql['occurred'];
 		$sql = "SELECT audit.id, audit.event_type, audit.subject_type, audit.subject_id, audit.application_id, audit.job_id, audit.actor_user_id, audit.from_state, audit.to_state, audit.created_at, jobs.post_title AS job_title FROM {$table} audit{$join} WHERE {$where_sql} ORDER BY {$order_column} {$order_sql}, audit.id {$order_sql} LIMIT %d OFFSET %d";
-		$items = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, array( $per_page, ( $page - 1 ) * $per_page ) ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$items = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, array( $per_page, ( $page - 1 ) * $per_page ) ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL uses trusted table names, fixed clauses, allowlisted columns, and prepared values.
 		return array( 'items' => $items, 'total' => $total, 'page' => $page, 'per_page' => $per_page, 'pages' => max( 1, (int) ceil( $total / $per_page ) ) );
 	}
 
@@ -179,7 +179,7 @@ final class Audit_Log {
 			$sql .= $wpdb->prepare( ' AND jobs.post_author = %d', absint( $author_id ) );
 		}
 		$sql .= ' LIMIT 250';
-		$actor_ids = array_map( 'absint', $wpdb->get_col( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$actor_ids = array_map( 'absint', $wpdb->get_col( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL uses trusted table names, a fixed limit, and an optional prepared author ID.
 		if ( ! $actor_ids ) {
 			return array();
 		}

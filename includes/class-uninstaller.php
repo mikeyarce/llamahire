@@ -205,7 +205,7 @@ final class Uninstaller {
 		global $wpdb;
 		foreach ( array( self::NOTES_TABLE, self::APPLICATIONS_TABLE, self::AUDIT_TABLE ) as $suffix ) {
 			$table = $wpdb->prefix . $suffix;
-			$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.DirectDatabaseQuery.DirectQuery -- Trusted plugin-owned table removed only on explicit full uninstall.
+			$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is built only from the trusted WordPress prefix and a fixed plugin-owned suffix.
 		}
 	}
 
