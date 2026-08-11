@@ -1,0 +1,35 @@
+#adminmenu .wp-submenu li.llamahire-submenu-section-start {
+	border-top: 1px solid rgba(255, 255, 255, .2);
+	margin-top: 6px;
+	padding-top: 6px;
+}
+
+.llamahire-moderation-actions {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 12px 0;
+}
+
+.llamahire-moderation-actions.is-compact {
+	align-items: flex-start;
+	flex-direction: column;
+	margin-bottom: 0;
+}
+
+.llamahire-moderation-actions.is-compact .button,
+.llamahire-moderation-actions.is-compact .button-link-delete {
+	box-sizing: border-box;
+	text-align: center;
+	width: 100%;
+}
+
+.llamahire-moderation-prompt {
+	padding-bottom: 10px;
+}
+
+.llamahire-employer-approval {
+	display: grid;
+	gap: 8px;
+}

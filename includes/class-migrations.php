@@ -3,6 +3,8 @@ namespace LlamaHire;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Forward-only schema migrations must inspect and update the plugin's custom tables directly and cannot use cached results.
+
 /**
  * Idempotent database schema migrations for the current site.
  */
@@ -97,6 +99,25 @@ final class Migrations {
 				}
 				self::migration_9_backfill_stage_changed_at();
 				update_option( self::OPTION, '9', false );
+				$current = 9;
+			}
+			if ( $current < 10 ) {
+				self::migration_10_convert_employment_types_to_terms();
+				update_option( self::OPTION, '10', false );
+				$current = 10;
+			}
+			if ( $current < 11 ) {
+				if ( ! self::migration_1_create_applications_table() ) {
+					return false;
+				}
+				update_option( self::OPTION, '11', false );
+				$current = 11;
+			}
+			if ( $current < 12 ) {
+				if ( ! self::migration_12_create_application_notes_table() ) {
+					return false;
+				}
+				update_option( self::OPTION, '12', false );
 			}
 			delete_option( 'llamahire_db_version' );
 		} finally {
@@ -141,6 +162,7 @@ final class Migrations {
 			KEY job_created (job_id, created_at, id),
 			KEY job_status_created (job_id, status, created_at, id),
 			KEY status_created (status, created_at, id),
+			KEY notification_created (notification_status, created_at, id),
 			KEY job_email (job_id, email)
 		) {$charset};";
 		dbDelta( $sql );
@@ -260,6 +282,66 @@ final class Migrations {
 		global $wpdb;
 		$table = $wpdb->prefix . 'llamahire_applications';
 		$wpdb->query( "UPDATE {$table} SET stage_changed_at = updated_at WHERE stage_changed_at IS NULL" ); // phpcs:ignore WordPress.DB.PreparedSQL
+	}
+
+	/**
+	 * Preserve existing employment values as operator-managed job type terms.
+	 */
+	private static function migration_10_convert_employment_types_to_terms() {
+		global $wpdb;
+		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s", Jobs::POST_TYPE ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+		foreach ( array_chunk( $ids, 250 ) as $batch ) {
+			foreach ( $batch as $job_id ) {
+				$stored = get_post_meta( $job_id, Jobs::META_KEY, true );
+				$value  = is_array( $stored ) ? sanitize_text_field( $stored['employment_type'] ?? '' ) : '';
+				if ( ! $value ) {
+					continue;
+				}
+				$slug = sanitize_title( $value );
+				$term = get_term_by( 'slug', $slug, Jobs::TYPE_TAXONOMY );
+				if ( ! $term ) {
+					$name = ucwords( strtolower( str_replace( array( '_', '-' ), ' ', $value ) ) );
+					$created = wp_insert_term( $name, Jobs::TYPE_TAXONOMY, array( 'slug' => $slug ) );
+					$term = is_wp_error( $created ) ? null : get_term( $created['term_id'], Jobs::TYPE_TAXONOMY );
+				}
+				if ( $term instanceof \WP_Term ) {
+					wp_set_object_terms( $job_id, array( $term->term_id ), Jobs::TYPE_TAXONOMY );
+					Jobs::set_meta( $job_id, array( 'employment_type' => $term->slug ) );
+				}
+			}
+		}
+	}
+
+	private static function migration_12_create_application_notes_table() {
+		global $wpdb;
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		$table   = Application_Notes::table();
+		$charset = $wpdb->get_charset_collate();
+		$sql     = "CREATE TABLE {$table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			application_id bigint(20) unsigned NOT NULL,
+			author_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			body longtext NOT NULL,
+			is_legacy tinyint(1) unsigned NOT NULL DEFAULT 0,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY application_created (application_id, created_at, id),
+			KEY author_created (author_user_id, created_at, id)
+		) {$charset};";
+		dbDelta( $sql );
+		if ( $table !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+			return false;
+		}
+
+		$rows = $wpdb->get_results( 'SELECT id, notes, updated_at FROM ' . Applications::table() . " WHERE notes IS NOT NULL AND notes <> '' ORDER BY id ASC" ); // phpcs:ignore WordPress.DB.PreparedSQL
+		foreach ( $rows as $row ) {
+			$exists = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . $table . ' WHERE application_id = %d AND is_legacy = 1 LIMIT 1', $row->id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			if ( ! $exists && is_wp_error( Application_Notes::add( $row->id, $row->notes, 0, $row->updated_at, true ) ) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	public static function failure_notice() {

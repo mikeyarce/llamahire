@@ -16,7 +16,7 @@
 			el( ToggleControl, { label: __( 'Show featured badge', 'llamahire' ), checked: props.attributes.showFeaturedBadge, onChange: function ( value ) { props.setAttributes( { showFeaturedBadge: value } ); } } ),
 			el( ToggleControl, { label: __( 'Show excerpt', 'llamahire' ), checked: props.attributes.showExcerpt, onChange: function ( value ) { props.setAttributes( { showExcerpt: value } ); } } ),
 			el( ToggleControl, { label: __( 'Show location', 'llamahire' ), checked: props.attributes.showLocation, onChange: function ( value ) { props.setAttributes( { showLocation: value } ); } } ),
-			el( ToggleControl, { label: __( 'Show workplace', 'llamahire' ), checked: props.attributes.showWorkplace, onChange: function ( value ) { props.setAttributes( { showWorkplace: value } ); } } ),
+			el( ToggleControl, { label: __( 'Show location type', 'llamahire' ), checked: props.attributes.showWorkplace, onChange: function ( value ) { props.setAttributes( { showWorkplace: value } ); } } ),
 			el( ToggleControl, { label: __( 'Show employment type', 'llamahire' ), checked: props.attributes.showEmploymentType, onChange: function ( value ) { props.setAttributes( { showEmploymentType: value } ); } } ),
 			el( ToggleControl, { label: __( 'Show salary', 'llamahire' ), checked: props.attributes.showSalary, onChange: function ( value ) { props.setAttributes( { showSalary: value } ); } } ),
 			el( TextControl, { label: __( 'Link label', 'llamahire' ), value: props.attributes.linkLabel, onChange: function ( value ) { props.setAttributes( { linkLabel: value } ); } } ),
@@ -36,7 +36,7 @@
 			el( ToggleControl, { label: __( 'Show organization', 'llamahire' ), checked: props.attributes.showOrganization, onChange: function ( value ) { props.setAttributes( { showOrganization: value } ); } } ),
 			el( ToggleControl, { label: __( 'Show location', 'llamahire' ), checked: props.attributes.showLocation, onChange: function ( value ) { props.setAttributes( { showLocation: value } ); } } ),
 			props.attributes.showLocation ? el( ToggleControl, { label: __( 'Show street address', 'llamahire' ), checked: props.attributes.showFullAddress, onChange: function ( value ) { props.setAttributes( { showFullAddress: value } ); } } ) : null,
-			el( ToggleControl, { label: __( 'Show workplace', 'llamahire' ), checked: props.attributes.showWorkplace, onChange: function ( value ) { props.setAttributes( { showWorkplace: value } ); } } ),
+			el( ToggleControl, { label: __( 'Show location type', 'llamahire' ), checked: props.attributes.showWorkplace, onChange: function ( value ) { props.setAttributes( { showWorkplace: value } ); } } ),
 			el( ToggleControl, { label: __( 'Show employment type', 'llamahire' ), checked: props.attributes.showEmploymentType, onChange: function ( value ) { props.setAttributes( { showEmploymentType: value } ); } } ),
 			el( ToggleControl, { label: __( 'Show salary', 'llamahire' ), checked: props.attributes.showSalary, onChange: function ( value ) { props.setAttributes( { showSalary: value } ); } } ),
 			el( ToggleControl, { label: __( 'Show posted date', 'llamahire' ), checked: props.attributes.showPostedDate, onChange: function ( value ) { props.setAttributes( { showPostedDate: value } ); } } ),
@@ -101,7 +101,7 @@
 				el( InspectorControls, {}, el( PanelBody, { title: __( 'Filter settings', 'llamahire' ) },
 					el( ToggleControl, { label: __( 'Show department', 'llamahire' ), checked: props.attributes.showDepartment, onChange: function ( value ) { props.setAttributes( { showDepartment: value } ); } } ),
 					el( ToggleControl, { label: __( 'Show employment type', 'llamahire' ), checked: props.attributes.showEmploymentType, onChange: function ( value ) { props.setAttributes( { showEmploymentType: value } ); } } ),
-					el( ToggleControl, { label: __( 'Show workplace', 'llamahire' ), checked: props.attributes.showWorkplace, onChange: function ( value ) { props.setAttributes( { showWorkplace: value } ); } } ),
+					el( ToggleControl, { label: __( 'Show location type', 'llamahire' ), checked: props.attributes.showWorkplace, onChange: function ( value ) { props.setAttributes( { showWorkplace: value } ); } } ),
 					el( ToggleControl, { label: __( 'Show location', 'llamahire' ), checked: props.attributes.showLocation, onChange: function ( value ) { props.setAttributes( { showLocation: value } ); } } ),
 					el( ToggleControl, { label: __( 'Show featured roles', 'llamahire' ), checked: props.attributes.showFeatured, onChange: function ( value ) { props.setAttributes( { showFeatured: value } ); } } ),
 					el( TextControl, { label: __( 'Button label', 'llamahire' ), value: props.attributes.buttonLabel, onChange: function ( value ) { props.setAttributes( { buttonLabel: value } ); } } )
@@ -161,11 +161,12 @@
 			var rows = [];
 			if ( props.attributes.showOrganization && meta.organization_name ) { rows.push( [ __( 'Organization', 'llamahire' ), meta.organization_name ] ); }
 			if ( props.attributes.showLocation && location ) { rows.push( [ __( 'Location', 'llamahire' ), location ] ); }
-			if ( props.attributes.showWorkplace && meta.workplace ) { rows.push( [ __( 'Workplace', 'llamahire' ), humanize( meta.workplace ) ] ); }
+			if ( props.attributes.showWorkplace && meta.workplace ) { rows.push( [ __( 'Location type', 'llamahire' ), humanize( meta.workplace ) ] ); }
 			if ( props.attributes.showEmploymentType && meta.employment_type ) { rows.push( [ __( 'Employment', 'llamahire' ), humanize( meta.employment_type ) ] ); }
 			if ( props.attributes.showSalary && salary ) { rows.push( [ __( 'Salary', 'llamahire' ), salary ] ); }
 			if ( props.attributes.showPostedDate && job.date ) { rows.push( [ __( 'Posted', 'llamahire' ), new Date( job.date ).toLocaleDateString() ] ); }
 			if ( props.attributes.showDeadline && meta.deadline ) { rows.push( [ __( 'Apply by', 'llamahire' ), meta.deadline ] ); }
+			if ( props.attributes.showDeadline && meta.listing_expires ) { rows.push( [ __( 'Listing ends', 'llamahire' ), meta.listing_expires ] ); }
 			if ( props.attributes.showReference && meta.job_identifier ) { rows.push( [ __( 'Job reference', 'llamahire' ), meta.job_identifier ] ); }
 			return el( element.Fragment, {},
 				detailsControls( props ),

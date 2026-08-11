@@ -37,6 +37,10 @@
 		var data = Object.assign( {}, config.defaults || {}, editor.meta._llamahire_job || {} );
 		var organization = config.organization || {};
 		var organizationName = data.organization_name || organization.name || '';
+		var employmentTypeOptions = [ option( __( 'Select a job type', 'llamahire' ), '' ) ];
+		Object.keys( config.employmentTypes || {} ).forEach( function ( value ) {
+			employmentTypeOptions.push( option( config.employmentTypes[ value ], value ) );
+		} );
 		var issues = [];
 
 		useEffect( function () {
@@ -125,20 +129,21 @@
 				el( Notice, { status: 'info', isDismissible: false },
 					el( 'strong', {}, editor.status === 'publish' ? __( 'Published', 'llamahire' ) : __( 'Not published', 'llamahire' ) ),
 					' — ',
-					editor.status !== 'publish' ? __( 'applications will not open until this job is published.', 'llamahire' ) : ( data.closed === '1' ? __( 'closed to new applications.', 'llamahire' ) : __( 'accepting applications until its deadline.', 'llamahire' ) )
+					editor.status !== 'publish' ? __( 'applications will not open until this job is published.', 'llamahire' ) : ( data.closed === '1' ? __( 'closed to new applications.', 'llamahire' ) : __( 'accepting applications until its application deadline or listing expiration.', 'llamahire' ) )
 				),
 				editor.previewLink ? el( Button, { variant: 'secondary', href: editor.previewLink, target: '_blank', rel: 'noopener noreferrer' }, __( 'Preview job', 'llamahire' ) ) : null,
 				el( SelectControl, {
 					label: __( 'Employment type', 'llamahire' ), value: data.employment_type,
-					options: [ option( __( 'Full time', 'llamahire' ), 'FULL_TIME' ), option( __( 'Part time', 'llamahire' ), 'PART_TIME' ), option( __( 'Contractor', 'llamahire' ), 'CONTRACTOR' ), option( __( 'Temporary', 'llamahire' ), 'TEMPORARY' ), option( __( 'Internship', 'llamahire' ), 'INTERN' ), option( __( 'Volunteer', 'llamahire' ), 'VOLUNTEER' ), option( __( 'Per diem', 'llamahire' ), 'PER_DIEM' ), option( __( 'Other', 'llamahire' ), 'OTHER' ) ],
+					options: employmentTypeOptions,
 					onChange: function ( value ) { set( 'employment_type', value ); }
 				} ),
 				el( SelectControl, {
-					label: __( 'Workplace', 'llamahire' ), value: data.workplace,
+					label: __( 'Location', 'llamahire' ), value: data.workplace,
 					options: [ option( __( 'On-site', 'llamahire' ), 'onsite' ), option( __( 'Hybrid', 'llamahire' ), 'hybrid' ), option( __( 'Fully remote', 'llamahire' ), 'remote' ) ],
 					onChange: function ( value ) { set( 'workplace', value ); }
 				} ),
 				el( TextControl, { label: __( 'Application deadline', 'llamahire' ), type: 'date', value: data.deadline, onChange: function ( value ) { set( 'deadline', value ); } } ),
+				el( TextControl, { label: __( 'Listing expiration', 'llamahire' ), help: __( 'Set automatically for employer submissions. Board operators can adjust it here.', 'llamahire' ), type: 'date', value: data.listing_expires, onChange: function ( value ) { set( 'listing_expires', value ); } } ),
 				el( TextControl, { label: __( 'Stable job reference', 'llamahire' ), help: __( 'Used as Google’s unique identifier. Keep it stable after publication.', 'llamahire' ), value: data.job_identifier, onChange: function ( value ) { set( 'job_identifier', value ); } } ),
 				el( CheckboxControl, { label: __( 'Featured job', 'llamahire' ), checked: data.featured === '1', onChange: function ( value ) { set( 'featured', value ? '1' : '0' ); } } ),
 				el( CheckboxControl, { label: __( 'Close applications without unpublishing', 'llamahire' ), help: __( 'The job can remain publicly visible, but its application form and Google Jobs listing will close.', 'llamahire' ), checked: data.closed === '1', onChange: function ( value ) { set( 'closed', value ? '1' : '0' ); } } )
@@ -165,11 +170,11 @@
 			el( PluginDocumentSettingPanel, { name: 'llamahire-application-routing', title: __( 'Application routing', 'llamahire' ) },
 				el( SelectControl, {
 					label: __( 'How candidates apply', 'llamahire' ), value: data.application_method,
-					options: [ option( __( 'LlamaHire application form', 'llamahire' ), 'internal' ), option( __( 'Employer website', 'llamahire' ), 'external_url' ), option( __( 'Email', 'llamahire' ), 'external_email' ) ],
+					options: [ option( __( 'LlamaHire application form', 'llamahire' ), 'internal' ), option( __( 'Application website', 'llamahire' ), 'external_url' ), option( __( 'Application email', 'llamahire' ), 'external_email' ) ],
 					onChange: function ( value ) { set( 'application_method', value ); }
 				} ),
 				el( TextControl, {
-					label: data.application_method === 'external_url' ? __( 'Application URL', 'llamahire' ) : __( 'Application email', 'llamahire' ),
+					label: data.application_method === 'external_url' ? __( 'Application website URL', 'llamahire' ) : ( data.application_method === 'external_email' ? __( 'Application email', 'llamahire' ) : __( 'Notification email', 'llamahire' ) ),
 					type: data.application_method === 'external_url' ? 'url' : 'email',
 					help: data.application_method === 'internal' ? __( 'Candidate notifications for this job are sent here. Leave blank to use the board-wide hiring inbox.', 'llamahire' ) : '',
 					value: data.application_target,

@@ -5,11 +5,14 @@ defined( 'ABSPATH' ) || exit;
 
 final class Jobs {
 	const POST_TYPE = 'llamahire_job';
+	const DEPARTMENT_TAXONOMY = 'llamahire_department';
+	const TYPE_TAXONOMY = 'llamahire_job_type';
 	const META_KEY  = '_llamahire_job';
 	const META_WORKPLACE = '_llamahire_workplace';
 	const META_FEATURED  = '_llamahire_featured';
 	const META_CLOSED    = '_llamahire_closed';
 	const META_DEADLINE  = '_llamahire_deadline';
+	const META_EXPIRY    = '_llamahire_listing_expires';
 	const META_EMPLOYMENT = '_llamahire_employment_type';
 	const META_LOCATION   = '_llamahire_location';
 
@@ -63,11 +66,12 @@ final class Jobs {
 			)
 		);
 
+		$department_labels = self::department_labels();
 		register_taxonomy(
-			'llamahire_department',
+			self::DEPARTMENT_TAXONOMY,
 			self::POST_TYPE,
 			array(
-				'labels'            => array( 'name' => __( 'Departments', 'llamahire' ), 'singular_name' => __( 'Department', 'llamahire' ) ),
+				'labels'            => array( 'name' => $department_labels['plural'], 'singular_name' => $department_labels['singular'] ),
 				'public'            => true,
 				'show_in_rest'      => true,
 				'show_admin_column' => true,
@@ -81,17 +85,37 @@ final class Jobs {
 			)
 		);
 
+		register_taxonomy(
+			self::TYPE_TAXONOMY,
+			self::POST_TYPE,
+			array(
+				'labels'            => array( 'name' => __( 'Job Types', 'llamahire' ), 'singular_name' => __( 'Job Type', 'llamahire' ) ),
+				'public'            => true,
+				'hierarchical'      => false,
+				'show_in_rest'      => true,
+				'show_admin_column' => true,
+				'capabilities'      => array(
+					'manage_terms' => 'manage_llamahire_job_types',
+					'edit_terms'   => 'edit_llamahire_job_types',
+					'delete_terms' => 'delete_llamahire_job_types',
+					'assign_terms' => 'assign_llamahire_job_types',
+				),
+				'rewrite'           => array( 'slug' => 'job-type' ),
+			)
+		);
+
 		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'enqueue_editor' ) );
 		add_action( 'wp_after_insert_post', array( __CLASS__, 'ensure_identifier' ), 10, 4 );
 		add_action( 'added_post_meta', array( __CLASS__, 'sync_query_meta' ), 10, 4 );
 		add_action( 'updated_post_meta', array( __CLASS__, 'sync_query_meta' ), 10, 4 );
+		add_action( 'set_object_terms', array( __CLASS__, 'sync_type_meta' ), 10, 6 );
 		add_filter( 'post_row_actions', array( __CLASS__, 'row_actions' ), 10, 2 );
 		add_action( 'admin_action_llamahire_duplicate_job', array( __CLASS__, 'duplicate' ) );
 		add_filter( 'display_post_states', array( __CLASS__, 'post_states' ), 10, 2 );
 	}
 
 	private static function rest_properties() {
-		$strings = array( 'location', 'employment_type', 'workplace', 'salary_currency', 'salary_unit', 'deadline', 'featured', 'closed', 'address_street', 'address_locality', 'address_region', 'postal_code', 'address_country', 'applicant_countries', 'job_identifier', 'organization_name', 'organization_tagline', 'organization_url', 'organization_logo', 'application_method', 'application_target' );
+		$strings = array( 'location', 'employment_type', 'workplace', 'salary_currency', 'salary_unit', 'deadline', 'listing_expires', 'featured', 'closed', 'address_street', 'address_locality', 'address_region', 'postal_code', 'address_country', 'applicant_countries', 'job_identifier', 'organization_name', 'organization_tagline', 'organization_url', 'organization_logo', 'application_method', 'application_target' );
 		$schema  = array();
 		foreach ( $strings as $key ) {
 			$schema[ $key ] = array( 'type' => 'string' );
@@ -122,7 +146,8 @@ final class Jobs {
 			array(
 				'defaults'     => self::defaults(),
 				'organization' => Settings::get(),
-				'duplicateNotice' => absint( $_GET['llamahire_duplicated'] ?? 0 ) ? __( 'Job duplicated as a new draft. Review its details before publishing.', 'llamahire' ) : '',
+				'employmentTypes' => self::employment_types(),
+				'duplicateNotice' => absint( $_GET['llamahire_duplicated'] ?? 0 ) ? __( 'Job duplicated as a new draft. Review its details before publishing.', 'llamahire' ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action.
 			)
 		);
 	}
@@ -146,8 +171,22 @@ final class Jobs {
 		update_post_meta( $post_id, self::META_FEATURED, $data['featured'] );
 		update_post_meta( $post_id, self::META_CLOSED, $data['closed'] );
 		update_post_meta( $post_id, self::META_DEADLINE, $data['deadline'] );
+		update_post_meta( $post_id, self::META_EXPIRY, $data['listing_expires'] );
 		update_post_meta( $post_id, self::META_EMPLOYMENT, $data['employment_type'] );
 		update_post_meta( $post_id, self::META_LOCATION, self::query_location( $data ) );
+		wp_set_object_terms( $post_id, $data['employment_type'] ? array( $data['employment_type'] ) : array(), self::TYPE_TAXONOMY );
+	}
+
+	public static function sync_type_meta( $object_id, $terms, $term_taxonomy_ids, $taxonomy, $append, $old_term_taxonomy_ids ) {
+		if ( self::TYPE_TAXONOMY !== $taxonomy || self::POST_TYPE !== get_post_type( $object_id ) ) {
+			return;
+		}
+		$slugs = wp_get_object_terms( $object_id, self::TYPE_TAXONOMY, array( 'fields' => 'slugs' ) );
+		$value = ! is_wp_error( $slugs ) && $slugs ? reset( $slugs ) : '';
+		$meta  = self::get_meta( $object_id );
+		if ( $meta['employment_type'] !== $value ) {
+			self::set_meta( $object_id, array( 'employment_type' => $value ) );
+		}
 	}
 
 	public static function set_meta( $post_id, array $data ) {
@@ -159,33 +198,40 @@ final class Jobs {
 		update_post_meta( $post_id, self::META_FEATURED, $data['featured'] );
 		update_post_meta( $post_id, self::META_CLOSED, $data['closed'] );
 		update_post_meta( $post_id, self::META_DEADLINE, $data['deadline'] );
+		update_post_meta( $post_id, self::META_EXPIRY, $data['listing_expires'] );
 		update_post_meta( $post_id, self::META_EMPLOYMENT, $data['employment_type'] );
 		update_post_meta( $post_id, self::META_LOCATION, self::query_location( $data ) );
+		wp_set_object_terms( $post_id, $data['employment_type'] ? array( $data['employment_type'] ) : array(), self::TYPE_TAXONOMY );
 	}
 
 	public static function query_location( array $data ) {
+		if ( 'remote' === ( $data['workplace'] ?? '' ) ) {
+			return sanitize_text_field( $data['applicant_countries'] ?? '' );
+		}
 		$parts = array_filter(
 			array(
-				$data['location'] ?? '',
 				$data['address_locality'] ?? '',
 				$data['address_region'] ?? '',
 				$data['address_country'] ?? '',
-				$data['applicant_countries'] ?? '',
 			)
 		);
+		if ( empty( $data['address_locality'] ) && empty( $data['address_country'] ) && ! empty( $data['location'] ) ) {
+			array_unshift( $parts, $data['location'] );
+		}
 		return sanitize_text_field( implode( ' ', array_unique( $parts ) ) );
 	}
 
 	public static function defaults() {
 		return array(
 			'location'            => '',
-			'employment_type'     => 'FULL_TIME',
+			'employment_type'     => '',
 			'workplace'           => 'onsite',
 			'salary_min'          => '',
 			'salary_max'          => '',
 			'salary_currency'     => Settings::get()['default_currency'],
 			'salary_unit'         => 'YEAR',
 			'deadline'            => '',
+			'listing_expires'     => '',
 			'featured'            => '0',
 			'closed'              => '0',
 			'address_street'      => '',
@@ -210,7 +256,6 @@ final class Jobs {
 		$input       = is_array( $input ) ? $input : array();
 		$defaults    = self::defaults();
 		$data        = wp_parse_args( $input, $defaults );
-		$employment = array( 'FULL_TIME', 'PART_TIME', 'CONTRACTOR', 'TEMPORARY', 'INTERN', 'VOLUNTEER', 'PER_DIEM', 'OTHER' );
 		$units       = array( 'HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR' );
 		$countries   = array_filter( array_map( 'trim', explode( ',', strtoupper( sanitize_text_field( $data['applicant_countries'] ) ) ) ) );
 		$countries   = array_values( array_unique( array_filter( $countries, static function ( $code ) { return (bool) preg_match( '/^[A-Z]{2}$/', $code ); } ) ) );
@@ -234,13 +279,14 @@ final class Jobs {
 
 		return array(
 			'location'            => sanitize_text_field( $data['location'] ),
-			'employment_type'     => in_array( $data['employment_type'], $employment, true ) ? $data['employment_type'] : 'FULL_TIME',
+			'employment_type'     => sanitize_title( $data['employment_type'] ),
 			'workplace'           => in_array( $data['workplace'], array( 'onsite', 'hybrid', 'remote' ), true ) ? $data['workplace'] : 'onsite',
 			'salary_min'          => $salary_min,
 			'salary_max'          => $salary_max,
 			'salary_currency'     => $salary_currency,
 			'salary_unit'         => in_array( $data['salary_unit'], $units, true ) ? $data['salary_unit'] : 'YEAR',
 			'deadline'            => self::valid_date( $data['deadline'] ) ? $data['deadline'] : '',
+			'listing_expires'     => self::valid_date( $data['listing_expires'] ) ? $data['listing_expires'] : '',
 			'featured'            => empty( $data['featured'] ) || '0' === (string) $data['featured'] ? '0' : '1',
 			'closed'              => empty( $data['closed'] ) || '0' === (string) $data['closed'] ? '0' : '1',
 			'address_street'      => sanitize_text_field( $data['address_street'] ),
@@ -288,6 +334,25 @@ final class Jobs {
 				'relation' => 'OR',
 				array( 'key' => self::META_DEADLINE, 'value' => '', 'compare' => '=' ),
 				array( 'key' => self::META_DEADLINE, 'value' => current_time( 'Y-m-d' ), 'compare' => '>=', 'type' => 'DATE' ),
+			),
+			array(
+				'relation' => 'OR',
+				array( 'key' => self::META_EXPIRY, 'compare' => 'NOT EXISTS' ),
+				array( 'key' => self::META_EXPIRY, 'value' => '', 'compare' => '=' ),
+				array( 'key' => self::META_EXPIRY, 'value' => current_time( 'Y-m-d' ), 'compare' => '>=', 'type' => 'DATE' ),
+			),
+		);
+	}
+
+	public static function closing_soon_meta_query() {
+		$today = current_datetime();
+		return array(
+			'relation' => 'AND',
+			self::open_meta_query(),
+			array(
+				'relation' => 'OR',
+				array( 'key' => self::META_DEADLINE, 'value' => array( $today->format( 'Y-m-d' ), $today->modify( '+7 days' )->format( 'Y-m-d' ) ), 'compare' => 'BETWEEN', 'type' => 'DATE' ),
+				array( 'key' => self::META_EXPIRY, 'value' => array( $today->format( 'Y-m-d' ), $today->modify( '+7 days' )->format( 'Y-m-d' ) ), 'compare' => 'BETWEEN', 'type' => 'DATE' ),
 			),
 		);
 	}
@@ -349,25 +414,87 @@ final class Jobs {
 	}
 
 	public static function employment_label( $value ) {
-		return ucwords( strtolower( str_replace( '_', ' ', $value ) ) );
+		$term = get_term_by( 'slug', sanitize_title( $value ), self::TYPE_TAXONOMY );
+		return $term instanceof \WP_Term ? $term->name : ucwords( strtolower( str_replace( array( '_', '-' ), ' ', $value ) ) );
 	}
 
 	public static function employment_types() {
-		return array(
-			'FULL_TIME'  => __( 'Full time', 'llamahire' ),
-			'PART_TIME'  => __( 'Part time', 'llamahire' ),
-			'CONTRACTOR' => __( 'Contractor', 'llamahire' ),
-			'TEMPORARY'  => __( 'Temporary', 'llamahire' ),
-			'INTERN'     => __( 'Intern', 'llamahire' ),
-			'VOLUNTEER'  => __( 'Volunteer', 'llamahire' ),
-			'PER_DIEM'   => __( 'Per diem', 'llamahire' ),
-			'OTHER'      => __( 'Other', 'llamahire' ),
-		);
+		$terms = get_terms( array( 'taxonomy' => self::TYPE_TAXONOMY, 'hide_empty' => false, 'orderby' => 'name', 'order' => 'ASC' ) );
+		$options = array();
+		if ( ! is_wp_error( $terms ) ) {
+			foreach ( $terms as $term ) {
+				$options[ $term->slug ] = $term->name;
+			}
+		}
+		return $options;
+	}
+
+	public static function department_labels() {
+		if ( Settings::SITE_MODE_JOB_BOARD === Settings::site_mode() ) {
+			return array( 'singular' => __( 'Job Category', 'llamahire' ), 'plural' => __( 'Job Categories', 'llamahire' ) );
+		}
+		return array( 'singular' => __( 'Department', 'llamahire' ), 'plural' => __( 'Departments', 'llamahire' ) );
 	}
 
 	public static function is_open( $post_id ) {
 		$meta = self::get_meta( $post_id );
-		return '1' !== $meta['closed'] && ( empty( $meta['deadline'] ) || $meta['deadline'] >= current_time( 'Y-m-d' ) );
+		$today = current_time( 'Y-m-d' );
+		return '1' !== $meta['closed'] && ( empty( $meta['deadline'] ) || $meta['deadline'] >= $today ) && ( empty( $meta['listing_expires'] ) || $meta['listing_expires'] >= $today );
+	}
+
+	public static function listing_expires_soon( $post_id, $days = 7 ) {
+		$post = get_post( absint( $post_id ) );
+		if ( ! $post || self::POST_TYPE !== $post->post_type || 'publish' !== $post->post_status || ! self::is_open( $post->ID ) ) {
+			return false;
+		}
+		$meta   = self::get_meta( $post->ID );
+		$expiry = $meta['listing_expires'];
+		if ( ! $expiry || ( $meta['deadline'] && $meta['deadline'] <= $expiry ) ) {
+			return false;
+		}
+		$today = current_datetime();
+		return $expiry >= $today->format( 'Y-m-d' ) && $expiry <= $today->modify( '+' . max( 0, absint( $days ) ) . ' days' )->format( 'Y-m-d' );
+	}
+
+	public static function duplicate_as_draft( $post_id, $author_id = 0 ) {
+		$post = get_post( absint( $post_id ) );
+		if ( ! $post || self::POST_TYPE !== $post->post_type ) {
+			return new \WP_Error( 'llamahire_job_not_found', __( 'The job listing could not be found.', 'llamahire' ) );
+		}
+		$new = wp_insert_post(
+			array(
+				'post_type'    => self::POST_TYPE,
+				'post_status'  => 'draft',
+				'post_author'  => absint( $author_id ) ?: absint( $post->post_author ),
+				/* translators: %s: original job title. */
+				'post_title'   => sprintf( __( '%s (Copy)', 'llamahire' ), $post->post_title ),
+				'post_content' => $post->post_content,
+				'post_excerpt' => $post->post_excerpt,
+			),
+			true
+		);
+		if ( is_wp_error( $new ) ) {
+			return $new;
+		}
+		$duplicate_meta = self::get_meta( $post->ID );
+		$duplicate_meta = array_merge(
+			$duplicate_meta,
+			array(
+				'closed'           => '0',
+				'deadline'         => '',
+				'featured'         => '0',
+				'job_identifier'   => '',
+				'listing_expires'  => '',
+			)
+		);
+		self::set_meta( $new, $duplicate_meta );
+		foreach ( array( self::DEPARTMENT_TAXONOMY, self::TYPE_TAXONOMY ) as $taxonomy ) {
+			$terms = wp_get_object_terms( $post->ID, $taxonomy, array( 'fields' => 'ids' ) );
+			if ( ! is_wp_error( $terms ) ) {
+				wp_set_object_terms( $new, $terms, $taxonomy );
+			}
+		}
+		return $new;
 	}
 
 	public static function row_actions( $actions, $post ) {
@@ -384,21 +511,23 @@ final class Jobs {
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			wp_die( esc_html__( 'You cannot duplicate this job.', 'llamahire' ) );
 		}
-		$post = get_post( $post_id );
-		/* translators: %s: original job title. */
-		$new  = wp_insert_post( array( 'post_type' => self::POST_TYPE, 'post_status' => 'draft', 'post_title' => sprintf( __( '%s (Copy)', 'llamahire' ), $post->post_title ), 'post_content' => $post->post_content, 'post_excerpt' => $post->post_excerpt ), true );
+		$new = self::duplicate_as_draft( $post_id );
 		if ( is_wp_error( $new ) ) {
 			wp_die( esc_html__( 'WordPress could not duplicate this job. Please try again.', 'llamahire' ), 500 );
 		}
-		self::set_meta( $new, self::get_meta( $post_id ) );
-		wp_set_object_terms( $new, wp_get_object_terms( $post_id, 'llamahire_department', array( 'fields' => 'ids' ) ), 'llamahire_department' );
 		wp_safe_redirect( add_query_arg( 'llamahire_duplicated', $post_id, get_edit_post_link( $new, 'url' ) ) );
 		exit;
 	}
 
 	public static function post_states( $states, $post ) {
-		if ( self::POST_TYPE === $post->post_type && ! self::is_open( $post->ID ) ) {
+		if ( self::POST_TYPE !== $post->post_type || 'publish' !== $post->post_status ) {
+			return $states;
+		}
+		$meta = self::get_meta( $post->ID );
+		if ( '1' === $meta['closed'] ) {
 			$states['llamahire_closed'] = __( 'Closed', 'llamahire' );
+		} elseif ( ( ! empty( $meta['deadline'] ) && $meta['deadline'] < current_time( 'Y-m-d' ) ) || ( ! empty( $meta['listing_expires'] ) && $meta['listing_expires'] < current_time( 'Y-m-d' ) ) ) {
+			$states['llamahire_expired'] = __( 'Expired', 'llamahire' );
 		}
 		return $states;
 	}

@@ -50,6 +50,17 @@ final class Settings {
 			'careers_page_id'    => 0,
 			'submit_job_page_id'  => 0,
 			'my_jobs_page_id'     => 0,
+			'employer_registration_page_id' => 0,
+			'employer_approval'   => 'manual',
+			'employer_policy_text' => __( 'I agree to follow this job board’s {listing_policy} and provide accurate employer and job information.', 'llamahire' ),
+			'employer_policy_page_id' => 0,
+			'active_listing_limit' => 0,
+			'listing_duration_days' => 30,
+			'anti_spam_provider' => 'none',
+			'anti_spam_site_key' => '',
+			'anti_spam_secret_key' => '',
+			'anti_spam_registration' => 1,
+			'anti_spam_applications' => 1,
 			'application_phone'   => 'optional',
 			'application_resume'  => 'optional',
 			'application_letter'  => 'optional',
@@ -91,6 +102,17 @@ final class Settings {
 			'careers_page_id'    => absint( $input['careers_page_id'] ?? 0 ),
 			'submit_job_page_id'  => absint( $input['submit_job_page_id'] ?? 0 ),
 			'my_jobs_page_id'     => absint( $input['my_jobs_page_id'] ?? 0 ),
+			'employer_registration_page_id' => absint( $input['employer_registration_page_id'] ?? 0 ),
+			'employer_approval'   => self::employer_approval( $input['employer_approval'] ?? $defaults['employer_approval'] ),
+			'employer_policy_text' => self::employer_policy_text( $input['employer_policy_text'] ?? '', $defaults['employer_policy_text'] ),
+			'employer_policy_page_id' => absint( $input['employer_policy_page_id'] ?? 0 ),
+			'active_listing_limit' => min( 1000, absint( $input['active_listing_limit'] ?? $defaults['active_listing_limit'] ) ),
+			'listing_duration_days' => self::listing_duration_days( $input['listing_duration_days'] ?? $defaults['listing_duration_days'] ),
+			'anti_spam_provider' => Anti_Spam::sanitize_provider( $input['anti_spam_provider'] ?? $defaults['anti_spam_provider'] ),
+			'anti_spam_site_key' => substr( sanitize_text_field( $input['anti_spam_site_key'] ?? '' ), 0, 255 ),
+			'anti_spam_secret_key' => substr( sanitize_text_field( $input['anti_spam_secret_key'] ?? '' ), 0, 255 ),
+			'anti_spam_registration' => empty( $input['anti_spam_registration'] ) ? 0 : 1,
+			'anti_spam_applications' => empty( $input['anti_spam_applications'] ) ? 0 : 1,
 			'application_phone'   => self::field_mode( $input['application_phone'] ?? 'optional', 'optional' ),
 			'application_resume'  => self::field_mode( $input['application_resume'] ?? 'optional', 'optional' ),
 			'application_letter'  => self::field_mode( $input['application_letter'] ?? 'optional', 'optional' ),
@@ -100,6 +122,21 @@ final class Settings {
 
 	public static function site_mode() {
 		return self::sanitize_site_mode( self::get()['site_mode'] );
+	}
+
+	public static function employer_approval( $value ) {
+		$value = sanitize_key( $value );
+		return in_array( $value, array( 'automatic', 'manual' ), true ) ? $value : 'manual';
+	}
+
+	private static function employer_policy_text( $value, $fallback ) {
+		$value = sanitize_textarea_field( $value );
+		return $value ?: $fallback;
+	}
+
+	public static function listing_duration_days( $value ) {
+		$value = absint( $value );
+		return in_array( $value, array( 0, 7, 14, 30, 45, 60, 90, 180, 365 ), true ) ? $value : 30;
 	}
 
 	public static function sanitize_site_mode( $value ) {
@@ -138,7 +175,11 @@ final class Settings {
 	}
 
 	public static function public_page( $page_id ) {
-		$page = get_post( absint( $page_id ) );
+		$page_id = absint( $page_id );
+		if ( ! $page_id ) {
+			return null;
+		}
+		$page = get_post( $page_id );
 		return $page && 'page' === $page->post_type && 'publish' === $page->post_status ? $page : null;
 	}
 
@@ -245,7 +286,7 @@ final class Settings {
 	}
 
 	public static function enqueue_assets() {
-		$page = sanitize_key( wp_unslash( $_GET['page'] ?? '' ) );
+		$page = sanitize_key( wp_unslash( $_GET['page'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin screen selection.
 		if ( ! in_array( $page, array( 'llamahire-settings', 'llamahire-setup' ), true ) ) {
 			return;
 		}
@@ -274,15 +315,19 @@ final class Settings {
 		}
 		$settings     = self::get();
 		$is_job_board = self::SITE_MODE_JOB_BOARD === $settings['site_mode'];
-		$email_test   = sanitize_key( wp_unslash( $_GET['email_test'] ?? '' ) );
+		$email_test   = sanitize_key( wp_unslash( $_GET['email_test'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action.
 		$sections     = array(
 			'site-purpose' => array( __( 'Site purpose', 'llamahire' ), 'dashicons-admin-settings' ),
 			'organization' => array( $is_job_board ? __( 'Board identity', 'llamahire' ) : __( 'Organization', 'llamahire' ), 'dashicons-building' ),
 			'job-defaults' => array( __( 'Job defaults', 'llamahire' ), 'dashicons-portfolio' ),
+			'listing-policy' => array( __( 'Listing policy', 'llamahire' ), 'dashicons-clipboard' ),
 			'applications' => array( __( 'Applications & privacy', 'llamahire' ), 'dashicons-shield' ),
 			'notifications' => array( __( 'Notifications', 'llamahire' ), 'dashicons-bell' ),
 			'pages'        => array( __( 'Pages', 'llamahire' ), 'dashicons-media-document' ),
 		);
+		if ( ! $is_job_board ) {
+			unset( $sections['listing-policy'] );
+		}
 		?>
 		<div class="wrap llamahire-settings-screen" data-llamahire-settings>
 			<h1><?php esc_html_e( 'LlamaHire settings', 'llamahire' ); ?></h1>
@@ -321,7 +366,29 @@ final class Settings {
 								<label><input type="radio" name="<?php echo esc_attr( self::OPTION ); ?>[site_mode]" value="company" <?php checked( self::SITE_MODE_COMPANY, $settings['site_mode'] ); ?>><span><strong><?php esc_html_e( 'Company careers site', 'llamahire' ); ?></strong><span class="description"><?php esc_html_e( 'Publish jobs for one organization using shared employer defaults.', 'llamahire' ); ?></span></span></label>
 								<label><input type="radio" name="<?php echo esc_attr( self::OPTION ); ?>[site_mode]" value="job_board" <?php checked( self::SITE_MODE_JOB_BOARD, $settings['site_mode'] ); ?>><span><strong><?php esc_html_e( 'Community job board', 'llamahire' ); ?></strong><span class="description"><?php esc_html_e( 'Publish listings from multiple employers while this site acts as the board operator.', 'llamahire' ); ?></span></span></label>
 							</fieldset>
-							<?php if ( $is_job_board ) : ?><div class="llamahire-settings-callout"><h3><?php esc_html_e( 'Employer access', 'llamahire' ); ?></h3><p><?php esc_html_e( 'Employer accounts are administrator-approved for the MVP. Create an account in Users, assign the Employer role, then send the employer the Submit a Job page.', 'llamahire' ); ?> <a href="<?php echo esc_url( admin_url( 'user-new.php' ) ); ?>"><?php esc_html_e( 'Add an employer account', 'llamahire' ); ?></a>.</p></div><?php endif; ?>
+							<?php if ( $is_job_board ) : ?>
+								<div class="llamahire-settings-callout">
+									<h3><?php esc_html_e( 'Employer registration', 'llamahire' ); ?></h3>
+									<p><?php esc_html_e( 'New employers verify their email address before they can submit jobs.', 'llamahire' ); ?></p>
+									<label for="llamahire-employer-approval"><strong><?php esc_html_e( 'After email verification', 'llamahire' ); ?></strong></label>
+									<select id="llamahire-employer-approval" name="<?php echo esc_attr( self::OPTION ); ?>[employer_approval]">
+										<option value="manual" <?php selected( 'manual', $settings['employer_approval'] ); ?>><?php esc_html_e( 'Require operator approval', 'llamahire' ); ?></option>
+										<option value="automatic" <?php selected( 'automatic', $settings['employer_approval'] ); ?>><?php esc_html_e( 'Approve automatically', 'llamahire' ); ?></option>
+									</select>
+									<label for="llamahire-employer-policy"><strong><?php esc_html_e( 'Registration agreement', 'llamahire' ); ?></strong></label>
+									<textarea class="large-text" rows="3" id="llamahire-employer-policy" name="<?php echo esc_attr( self::OPTION ); ?>[employer_policy_text]" required><?php echo esc_textarea( $settings['employer_policy_text'] ); ?></textarea>
+									<p class="description"><?php echo wp_kses_post( __( 'Use <code>{listing_policy}</code> where the linked “listing rules” text should appear. It remains plain text until a policy page is selected.', 'llamahire' ) ); ?></p>
+									<label for="llamahire-employer-policy-page"><strong><?php esc_html_e( 'Full listing policy page', 'llamahire' ); ?></strong></label>
+									<?php self::page_select( 'llamahire-employer-policy-page', self::OPTION . '[employer_policy_page_id]', $settings['employer_policy_page_id'], __( 'No separate policy page', 'llamahire' ), '', __( 'Listing policy page', 'llamahire' ) ); ?>
+								</div>
+							<?php else : ?>
+								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[employer_approval]" value="<?php echo esc_attr( $settings['employer_approval'] ); ?>">
+								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[employer_policy_text]" value="<?php echo esc_attr( $settings['employer_policy_text'] ); ?>">
+								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[employer_policy_page_id]" value="<?php echo esc_attr( $settings['employer_policy_page_id'] ); ?>">
+								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[employer_registration_page_id]" value="<?php echo esc_attr( $settings['employer_registration_page_id'] ); ?>">
+								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[active_listing_limit]" value="<?php echo esc_attr( $settings['active_listing_limit'] ); ?>">
+								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[listing_duration_days]" value="<?php echo esc_attr( $settings['listing_duration_days'] ); ?>">
+							<?php endif; ?>
 						</section>
 
 						<section id="llamahire-settings-organization" class="llamahire-settings-section" data-llamahire-settings-section="organization" aria-labelledby="llamahire-settings-organization-title">
@@ -343,13 +410,23 @@ final class Settings {
 							</table>
 						</section>
 
+						<?php if ( $is_job_board ) : ?>
+							<section id="llamahire-settings-listing-policy" class="llamahire-settings-section" data-llamahire-settings-section="listing-policy" aria-labelledby="llamahire-settings-listing-policy-title">
+								<header><h2 id="llamahire-settings-listing-policy-title" tabindex="-1"><?php esc_html_e( 'Listing policy', 'llamahire' ); ?></h2><p><?php esc_html_e( 'Set the free operating limits that apply equally to every employer.', 'llamahire' ); ?></p></header>
+								<table class="form-table" role="presentation">
+									<tr><th scope="row"><label for="llamahire-active-listing-limit"><?php esc_html_e( 'Active listings per employer', 'llamahire' ); ?></label></th><td><input class="small-text" type="number" min="0" max="1000" step="1" id="llamahire-active-listing-limit" name="<?php echo esc_attr( self::OPTION ); ?>[active_listing_limit]" value="<?php echo esc_attr( $settings['active_listing_limit'] ); ?>"><p class="description"><?php esc_html_e( 'Counts published listings and listings awaiting review. Enter 0 for no limit; private drafts do not count.', 'llamahire' ); ?></p></td></tr>
+									<tr><th scope="row"><label for="llamahire-listing-duration"><?php esc_html_e( 'Default listing duration', 'llamahire' ); ?></label></th><td><select id="llamahire-listing-duration" name="<?php echo esc_attr( self::OPTION ); ?>[listing_duration_days]"><?php foreach ( array( 7, 14, 30, 45, 60, 90, 180, 365 ) as $days ) : ?><option value="<?php echo esc_attr( $days ); ?>" <?php selected( $settings['listing_duration_days'], $days ); ?>><?php /* translators: %d: listing duration in days. */ echo esc_html( sprintf( _n( '%d day', '%d days', $days, 'llamahire' ), $days ) ); ?></option><?php endforeach; ?><option value="0" <?php selected( 0, $settings['listing_duration_days'] ); ?>><?php esc_html_e( 'No automatic expiration', 'llamahire' ); ?></option></select><p class="description"><?php esc_html_e( 'The clock starts when an employer first submits a listing for review. Existing listings keep their saved expiration.', 'llamahire' ); ?></p></td></tr>
+								</table>
+							</section>
+						<?php endif; ?>
+
 						<section id="llamahire-settings-applications" class="llamahire-settings-section" data-llamahire-settings-section="applications" aria-labelledby="llamahire-settings-applications-title">
 							<header><h2 id="llamahire-settings-applications-title" tabindex="-1"><?php esc_html_e( 'Applications & privacy', 'llamahire' ); ?></h2><p><?php esc_html_e( 'Control the information candidates submit and how long their private data is retained.', 'llamahire' ); ?></p></header>
 							<h3><?php esc_html_e( 'Application fields', 'llamahire' ); ?></h3>
 							<p class="description"><?php esc_html_e( 'Name and email are always required.', 'llamahire' ); ?></p>
 							<table class="form-table" role="presentation">
 								<tr><th scope="row"><label for="llamahire-application-phone"><?php esc_html_e( 'Phone', 'llamahire' ); ?></label></th><td><?php self::field_mode_select( 'llamahire-application-phone', self::OPTION . '[application_phone]', $settings['application_phone'] ); ?></td></tr>
-								<tr><th scope="row"><label for="llamahire-application-resume"><?php esc_html_e( 'Resume', 'llamahire' ); ?></label></th><td><?php self::field_mode_select( 'llamahire-application-resume', self::OPTION . '[application_resume]', $settings['application_resume'] ); ?><p class="description"><?php esc_html_e( 'PDF, DOC, or DOCX files smaller than 5 MB.', 'llamahire' ); ?></p></td></tr>
+								<tr><th scope="row"><label for="llamahire-application-resume"><?php esc_html_e( 'Resume', 'llamahire' ); ?></label></th><td><?php self::field_mode_select( 'llamahire-application-resume', self::OPTION . '[application_resume]', $settings['application_resume'] ); ?><p class="description"><?php esc_html_e( 'PDF or DOCX files smaller than 5 MB.', 'llamahire' ); ?></p></td></tr>
 								<tr><th scope="row"><label for="llamahire-application-letter"><?php esc_html_e( 'Cover letter', 'llamahire' ); ?></label></th><td><?php self::field_mode_select( 'llamahire-application-letter', self::OPTION . '[application_letter]', $settings['application_letter'] ); ?></td></tr>
 							</table>
 							<h3><?php esc_html_e( 'Candidate privacy', 'llamahire' ); ?></h3>
@@ -357,6 +434,14 @@ final class Settings {
 								<tr><th scope="row"><label for="llamahire-privacy-text"><?php esc_html_e( 'Privacy notice', 'llamahire' ); ?></label></th><td><textarea class="large-text" rows="3" id="llamahire-privacy-text" name="<?php echo esc_attr( self::OPTION ); ?>[privacy_text]" required data-company-default="<?php echo esc_attr( self::default_privacy_text( self::SITE_MODE_COMPANY ) ); ?>" data-job-board-default="<?php echo esc_attr( self::default_privacy_text( self::SITE_MODE_JOB_BOARD ) ); ?>"><?php echo esc_textarea( $settings['privacy_text'] ); ?></textarea><p class="description"><?php esc_html_e( 'Shown beside the application form. Describe how candidate information will be used.', 'llamahire' ); ?></p></td></tr>
 								<tr><th scope="row"><label for="llamahire-privacy-page"><?php esc_html_e( 'Privacy policy page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-privacy-page', self::OPTION . '[privacy_page_id]', $settings['privacy_page_id'], __( 'Use the WordPress privacy policy', 'llamahire' ), '', __( 'Privacy policy page', 'llamahire' ) ); ?></td></tr>
 								<tr><th scope="row"><label for="llamahire-retention-days"><?php esc_html_e( 'Application retention', 'llamahire' ); ?></label></th><td><select class="regular-text" id="llamahire-retention-days" name="<?php echo esc_attr( self::OPTION ); ?>[retention_days]"><?php foreach ( array( 30 => __( '30 days', 'llamahire' ), 90 => __( '90 days', 'llamahire' ), 180 => __( '180 days', 'llamahire' ), 365 => __( '1 year', 'llamahire' ), 730 => __( '2 years', 'llamahire' ), 1095 => __( '3 years', 'llamahire' ), 1825 => __( '5 years', 'llamahire' ), 0 => __( 'Keep until manually erased', 'llamahire' ) ) as $days => $label ) : ?><option value="<?php echo esc_attr( $days ); ?>" <?php selected( $settings['retention_days'], $days ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select><p class="description"><?php esc_html_e( 'Applications and private resumes older than this are permanently deleted by the daily cleanup task.', 'llamahire' ); ?></p></td></tr>
+							</table>
+							<h3><?php esc_html_e( 'Spam protection', 'llamahire' ); ?></h3>
+							<p class="description"><?php esc_html_e( 'Add an optional bot check to public forms. Existing rate limits and the application honeypot remain active.', 'llamahire' ); ?></p>
+							<table class="form-table" role="presentation">
+								<tr><th scope="row"><label for="llamahire-anti-spam-provider"><?php esc_html_e( 'Provider', 'llamahire' ); ?></label></th><td><select class="regular-text" id="llamahire-anti-spam-provider" name="<?php echo esc_attr( self::OPTION ); ?>[anti_spam_provider]"><?php foreach ( Anti_Spam::providers() as $provider => $label ) : ?><option value="<?php echo esc_attr( $provider ); ?>" <?php selected( $settings['anti_spam_provider'], $provider ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select><p class="description"><?php echo wp_kses_post( __( 'Turnstile is free for most sites and can run without using Cloudflare hosting. <a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank" rel="noopener noreferrer">Create Turnstile keys</a> or <a href="https://console.cloud.google.com/security/recaptcha" target="_blank" rel="noopener noreferrer">create reCAPTCHA keys</a>.', 'llamahire' ) ); ?></p></td></tr>
+								<tr data-llamahire-anti-spam-keys><th scope="row"><label for="llamahire-anti-spam-site-key"><?php esc_html_e( 'Site key', 'llamahire' ); ?></label></th><td><input class="regular-text code" type="text" id="llamahire-anti-spam-site-key" name="<?php echo esc_attr( self::OPTION ); ?>[anti_spam_site_key]" value="<?php echo esc_attr( $settings['anti_spam_site_key'] ); ?>" autocomplete="off"></td></tr>
+								<tr data-llamahire-anti-spam-keys><th scope="row"><label for="llamahire-anti-spam-secret-key"><?php esc_html_e( 'Secret key', 'llamahire' ); ?></label></th><td><input class="regular-text code" type="password" id="llamahire-anti-spam-secret-key" name="<?php echo esc_attr( self::OPTION ); ?>[anti_spam_secret_key]" value="<?php echo esc_attr( $settings['anti_spam_secret_key'] ); ?>" autocomplete="new-password"><p class="description"><?php esc_html_e( 'Protection becomes active only when a provider and both keys are saved.', 'llamahire' ); ?></p></td></tr>
+								<tr><th scope="row"><?php esc_html_e( 'Protected forms', 'llamahire' ); ?></th><td><fieldset><?php if ( $is_job_board ) : ?><label><input type="checkbox" name="<?php echo esc_attr( self::OPTION ); ?>[anti_spam_registration]" value="1" <?php checked( $settings['anti_spam_registration'], 1 ); ?>> <?php esc_html_e( 'Employer registration', 'llamahire' ); ?></label><br><?php else : ?><input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[anti_spam_registration]" value="<?php echo esc_attr( $settings['anti_spam_registration'] ); ?>"><?php endif; ?><label><input type="checkbox" name="<?php echo esc_attr( self::OPTION ); ?>[anti_spam_applications]" value="1" <?php checked( $settings['anti_spam_applications'], 1 ); ?>> <?php esc_html_e( 'Candidate applications', 'llamahire' ); ?></label></fieldset><p class="description"><?php esc_html_e( 'Approved employers are already authenticated, so routine job edits and draft saves are not interrupted by a challenge.', 'llamahire' ); ?></p></td></tr>
 							</table>
 						</section>
 
@@ -377,8 +462,11 @@ final class Settings {
 							<header><h2 id="llamahire-settings-pages-title" tabindex="-1"><?php esc_html_e( 'Pages', 'llamahire' ); ?></h2><p><?php esc_html_e( 'Connect the public pages that visitors and employers use.', 'llamahire' ); ?></p></header>
 							<table class="form-table" role="presentation">
 								<tr><th scope="row"><label for="llamahire-careers-page"><?php esc_html_e( 'Careers page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-careers-page', self::OPTION . '[careers_page_id]', $settings['careers_page_id'], __( 'No Careers page selected', 'llamahire' ), '', __( 'Careers page', 'llamahire' ) ); ?></td></tr>
-								<?php if ( $is_job_board ) : ?><tr><th scope="row"><label for="llamahire-submit-job-page"><?php esc_html_e( 'Submit a Job page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-submit-job-page', self::OPTION . '[submit_job_page_id]', $settings['submit_job_page_id'], __( 'Create automatically', 'llamahire' ), '', __( 'Submit a Job page', 'llamahire' ) ); ?><p class="description"><?php esc_html_e( 'Use a page containing [llamahire_submit_job].', 'llamahire' ); ?></p></td></tr>
-								<tr><th scope="row"><label for="llamahire-my-jobs-page"><?php esc_html_e( 'My Jobs page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-my-jobs-page', self::OPTION . '[my_jobs_page_id]', $settings['my_jobs_page_id'], __( 'Create automatically', 'llamahire' ), '', __( 'My Jobs page', 'llamahire' ) ); ?><p class="description"><?php esc_html_e( 'Use a page containing [llamahire_my_jobs].', 'llamahire' ); ?></p></td></tr><?php endif; ?>
+								<?php if ( $is_job_board ) : ?>
+									<tr><th scope="row"><label for="llamahire-submit-job-page"><?php esc_html_e( 'Submit a Job page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-submit-job-page', self::OPTION . '[submit_job_page_id]', $settings['submit_job_page_id'], __( 'Create automatically', 'llamahire' ), '', __( 'Submit a Job page', 'llamahire' ) ); ?><p class="description"><?php esc_html_e( 'Use a page containing [llamahire_submit_job].', 'llamahire' ); ?></p></td></tr>
+									<tr><th scope="row"><label for="llamahire-my-jobs-page"><?php esc_html_e( 'My Jobs page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-my-jobs-page', self::OPTION . '[my_jobs_page_id]', $settings['my_jobs_page_id'], __( 'Create automatically', 'llamahire' ), '', __( 'My Jobs page', 'llamahire' ) ); ?><p class="description"><?php esc_html_e( 'Use a page containing [llamahire_my_jobs].', 'llamahire' ); ?></p></td></tr>
+									<tr><th scope="row"><label for="llamahire-employer-registration-page"><?php esc_html_e( 'Employer registration page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-employer-registration-page', self::OPTION . '[employer_registration_page_id]', $settings['employer_registration_page_id'], __( 'Create automatically', 'llamahire' ), '', __( 'Employer registration page', 'llamahire' ) ); ?><p class="description"><?php esc_html_e( 'Use a page containing [llamahire_employer_registration].', 'llamahire' ); ?></p></td></tr>
+								<?php endif; ?>
 							</table>
 						</section>
 

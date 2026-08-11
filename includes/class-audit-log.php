@@ -3,6 +3,8 @@ namespace LlamaHire;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- The append-only audit service owns its custom table and must return current authorization-sensitive history.
+
 /**
  * Privacy-safe operational history for jobs and applications.
  *
@@ -12,6 +14,7 @@ defined( 'ABSPATH' ) || exit;
 final class Audit_Log {
 	const EVENTS = array(
 		'application_status_changed',
+		'application_note_added',
 		'application_erased',
 		'application_resume_deleted',
 		'application_resume_replaced',
@@ -23,6 +26,10 @@ final class Audit_Log {
 		'job_changes_requested',
 		'job_declined',
 		'job_closed',
+		'job_renewed',
+		'job_relist_started',
+		'job_duplicated',
+		'job_expiry_notice_sent',
 		'job_deleted',
 		'job_owner_changed',
 	);
@@ -70,7 +77,26 @@ final class Audit_Log {
 
 	public static function search( array $arguments = array() ) {
 		global $wpdb;
-		$args = wp_parse_args( $arguments, array( 'author_id' => 0, 'application_id' => 0, 'job_id' => 0, 'page' => 1, 'per_page' => 50 ) );
+		$args = wp_parse_args(
+			$arguments,
+			array(
+				'author_id'                => 0,
+				'application_id'           => 0,
+				'job_id'                   => 0,
+				'job_ids'                  => array(),
+				'actor_ids'                => array(),
+				'event_types'              => array(),
+				'search'                   => '',
+				'occurred_after'           => '',
+				'occurred_after_exclusive' => '',
+				'occurred_before'          => '',
+				'occurred_before_exclusive'=> '',
+				'orderby'                  => 'occurred',
+				'order'                    => 'desc',
+				'page'                     => 1,
+				'per_page'                 => 50,
+			)
+		);
 		$page = max( 1, absint( $args['page'] ) );
 		$per_page = min( 100, max( 1, absint( $args['per_page'] ) ) );
 		$where = array( '1=1' );
@@ -78,33 +104,121 @@ final class Audit_Log {
 		if ( absint( $args['author_id'] ) ) { $where[] = 'jobs.post_author = %d'; $params[] = absint( $args['author_id'] ); }
 		if ( absint( $args['application_id'] ) ) { $where[] = 'audit.application_id = %d'; $params[] = absint( $args['application_id'] ); }
 		if ( absint( $args['job_id'] ) ) { $where[] = 'audit.job_id = %d'; $params[] = absint( $args['job_id'] ); }
+		$job_ids = array_slice( array_values( array_unique( array_filter( array_map( 'absint', (array) $args['job_ids'] ) ) ) ), 0, 100 );
+		if ( $job_ids ) {
+			$where[] = 'audit.job_id IN (' . implode( ',', array_fill( 0, count( $job_ids ), '%d' ) ) . ')';
+			$params = array_merge( $params, $job_ids );
+		}
+		$actor_ids = array_slice( array_values( array_unique( array_filter( array_map( 'absint', (array) $args['actor_ids'] ) ) ) ), 0, 100 );
+		if ( $actor_ids ) {
+			$where[] = 'audit.actor_user_id IN (' . implode( ',', array_fill( 0, count( $actor_ids ), '%d' ) ) . ')';
+			$params = array_merge( $params, $actor_ids );
+		}
+		$event_types = array_values( array_unique( array_intersect( array_map( 'sanitize_key', (array) $args['event_types'] ), self::EVENTS ) ) );
+		if ( $event_types ) {
+			$where[] = 'audit.event_type IN (' . implode( ',', array_fill( 0, count( $event_types ), '%s' ) ) . ')';
+			$params = array_merge( $params, $event_types );
+		}
+		$search = sanitize_text_field( $args['search'] );
+		if ( $search ) {
+			$like = '%' . $wpdb->esc_like( $search ) . '%';
+			$event_like = '%' . $wpdb->esc_like( str_replace( ' ', '_', strtolower( $search ) ) ) . '%';
+			$search_where = array( 'audit.event_type LIKE %s', 'audit.from_state LIKE %s', 'audit.to_state LIKE %s', 'jobs.post_title LIKE %s' );
+			$search_params = array( $event_like, $like, $like, $like );
+			$matching_actor_ids = get_users(
+				array(
+					'fields'         => 'ids',
+					'number'         => 250,
+					'search'         => '*' . $search . '*',
+					'search_columns' => array( 'display_name', 'user_login' ),
+				)
+			);
+			if ( $matching_actor_ids ) {
+				$search_where[] = 'audit.actor_user_id IN (' . implode( ',', array_fill( 0, count( $matching_actor_ids ), '%d' ) ) . ')';
+				$search_params = array_merge( $search_params, array_map( 'absint', $matching_actor_ids ) );
+			}
+			$where[] = '(' . implode( ' OR ', $search_where ) . ')';
+			$params = array_merge( $params, $search_params );
+		}
+		$date_filters = array(
+			'occurred_after'            => array( 'audit.created_at >= %s', $args['occurred_after'] ),
+			'occurred_after_exclusive'  => array( 'audit.created_at > %s', $args['occurred_after_exclusive'] ),
+			'occurred_before'           => array( 'audit.created_at <= %s', $args['occurred_before'] ),
+			'occurred_before_exclusive' => array( 'audit.created_at < %s', $args['occurred_before_exclusive'] ),
+		);
+		foreach ( $date_filters as $filter ) {
+			$value = sanitize_text_field( $filter[1] );
+			if ( preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value ) ) {
+				$where[] = $filter[0];
+				$params[] = $value;
+			}
+		}
 		$where_sql = implode( ' AND ', $where );
 		$table = self::table();
 		$join = " LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = audit.job_id";
 		$count_sql = "SELECT COUNT(*) FROM {$table} audit{$join} WHERE {$where_sql}";
 		$total = (int) ( $params ? $wpdb->get_var( $wpdb->prepare( $count_sql, $params ) ) : $wpdb->get_var( $count_sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL
-		$sql = "SELECT audit.id, audit.event_type, audit.subject_type, audit.subject_id, audit.application_id, audit.job_id, audit.actor_user_id, audit.from_state, audit.to_state, audit.created_at, jobs.post_title AS job_title FROM {$table} audit{$join} WHERE {$where_sql} ORDER BY audit.created_at DESC, audit.id DESC LIMIT %d OFFSET %d";
+		$orderby = sanitize_key( $args['orderby'] );
+		$orderby_sql = array(
+			'event'    => 'audit.event_type',
+			'job'      => 'jobs.post_title',
+			'occurred' => 'audit.created_at',
+		);
+		$order_sql = 'asc' === strtolower( sanitize_key( $args['order'] ) ) ? 'ASC' : 'DESC';
+		$order_column = $orderby_sql[ $orderby ] ?? $orderby_sql['occurred'];
+		$sql = "SELECT audit.id, audit.event_type, audit.subject_type, audit.subject_id, audit.application_id, audit.job_id, audit.actor_user_id, audit.from_state, audit.to_state, audit.created_at, jobs.post_title AS job_title FROM {$table} audit{$join} WHERE {$where_sql} ORDER BY {$order_column} {$order_sql}, audit.id {$order_sql} LIMIT %d OFFSET %d";
 		$items = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, array( $per_page, ( $page - 1 ) * $per_page ) ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL
 		return array( 'items' => $items, 'total' => $total, 'page' => $page, 'per_page' => $per_page, 'pages' => max( 1, (int) ceil( $total / $per_page ) ) );
 	}
 
-	public static function describe( $event ) {
-		$labels = array(
-			'application_status_changed'       => __( 'Application status changed', 'llamahire' ),
-			'application_erased'               => __( 'Application permanently erased', 'llamahire' ),
-			'application_resume_deleted'       => __( 'Resume permanently deleted', 'llamahire' ),
-			'application_resume_replaced'      => __( 'Resume replaced', 'llamahire' ),
-			'application_notifications_retried'=> __( 'Application notifications retried', 'llamahire' ),
-			'application_resume_accessed'      => __( 'Resume accessed', 'llamahire' ),
-			'job_submitted'                    => __( 'Job submitted for review', 'llamahire' ),
-			'job_resubmitted'                  => __( 'Job resubmitted for review', 'llamahire' ),
-			'job_approved'                     => __( 'Job approved and published', 'llamahire' ),
-			'job_changes_requested'            => __( 'Job returned for changes', 'llamahire' ),
-			'job_declined'                     => __( 'Job declined', 'llamahire' ),
-			'job_closed'                       => __( 'Job closed by employer', 'llamahire' ),
-			'job_deleted'                      => __( 'Job deleted by employer', 'llamahire' ),
-			'job_owner_changed'                => __( 'Job owner changed', 'llamahire' ),
+	public static function actor_options( $author_id = 0 ) {
+		global $wpdb;
+		$table = self::table();
+		$sql = "SELECT DISTINCT audit.actor_user_id FROM {$table} audit LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = audit.job_id WHERE audit.actor_user_id > 0";
+		if ( absint( $author_id ) ) {
+			$sql .= $wpdb->prepare( ' AND jobs.post_author = %d', absint( $author_id ) );
+		}
+		$sql .= ' LIMIT 250';
+		$actor_ids = array_map( 'absint', $wpdb->get_col( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		if ( ! $actor_ids ) {
+			return array();
+		}
+		return get_users(
+			array(
+				'include' => $actor_ids,
+				'fields'  => array( 'ID', 'display_name' ),
+				'orderby' => 'display_name',
+				'order'   => 'ASC',
+			)
 		);
+	}
+
+	public static function event_labels() {
+		return array(
+			'application_status_changed'        => __( 'Application status changed', 'llamahire' ),
+			'application_note_added'             => __( 'Private note added', 'llamahire' ),
+			'application_erased'                => __( 'Application permanently erased', 'llamahire' ),
+			'application_resume_deleted'        => __( 'Resume permanently deleted', 'llamahire' ),
+			'application_resume_replaced'       => __( 'Resume replaced', 'llamahire' ),
+			'application_notifications_retried' => __( 'Application notifications retried', 'llamahire' ),
+			'application_resume_accessed'       => __( 'Resume accessed', 'llamahire' ),
+			'job_submitted'                     => __( 'Job submitted for review', 'llamahire' ),
+			'job_resubmitted'                   => __( 'Job resubmitted for review', 'llamahire' ),
+			'job_approved'                      => __( 'Job approved and published', 'llamahire' ),
+			'job_changes_requested'             => __( 'Job returned for changes', 'llamahire' ),
+			'job_declined'                      => __( 'Job declined', 'llamahire' ),
+			'job_closed'                        => __( 'Job closed by employer', 'llamahire' ),
+			'job_renewed'                       => __( 'Job listing renewed by employer', 'llamahire' ),
+			'job_relist_started'                 => __( 'Expired job prepared for relisting', 'llamahire' ),
+			'job_duplicated'                     => __( 'Job duplicated as a fresh draft', 'llamahire' ),
+			'job_expiry_notice_sent'             => __( 'Job expiration reminder sent', 'llamahire' ),
+			'job_deleted'                       => __( 'Job deleted by employer', 'llamahire' ),
+			'job_owner_changed'                 => __( 'Job owner changed', 'llamahire' ),
+		);
+	}
+
+	public static function describe( $event ) {
+		$labels = self::event_labels();
 		$description = $labels[ $event->event_type ] ?? ucwords( str_replace( '_', ' ', $event->event_type ) );
 		if ( 'application_status_changed' === $event->event_type ) {
 			$description .= ': ' . ucfirst( $event->from_state ) . ' → ' . ucfirst( $event->to_state );

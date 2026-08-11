@@ -45,7 +45,7 @@ interface Resume_Storage {
 	/**
 	 * Inspect storage safety and writability without exposing its path.
 	 *
-	 * @return array{available:bool,outside_webroot:bool}
+	 * @return array{available:bool,outside_webroot:bool,protected:bool,driver:string}
 	 */
 	public function health();
 }

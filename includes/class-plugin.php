@@ -23,26 +23,29 @@ final class Plugin {
 		foreach ( array( 'interface-service-container.php', 'interface-application-repository.php', 'interface-application-query.php', 'interface-notification-service.php', 'interface-resume-storage.php', 'interface-candidate-data-lifecycle.php', 'interface-schema-builder.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/contracts/' . $file;
 		}
-		foreach ( array( 'class-service-ids.php', 'class-service-container.php', 'class-settings.php', 'class-setup.php', 'class-migrations.php', 'class-capabilities.php', 'class-jobs.php', 'class-ownership.php', 'class-audit-log.php', 'class-employer-notifications.php', 'class-employer-portal.php', 'class-applications.php', 'class-privacy.php', 'class-blocks.php', 'class-theme-support.php', 'class-admin-workspaces.php', 'class-admin.php', 'class-rest-api.php', 'class-seo.php' ) as $file ) {
+		foreach ( array( 'class-service-ids.php', 'class-service-container.php', 'class-settings.php', 'class-anti-spam.php', 'class-setup.php', 'class-migrations.php', 'class-capabilities.php', 'class-jobs.php', 'class-ownership.php', 'class-audit-log.php', 'class-application-notes.php', 'class-employer-notifications.php', 'class-employer-registration.php', 'class-employer-portal.php', 'class-employer-applications.php', 'class-applications.php', 'class-privacy.php', 'class-blocks.php', 'class-job-feed.php', 'class-theme-support.php', 'class-admin-workspaces.php', 'class-admin.php', 'class-rest-api.php', 'class-seo.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/' . $file;
 		}
-		foreach ( array( 'class-application-repository.php', 'class-application-query.php', 'class-notification-service.php', 'class-resume-storage.php', 'class-candidate-data-lifecycle.php', 'class-schema-builder.php' ) as $file ) {
+		foreach ( array( 'class-application-repository.php', 'class-application-query.php', 'class-notification-service.php', 'class-resume-storage.php', 'class-vip-acl-resume-storage.php', 'class-candidate-data-lifecycle.php', 'class-schema-builder.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/services/' . $file;
 		}
 	}
 
 	public function init() {
+		Jobs::register();
 		Migrations::maybe_run();
 		Capabilities::maybe_install();
 		$this->register_assets();
 		$this->register_services();
-		Jobs::register();
 		Audit_Log::register();
 		Employer_Notifications::register();
+		Employer_Registration::register();
 		Employer_Portal::register();
+		Employer_Applications::register();
 		Settings::register();
 		Setup::register();
 		Blocks::register();
+		Job_Feed::register();
 		Theme_Support::register();
 		Applications::register();
 		Privacy::register();
@@ -65,7 +68,17 @@ final class Plugin {
 		$this->services->set( Service_IDs::APPLICATION_REPOSITORY, new Services\Application_Repository() );
 		$this->services->set( Service_IDs::APPLICATION_QUERY, new Services\Application_Query() );
 		$this->services->set( Service_IDs::NOTIFICATIONS, new Services\Notification_Service() );
-		$this->services->set( Service_IDs::RESUME_STORAGE, new Services\Resume_Storage() );
+		/**
+		 * Filters the built-in private resume storage driver.
+		 *
+		 * Supported values are `local_private` and `vip_acl`. Unknown values
+		 * fall back to the outside-webroot local driver.
+		 *
+		 * @param string $driver Resume storage driver identifier.
+		 */
+		$storage_driver = sanitize_key( apply_filters( 'llamahire_resume_storage_driver', 'local_private' ) );
+		$resume_storage = 'vip_acl' === $storage_driver ? new Services\VIP_ACL_Resume_Storage() : new Services\Resume_Storage();
+		$this->services->set( Service_IDs::RESUME_STORAGE, $resume_storage );
 		$this->services->set( Service_IDs::CANDIDATE_DATA, new Services\Candidate_Data_Lifecycle( $this->services->get( Service_IDs::APPLICATION_REPOSITORY ), $this->services->get( Service_IDs::RESUME_STORAGE ) ) );
 		$this->services->set( Service_IDs::SCHEMA_BUILDER, new Services\Schema_Builder() );
 
@@ -122,5 +135,17 @@ final class Plugin {
 	private function register_assets() {
 		wp_register_style( 'llamahire', LLAMAHIRE_URL . 'assets/css/llamahire.css', array(), LLAMAHIRE_VERSION );
 		wp_register_script( 'llamahire-application-form', LLAMAHIRE_URL . 'assets/js/application-form.js', array(), LLAMAHIRE_VERSION, true );
+		wp_register_script_module(
+			'llamahire-job-discovery',
+			LLAMAHIRE_URL . 'assets/js/job-discovery.js',
+			array(
+				'@wordpress/interactivity',
+				array(
+					'id'     => '@wordpress/interactivity-router',
+					'import' => 'dynamic',
+				),
+			),
+			LLAMAHIRE_VERSION
+		);
 	}
 }

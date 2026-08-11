@@ -6,7 +6,7 @@
   "title": "Job Filters",
   "category": "widgets",
   "icon": "filter",
-  "description": "Filter open roles by department, employment type, workplace, location, or featured status.",
+  "description": "Filter open roles by department, employment type, location type, location, or featured status.",
   "textdomain": "llamahire",
   "attributes": {
     "showDepartment": { "type": "boolean", "default": true },
@@ -16,7 +16,16 @@
     "showFeatured": { "type": "boolean", "default": true },
     "buttonLabel": { "type": "string", "default": "Apply filters" }
   },
-  "supports": { "align": ["wide", "full"], "html": false, "spacing": { "margin": true, "padding": true } },
+  "supports": {
+    "align": ["wide", "full"],
+    "html": false,
+    "interactivity": true,
+    "color": { "text": true, "background": true },
+    "spacing": { "margin": true, "padding": true },
+    "typography": { "fontSize": true, "lineHeight": true },
+    "border": { "color": true, "radius": true, "style": true, "width": true }
+  },
   "editorScript": "llamahire-blocks-editor",
-  "style": "llamahire"
+  "style": "llamahire",
+  "viewScriptModule": "llamahire-job-discovery"
 }

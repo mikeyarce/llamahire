@@ -6,6 +6,8 @@ use LlamaHire\Contracts\Application_Query as Application_Query_Contract;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- This bounded query service owns reads from LlamaHire's private custom table; persistent caching would retain sensitive or stale candidate data.
+
 final class Application_Query implements Application_Query_Contract {
 	public function search( array $arguments = array() ) {
 		global $wpdb;
@@ -25,7 +27,7 @@ final class Application_Query implements Application_Query_Contract {
 		);
 		$orderby = $order_columns[ $args['orderby'] ] ?? $order_columns['received'];
 		$order   = 'asc' === strtolower( $args['order'] ) ? 'ASC' : 'DESC';
-		$sql = "SELECT applications.id, applications.job_id, jobs.post_title AS job_title, applications.name, applications.email, applications.phone, applications.cover_letter, applications.resume_name, (applications.resume_path <> '') AS has_resume, applications.status, applications.notes, applications.created_at, applications.updated_at, applications.stage_changed_at, applications.notification_status, applications.notification_attempts, applications.employer_notified_at, applications.candidate_notified_at, applications.notification_error_code FROM {$table} applications LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = applications.job_id WHERE {$where} ORDER BY {$orderby} {$order}, applications.id {$order} LIMIT %d OFFSET %d";
+		$sql = "SELECT applications.id, applications.job_id, jobs.post_title AS job_title, applications.name, applications.email, applications.phone, applications.cover_letter, applications.resume_name, (applications.resume_path <> '') AS has_resume, applications.status, applications.notes, EXISTS (SELECT 1 FROM " . \LlamaHire\Application_Notes::table() . " private_notes WHERE private_notes.application_id = applications.id) AS has_notes, applications.created_at, applications.updated_at, applications.stage_changed_at, applications.notification_status, applications.notification_attempts, applications.employer_notified_at, applications.candidate_notified_at, applications.notification_error_code FROM {$table} applications LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = applications.job_id WHERE {$where} ORDER BY {$orderby} {$order}, applications.id {$order} LIMIT %d OFFSET %d";
 		$query_params = array_merge( $params, array( $per_page, ( $page - 1 ) * $per_page ) );
 		$items = $wpdb->get_results( $wpdb->prepare( $sql, $query_params ) ); // phpcs:ignore WordPress.DB.PreparedSQL
 		return array( 'items' => $items, 'total' => $total, 'page' => $page, 'per_page' => $per_page, 'pages' => max( 1, (int) ceil( $total / $per_page ) ) );
@@ -50,7 +52,7 @@ final class Application_Query implements Application_Query_Contract {
 		$table = Applications::table();
 		$limit = min( 20, max( 1, absint( $limit ) ) );
 		list( $where, $params ) = $this->where( $arguments );
-		$sql = "SELECT applications.id, applications.job_id, jobs.post_title AS job_title, applications.name, applications.email, applications.phone, applications.cover_letter, applications.resume_name, (applications.resume_path <> '') AS has_resume, applications.status, applications.notes, applications.created_at, applications.updated_at, applications.stage_changed_at, applications.notification_status, applications.notification_attempts, applications.employer_notified_at, applications.candidate_notified_at, applications.notification_error_code FROM {$table} applications LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = applications.job_id WHERE {$where} ORDER BY applications.created_at DESC, applications.id DESC LIMIT %d";
+		$sql = "SELECT applications.id, applications.job_id, jobs.post_title AS job_title, applications.name, applications.email, applications.phone, applications.cover_letter, applications.resume_name, (applications.resume_path <> '') AS has_resume, applications.status, applications.notes, EXISTS (SELECT 1 FROM " . \LlamaHire\Application_Notes::table() . " private_notes WHERE private_notes.application_id = applications.id) AS has_notes, applications.created_at, applications.updated_at, applications.stage_changed_at, applications.notification_status, applications.notification_attempts, applications.employer_notified_at, applications.candidate_notified_at, applications.notification_error_code FROM {$table} applications LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = applications.job_id WHERE {$where} ORDER BY applications.created_at DESC, applications.id DESC LIMIT %d";
 		return $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, array( $limit ) ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL
 	}
 
@@ -64,7 +66,7 @@ final class Application_Query implements Application_Query_Contract {
 		$table = Applications::table();
 		$placeholders = implode( ', ', array_fill( 0, count( $job_ids ), '%d' ) );
 		$sql = "SELECT applications.job_id, COUNT(*) AS application_count FROM {$table} applications LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = applications.job_id WHERE {$where} AND applications.job_id IN ({$placeholders}) GROUP BY applications.job_id";
-		$rows = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, $job_ids ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholders are generated from a bounded integer list.
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, $job_ids ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- SQL contains only trusted table names, fixed clauses, and placeholders generated from a bounded integer list; all values are prepared.
 		$counts = array_fill_keys( $job_ids, 0 );
 		foreach ( $rows as $row ) {
 			$counts[ (int) $row->job_id ] = (int) $row->application_count;
@@ -82,7 +84,7 @@ final class Application_Query implements Application_Query_Contract {
 		$table = Applications::table();
 		$placeholders = implode( ', ', array_fill( 0, count( $job_ids ), '%d' ) );
 		$sql = "SELECT applications.job_id, applications.status, COUNT(*) AS application_count FROM {$table} applications LEFT JOIN {$wpdb->posts} jobs ON jobs.ID = applications.job_id WHERE {$where} AND applications.job_id IN ({$placeholders}) GROUP BY applications.job_id, applications.status";
-		$rows = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, $job_ids ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, $job_ids ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- SQL contains only trusted table names, fixed clauses, and placeholders generated from a bounded integer list; all values are prepared.
 		$counts = array();
 		foreach ( $job_ids as $job_id ) {
 			$counts[ $job_id ] = array_fill_keys( array_keys( Applications::workflow_statuses() ), 0 );
@@ -116,7 +118,7 @@ final class Application_Query implements Application_Query_Contract {
 		$where = array( '1=1' );
 		$params = array();
 		$valid_statuses = array_keys( Applications::workflow_statuses() );
-		$statuses = array_values( array_intersect( $valid_statuses, array_map( 'sanitize_key', (array) ( $args['statuses'] ?? array() ) ) ) );
+		$statuses = array_values( array_unique( array_intersect( $valid_statuses, array_map( 'sanitize_key', (array) ( $args['statuses'] ?? array() ) ) ) ) );
 		if ( ! $statuses && in_array( $args['status'] ?? '', $valid_statuses, true ) ) {
 			$statuses[] = $args['status'];
 		}
@@ -157,7 +159,7 @@ final class Application_Query implements Application_Query_Contract {
 			$where[] = 'applications.email LIKE %s';
 			$params[] = '%' . $wpdb->esc_like( $email ) . '%';
 		}
-		$notification_statuses = array_values( array_intersect( array( 'pending', 'sent', 'partial', 'failed' ), array_map( 'sanitize_key', (array) ( $args['notification_statuses'] ?? array() ) ) ) );
+		$notification_statuses = array_values( array_unique( array_intersect( array( 'pending', 'sent', 'partial', 'failed' ), array_map( 'sanitize_key', (array) ( $args['notification_statuses'] ?? array() ) ) ) ) );
 		if ( $notification_statuses ) {
 			$where[] = 'applications.notification_status IN (' . implode( ', ', array_fill( 0, count( $notification_statuses ), '%s' ) ) . ')';
 			$params = array_merge( $params, $notification_statuses );

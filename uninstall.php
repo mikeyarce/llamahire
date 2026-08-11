@@ -9,19 +9,46 @@
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
 require_once __DIR__ . '/includes/class-capabilities.php';
-\LlamaHire\Capabilities::remove();
-wp_clear_scheduled_hook( 'llamahire_cleanup_expired_applications' );
+$remove_data = defined( 'LLAMAHIRE_REMOVE_DATA' ) && true === LLAMAHIRE_REMOVE_DATA;
 
-if ( ! defined( 'LLAMAHIRE_REMOVE_DATA' ) || true !== LLAMAHIRE_REMOVE_DATA ) {
+if ( $remove_data ) {
+	require_once __DIR__ . '/includes/contracts/interface-resume-storage.php';
+	require_once __DIR__ . '/includes/services/class-resume-storage.php';
+	require_once __DIR__ . '/includes/services/class-vip-acl-resume-storage.php';
+	require_once __DIR__ . '/includes/class-uninstaller.php';
+}
+
+$uninstall_current_site = static function () use ( $remove_data ) {
+	wp_clear_scheduled_hook( 'llamahire_cleanup_expired_applications' );
+	wp_clear_scheduled_hook( 'llamahire_send_expiring_listing_notices' );
+
+	if ( $remove_data ) {
+		\LlamaHire\Uninstaller::remove_data();
+	}
+	\LlamaHire\Capabilities::remove();
+};
+
+if ( ! is_multisite() ) {
+	$uninstall_current_site();
 	return;
 }
 
-global $wpdb;
-$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}llamahire_applications" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}llamahire_audit_log" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-delete_option( 'llamahire_db_version' );
-delete_option( 'llamahire_schema_version' );
-delete_option( 'llamahire_organization' );
-delete_option( 'llamahire_setup' );
-delete_option( 'llamahire_settings' );
-delete_option( 'llamahire_email_diagnostics' );
+$offset = 0;
+do {
+	$site_ids = get_sites(
+		array(
+			'fields' => 'ids',
+			'number' => 100,
+			'offset' => $offset,
+		)
+	);
+	foreach ( $site_ids as $site_id ) {
+		switch_to_blog( $site_id );
+		try {
+			$uninstall_current_site();
+		} finally {
+			restore_current_blog();
+		}
+	}
+	$offset += count( $site_ids );
+} while ( 100 === count( $site_ids ) );

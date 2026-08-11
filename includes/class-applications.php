@@ -68,7 +68,7 @@ final class Applications {
 
 		$name   = sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) );
 		$email  = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
-		$phone  = self::sanitize_phone( wp_unslash( $_POST['phone'] ?? '' ) );
+		$phone  = self::sanitize_phone( wp_unslash( $_POST['phone'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_phone() allowlists phone characters and normalizes whitespace.
 		$letter = sanitize_textarea_field( wp_unslash( $_POST['cover_letter'] ?? '' ) );
 		$fields = Settings::application_fields();
 		if ( 'hidden' === $fields['phone'] ) {
@@ -86,14 +86,17 @@ final class Applications {
 		if ( $validation_error ) {
 			self::redirect( $job_id, $validation_error );
 		}
+		if ( is_wp_error( Anti_Spam::verify( Anti_Spam::CONTEXT_APPLICATION ) ) ) {
+			self::redirect( $job_id, 'anti_spam' );
+		}
+		if ( ! self::consume_submission_limit( $job_id ) ) {
+			self::redirect( $job_id, 'rate_limited' );
+		}
 		$repository  = Plugin::instance()->services()->get( Service_IDs::APPLICATION_REPOSITORY );
 		$duplicate_id = $repository->find_duplicate( $job_id, $email );
 		if ( $duplicate_id && 'preserve' === self::duplicate_policy( $job_id, $email, $duplicate_id ) ) {
 			do_action( 'llamahire_duplicate_application_ignored', $duplicate_id, $job_id );
-			self::redirect( $job_id, 'duplicate' );
-		}
-		if ( ! self::consume_submission_limit( $job_id ) ) {
-			self::redirect( $job_id, 'rate_limited' );
+			self::redirect( $job_id, 'success' );
 		}
 
 		$storage = Plugin::instance()->services()->get( Service_IDs::RESUME_STORAGE );
@@ -128,7 +131,7 @@ final class Applications {
 			do_action( 'llamahire_duplicate_submission_ignored', $application_id, $job_id );
 			if ( 'job_email' === ( $creation['reason'] ?? '' ) ) {
 				do_action( 'llamahire_duplicate_application_ignored', $application_id, $job_id );
-				self::redirect( $job_id, 'duplicate' );
+				self::redirect( $job_id, 'success' );
 			}
 			self::redirect( $job_id, 'success' );
 		}
@@ -205,8 +208,42 @@ final class Applications {
 		return in_array( $policy, array( 'preserve', 'allow' ), true ) ? $policy : 'preserve';
 	}
 
+	/**
+	 * Build one ownership-checked private resume URL.
+	 *
+	 * @param int  $application_id Application ID.
+	 * @param bool $preview        Whether to request an inline PDF preview.
+	 * @return string
+	 */
+	public static function resume_url( $application_id, $preview = false ) {
+		$application_id = absint( $application_id );
+		$arguments      = array(
+			'action'      => 'llamahire_resume',
+			'application' => $application_id,
+			'_wpnonce'    => wp_create_nonce( 'llamahire_resume_' . $application_id ),
+		);
+		if ( $preview ) {
+			$arguments['preview'] = '1';
+		}
+
+		return add_query_arg( $arguments, admin_url( 'admin-post.php' ) );
+	}
+
+	/**
+	 * Determine whether a saved resume type has a safe native browser preview.
+	 *
+	 * @param string $name Original filename.
+	 * @return bool
+	 */
+	public static function resume_is_previewable( $name ) {
+		$type = wp_check_filetype( (string) $name );
+
+		return 'pdf' === strtolower( (string) $type['ext'] );
+	}
+
 	public static function download_resume() {
-		$id = absint( $_GET['application'] ?? 0 );
+		$id      = absint( $_GET['application'] ?? 0 );
+		$preview = '1' === sanitize_text_field( wp_unslash( $_GET['preview'] ?? '' ) );
 		check_admin_referer( 'llamahire_resume_' . $id );
 		if ( ! Ownership::user_can_access_application( $id, Capabilities::DOWNLOAD_RESUMES ) ) {
 			wp_die( esc_html__( 'You cannot access this resume.', 'llamahire' ), 403 );
@@ -215,7 +252,8 @@ final class Applications {
 		if ( $application ) {
 			Audit_Log::record( 'application_resume_accessed', $application->job_id, $id );
 		}
-		$result = Plugin::instance()->services()->get( Service_IDs::RESUME_STORAGE )->stream( $id );
+		$storage = Plugin::instance()->services()->get( Service_IDs::RESUME_STORAGE );
+		$result  = $preview && method_exists( $storage, 'preview' ) ? $storage->preview( $id ) : $storage->stream( $id );
 		wp_die( esc_html( $result->get_error_message() ), 404 );
 	}
 
@@ -225,18 +263,23 @@ final class Applications {
 	}
 
 	public static function resume_storage_health() {
-		$health = Plugin::instance()->services()->get( Service_IDs::RESUME_STORAGE )->health();
-		$good   = $health['available'] && $health['outside_webroot'];
+		$health    = Plugin::instance()->services()->get( Service_IDs::RESUME_STORAGE )->health();
+		$protected = ! empty( $health['protected'] ) || ! empty( $health['outside_webroot'] );
+		$good      = ! empty( $health['available'] ) && $protected;
 		if ( $good ) {
-			$description = __( 'Resume storage is writable and located outside the public WordPress web root.', 'llamahire' );
-		} elseif ( $health['available'] ) {
-			$description = __( 'Resume storage is writable, but the host may require an explicit server rule because the private directory is inside the web root.', 'llamahire' );
+			$description = 'vip_acl' === ( $health['driver'] ?? '' )
+				? __( 'Resume storage uses WordPress VIP Access-Controlled Files, and direct requests to the private resume path are denied.', 'llamahire' )
+				: __( 'Resume storage is writable and located outside the public WordPress web root.', 'llamahire' );
+		} elseif ( ! empty( $health['available'] ) ) {
+			$description = __( 'Resume storage is writable, but direct file access is not confirmed as protected.', 'llamahire' );
 		} else {
-			$description = __( 'WordPress cannot write to the configured private resume directory.', 'llamahire' );
+			$description = 'vip_acl' === ( $health['driver'] ?? '' )
+				? __( 'The VIP resume storage driver is selected, but Access-Controlled Files is not active in this environment.', 'llamahire' )
+				: __( 'WordPress cannot write to the configured private resume directory.', 'llamahire' );
 		}
 		return array(
-			'label'       => $good ? __( 'Resumes use private storage outside the web root', 'llamahire' ) : __( 'Resume storage needs attention', 'llamahire' ),
-			'status'      => $good ? 'good' : ( $health['available'] ? 'recommended' : 'critical' ),
+			'label'       => $good ? __( 'Resumes use protected private storage', 'llamahire' ) : __( 'Resume storage needs attention', 'llamahire' ),
+			'status'      => $good ? 'good' : ( ! empty( $health['available'] ) ? 'recommended' : 'critical' ),
 			'badge'       => array( 'label' => __( 'LlamaHire', 'llamahire' ), 'color' => 'blue' ),
 			'description' => '<p>' . esc_html( $description ) . '</p>',
 			'actions'     => '',
@@ -250,7 +293,8 @@ final class Applications {
 			return false;
 		}
 		if ( '' === $client ) {
-			$client = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) );
+			$client = filter_input( INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP );
+			$client = $client ? $client : 'unknown';
 		}
 		$window = max( MINUTE_IN_SECONDS, absint( apply_filters( 'llamahire_submission_rate_window', HOUR_IN_SECONDS, $job_id ) ) );
 		$limits = array(

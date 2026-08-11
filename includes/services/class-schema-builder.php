@@ -30,7 +30,6 @@ final class Schema_Builder implements Schema_Builder_Contract {
 			'title'              => $title,
 			'description'        => $description,
 			'datePosted'         => get_the_date( DATE_W3C, $job_id ),
-			'employmentType'     => $meta['employment_type'],
 			'hiringOrganization' => array(
 				'@type'  => 'Organization',
 				'name'   => $organization['name'],
@@ -42,6 +41,11 @@ final class Schema_Builder implements Schema_Builder_Contract {
 			),
 			'directApply'        => true,
 		);
+		$schema_employment_type = strtoupper( $meta['employment_type'] );
+		$supported_employment_types = array( 'FULL_TIME', 'PART_TIME', 'CONTRACTOR', 'TEMPORARY', 'INTERN', 'VOLUNTEER', 'PER_DIEM', 'OTHER' );
+		if ( in_array( $schema_employment_type, $supported_employment_types, true ) ) {
+			$data['employmentType'] = $schema_employment_type;
+		}
 		if ( $organization['website'] ) {
 			$data['hiringOrganization']['sameAs'] = $organization['website'];
 		}
@@ -49,9 +53,11 @@ final class Schema_Builder implements Schema_Builder_Contract {
 			$data['hiringOrganization']['logo'] = $organization['logo'];
 		}
 
-		if ( $meta['deadline'] && Jobs::valid_date( $meta['deadline'] ) ) {
+		$availability_dates = array_filter( array( $meta['deadline'], $meta['listing_expires'] ) );
+		$valid_through      = $availability_dates ? min( $availability_dates ) : '';
+		if ( $valid_through && Jobs::valid_date( $valid_through ) ) {
 			try {
-				$deadline = new \DateTimeImmutable( $meta['deadline'] . ' 23:59:59', wp_timezone() );
+				$deadline = new \DateTimeImmutable( $valid_through . ' 23:59:59', wp_timezone() );
 				$data['validThrough'] = $deadline->format( DATE_W3C );
 			} catch ( \Exception $exception ) {
 				// Invalid legacy values must never break the public job page.

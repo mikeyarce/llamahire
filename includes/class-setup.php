@@ -81,7 +81,7 @@ final class Setup {
 		if ( defined( 'WP_CLI' ) && WP_CLI || defined( 'DOING_CRON' ) && DOING_CRON || defined( 'REST_REQUEST' ) && REST_REQUEST ) {
 			return;
 		}
-		if ( 'admin-post.php' === $pagenow || 'llamahire-setup' === sanitize_key( wp_unslash( $_GET['page'] ?? '' ) ) || isset( $_GET['activate-multi'] ) ) {
+		if ( 'admin-post.php' === $pagenow || 'llamahire-setup' === sanitize_key( wp_unslash( $_GET['page'] ?? '' ) ) || isset( $_GET['activate-multi'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only routing checks prevent a setup redirect loop.
 			return;
 		}
 		wp_safe_redirect( admin_url( 'edit.php?post_type=' . Jobs::POST_TYPE . '&page=llamahire-setup' ) );
@@ -255,7 +255,7 @@ final class Setup {
 	}
 
 	public static function notice() {
-		$result = sanitize_key( wp_unslash( $_GET['llamahire_setup'] ?? '' ) );
+		$result = sanitize_key( wp_unslash( $_GET['llamahire_setup'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action.
 		if ( ! current_user_can( 'manage_options' ) || ! in_array( $result, array( 'completed', 'skipped' ), true ) ) {
 			return;
 		}
@@ -290,7 +290,7 @@ final class Setup {
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Settings::sanitize() normalizes every supported field below.
 		$input    = isset( $_POST['organization'] ) ? (array) wp_unslash( $_POST['organization'] ) : array();
 		$current  = Settings::get();
-		foreach ( array( 'application_phone', 'application_resume', 'application_letter', 'email_sender_name', 'email_sender_email', 'employer_email_subject', 'employer_email_body', 'candidate_email_subject', 'candidate_email_body', 'submit_job_page_id', 'my_jobs_page_id' ) as $key ) {
+		foreach ( array( 'application_phone', 'application_resume', 'application_letter', 'anti_spam_provider', 'anti_spam_site_key', 'anti_spam_secret_key', 'anti_spam_registration', 'anti_spam_applications', 'email_sender_name', 'email_sender_email', 'employer_email_subject', 'employer_email_body', 'candidate_email_subject', 'candidate_email_body', 'submit_job_page_id', 'my_jobs_page_id', 'employer_registration_page_id', 'employer_approval', 'employer_policy_text', 'employer_policy_page_id', 'active_listing_limit', 'listing_duration_days' ) as $key ) {
 			$input[ $key ] = $current[ $key ];
 		}
 		$settings = Settings::sanitize( $input );

@@ -10,6 +10,12 @@
 		var privacyPage = $( '#llamahire-setup-privacy-page' );
 		var retentionChoice = $( '#llamahire-setup-retention' );
 		var candidatePreview = $( '.llamahire-candidate-preview' );
+		var antiSpamProvider = $( '#llamahire-anti-spam-provider' );
+		var antiSpamKeys = $( '[data-llamahire-anti-spam-keys]' );
+
+		function updateAntiSpamFields() {
+			antiSpamKeys.prop( 'hidden', ! antiSpamProvider.length || 'none' === antiSpamProvider.val() );
+		}
 
 		function updatePrivacyPreview() {
 			if ( ! candidatePreview.length ) {
@@ -70,6 +76,8 @@
 
 		privacyText.add( privacyPage ).add( retentionChoice ).on( 'input change', updatePrivacyPreview );
 		updatePrivacyPreview();
+		antiSpamProvider.on( 'change', updateAntiSpamFields );
+		updateAntiSpamFields();
 
 		$( '[data-llamahire-settings]' ).each( function () {
 			var screen = $( this );

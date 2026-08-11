@@ -12,14 +12,19 @@ final class Admin {
 		}
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
 		add_action( 'admin_menu', array( __CLASS__, 'order_job_menu' ), PHP_INT_MAX );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_menu_assets' ) );
 		add_action( 'admin_enqueue_scripts', array( 'LlamaHire\\Admin_Workspaces', 'enqueue_assets' ) );
 		add_action( 'admin_post_llamahire_update_application', array( __CLASS__, 'update_application' ) );
+		add_action( 'admin_post_llamahire_add_application_note', array( __CLASS__, 'add_application_note' ) );
 		add_action( 'wp_ajax_llamahire_move_application', array( 'LlamaHire\\Admin_Workspaces', 'move_application_ajax' ) );
 		add_action( 'admin_post_llamahire_retry_notifications', array( __CLASS__, 'retry_notifications' ) );
 		add_action( 'admin_post_llamahire_export', array( __CLASS__, 'export' ) );
 		add_action( 'admin_post_llamahire_delete_resume', array( __CLASS__, 'delete_resume' ) );
 		add_action( 'admin_post_llamahire_replace_resume', array( __CLASS__, 'replace_resume' ) );
 		add_action( 'admin_post_llamahire_erase_application', array( __CLASS__, 'erase_application' ) );
+		add_action( 'admin_post_llamahire_moderate_job', array( __CLASS__, 'moderate_job' ) );
+		add_action( 'admin_notices', array( __CLASS__, 'moderation_notices' ) );
+		add_action( 'admin_notices', array( __CLASS__, 'pending_job_prompt' ) );
 		add_filter( 'manage_' . Jobs::POST_TYPE . '_posts_columns', array( __CLASS__, 'job_columns' ) );
 		add_action( 'manage_' . Jobs::POST_TYPE . '_posts_custom_column', array( __CLASS__, 'job_column' ), 10, 2 );
 		add_action( 'pre_get_posts', array( __CLASS__, 'filter_job_list' ) );
@@ -32,32 +37,104 @@ final class Admin {
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This only selects a read-only list view.
 		$state = sanitize_key( wp_unslash( $_GET['llamahire_job_state'] ?? '' ) );
-		if ( 'open' !== $state ) {
+		$meta_query = self::job_state_meta_query( $state );
+		if ( ! $meta_query ) {
 			return;
 		}
 		$query->set( 'post_status', 'publish' );
-		$query->set( 'meta_query', Jobs::open_meta_query() ); // phpcs:ignore WordPress.DB.SlowDBQuery
+		$query->set( 'meta_query', $meta_query ); // phpcs:ignore WordPress.DB.SlowDBQuery
 	}
 
 	public static function job_views( array $views ) {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This only selects a read-only list view.
-		$current = 'open' === sanitize_key( wp_unslash( $_GET['llamahire_job_state'] ?? '' ) );
-		$url = add_query_arg(
+		$current_state  = sanitize_key( wp_unslash( $_GET['llamahire_job_state'] ?? '' ) );
+		$current_status = sanitize_key( wp_unslash( $_GET['post_status'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This only selects a read-only list view.
+		$jobs_url       = admin_url( 'edit.php?post_type=' . Jobs::POST_TYPE );
+		$author_id      = Ownership::current_author_scope();
+		$pending_args   = array( 'post_type' => Jobs::POST_TYPE, 'post_status' => 'pending', 'posts_per_page' => 1, 'fields' => 'ids' );
+		if ( $author_id ) {
+			$pending_args['author'] = $author_id;
+		}
+		$pending_query = new \WP_Query( $pending_args );
+		$pending_url   = add_query_arg( 'post_status', 'pending', $jobs_url );
+		$views['llamahire_pending'] = sprintf(
+			'<a href="%1$s"%2$s>%3$s <span class="count">(%4$s)</span></a>',
+			esc_url( $pending_url ),
+			'pending' === $current_status ? ' class="current" aria-current="page"' : '',
+			esc_html__( 'Awaiting review', 'llamahire' ),
+			esc_html( number_format_i18n( $pending_query->found_posts ) )
+		);
+		$open_url = add_query_arg(
 			array(
 				'post_type'           => Jobs::POST_TYPE,
 				'llamahire_job_state' => 'open',
 			),
 			admin_url( 'edit.php' )
 		);
-		$count = Jobs::open_count( Ownership::current_author_scope() );
+		$count = self::job_state_count( 'open', $author_id );
 		$views['llamahire_open'] = sprintf(
 			'<a href="%1$s"%2$s>%3$s <span class="count">(%4$s)</span></a>',
-			esc_url( $url ),
-			$current ? ' class="current" aria-current="page"' : '',
+			esc_url( $open_url ),
+			'open' === $current_state ? ' class="current" aria-current="page"' : '',
 			esc_html__( 'Live', 'llamahire' ),
 			esc_html( number_format_i18n( $count ) )
 		);
+		foreach (
+			array(
+				'closing-soon' => __( 'Closing soon', 'llamahire' ),
+				'closed'       => __( 'Closed', 'llamahire' ),
+				'expired'      => __( 'Expired', 'llamahire' ),
+			) as $state => $label
+		) {
+			$state_url = add_query_arg( 'llamahire_job_state', $state, $jobs_url );
+			$views[ 'llamahire_' . $state ] = sprintf(
+				'<a href="%1$s"%2$s>%3$s <span class="count">(%4$s)</span></a>',
+				esc_url( $state_url ),
+				$state === $current_state ? ' class="current" aria-current="page"' : '',
+				esc_html( $label ),
+				esc_html( number_format_i18n( self::job_state_count( $state, $author_id ) ) )
+			);
+		}
 		return $views;
+	}
+
+	private static function job_state_count( $state, $author_id ) {
+		$args = array(
+			'post_type'      => Jobs::POST_TYPE,
+			'post_status'    => 'publish',
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'meta_query'     => self::job_state_meta_query( $state ), // phpcs:ignore WordPress.DB.SlowDBQuery
+		);
+		if ( $author_id ) {
+			$args['author'] = $author_id;
+		}
+		$query = new \WP_Query( $args );
+		return (int) $query->found_posts;
+	}
+
+	private static function job_state_meta_query( $state ) {
+		if ( 'open' === $state ) {
+			return Jobs::open_meta_query();
+		}
+		if ( 'closing-soon' === $state ) {
+			return Jobs::closing_soon_meta_query();
+		}
+		if ( 'closed' === $state ) {
+			return array( array( 'key' => Jobs::META_CLOSED, 'value' => '1' ) );
+		}
+		if ( 'expired' === $state ) {
+			return array(
+				'relation' => 'AND',
+				array( 'key' => Jobs::META_CLOSED, 'value' => '1', 'compare' => '!=' ),
+				array(
+					'relation' => 'OR',
+					array( 'key' => Jobs::META_DEADLINE, 'value' => current_time( 'Y-m-d' ), 'compare' => '<', 'type' => 'DATE' ),
+					array( 'key' => Jobs::META_EXPIRY, 'value' => current_time( 'Y-m-d' ), 'compare' => '<', 'type' => 'DATE' ),
+				),
+			);
+		}
+		return array();
 	}
 
 	public static function menu() {
@@ -78,13 +155,14 @@ final class Admin {
 		$order = array(
 			$parent,
 			'post-new.php?post_type=' . Jobs::POST_TYPE,
-			'llamahire-dashboard',
 			'llamahire-applications',
 			'llamahire-hiring',
-			'llamahire-activity',
+			'edit-tags.php?taxonomy=' . Jobs::TYPE_TAXONOMY . '&post_type=' . Jobs::POST_TYPE,
 			'edit-tags.php?taxonomy=llamahire_department&post_type=' . Jobs::POST_TYPE,
-			'llamahire-setup',
+			'llamahire-dashboard',
+			'llamahire-activity',
 			'llamahire-settings',
+			'llamahire-setup',
 		);
 		$items = $submenu[ $parent ];
 		usort(
@@ -99,19 +177,95 @@ final class Admin {
 				return $left_position <=> $right_position;
 			}
 		);
+		foreach ( $items as $item_index => $item ) {
+			if ( 'llamahire-dashboard' === html_entity_decode( (string) $item[2], ENT_QUOTES, 'UTF-8' ) ) {
+				$items[ $item_index ][4] = trim( (string) ( $item[4] ?? '' ) . ' llamahire-submenu-section-start' );
+				break;
+			}
+		}
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Reorders only LlamaHire's registered submenu items.
 		$submenu[ $parent ] = $items;
+	}
+
+	public static function enqueue_menu_assets() {
+		wp_enqueue_style(
+			'llamahire-admin-menu',
+			LLAMAHIRE_URL . 'assets/css/admin-menu.css',
+			array(),
+			(string) filemtime( LLAMAHIRE_PATH . 'assets/css/admin-menu.css' )
+		);
 	}
 
 	public static function activity_page() {
 		self::require_capability( Capabilities::VIEW_APPLICATIONS );
-		$page = max( 1, absint( $_GET['paged'] ?? 1 ) );
-		$result = Audit_Log::search( array_merge( array( 'page' => $page, 'per_page' => 50 ), Ownership::query_arguments() ) );
+		$asset_path = LLAMAHIRE_PATH . 'build/admin-activity.asset.php';
+		$script_path = LLAMAHIRE_PATH . 'build/admin-activity.js';
+		$style_path = LLAMAHIRE_PATH . 'build/admin-activity.css';
+		if ( ! is_readable( $asset_path ) || ! is_readable( $script_path ) || ! is_readable( $style_path ) ) {
+			wp_die( esc_html__( 'The Activity interface assets are missing. Rebuild the LlamaHire plugin assets and try again.', 'llamahire' ) );
+		}
+		$asset = require $asset_path;
+		wp_enqueue_script(
+			'llamahire-admin-activity',
+			LLAMAHIRE_URL . 'build/admin-activity.js',
+			$asset['dependencies'],
+			$asset['version'],
+			true
+		);
+		wp_enqueue_style(
+			'llamahire-admin-activity',
+			LLAMAHIRE_URL . 'build/admin-activity.css',
+			array( 'wp-components' ),
+			$asset['version']
+		);
+		wp_style_add_data( 'llamahire-admin-activity', 'rtl', 'replace' );
+		$author_id = Ownership::current_author_scope();
+		wp_localize_script(
+			'llamahire-admin-activity',
+			'llamahireActivity',
+			array(
+				'apiPath' => '/llamahire/v1/activity',
+				'baseUrl' => self::activity_url(),
+				'events'  => array_map(
+					static function ( $type, $label ) {
+						return array( 'value' => $type, 'label' => $label );
+					},
+					array_keys( Audit_Log::event_labels() ),
+					array_values( Audit_Log::event_labels() )
+				),
+				'jobs'    => array_map(
+					static function ( $job ) {
+						return array( 'value' => (int) $job->ID, 'label' => $job->post_title );
+					},
+					self::application_filter_jobs( $author_id )
+				),
+				'actors'  => array_map(
+					static function ( $actor ) {
+						return array( 'value' => (int) $actor->ID, 'label' => $actor->display_name );
+					},
+					Audit_Log::actor_options( $author_id )
+				),
+			)
+		);
 		?>
-		<div class="wrap"><h1><?php esc_html_e( 'Hiring activity', 'llamahire' ); ?></h1><p><?php esc_html_e( 'Privacy-safe operational history. Candidate names, contact details, notes, resume filenames, IP addresses, and browser data are never copied here.', 'llamahire' ); ?></p>
-		<table class="widefat striped"><caption class="screen-reader-text"><?php esc_html_e( 'Hiring activity events', 'llamahire' ); ?></caption><thead><tr><th><?php esc_html_e( 'Event', 'llamahire' ); ?></th><th><?php esc_html_e( 'Job', 'llamahire' ); ?></th><th><?php esc_html_e( 'Subject', 'llamahire' ); ?></th><th><?php esc_html_e( 'Actor', 'llamahire' ); ?></th><th><?php esc_html_e( 'Date', 'llamahire' ); ?></th></tr></thead><tbody>
-		<?php if ( $result['items'] ) : foreach ( $result['items'] as $event ) : $actor = $event->actor_user_id ? get_userdata( $event->actor_user_id ) : null; ?><tr><td><?php echo esc_html( Audit_Log::describe( $event ) ); ?></td><td><?php echo esc_html( $event->job_title ?: sprintf( __( 'Deleted job #%d', 'llamahire' ), $event->job_id ) ); ?></td><td><?php echo esc_html( 'application' === $event->subject_type ? sprintf( __( 'Application #%d', 'llamahire' ), $event->subject_id ) : sprintf( __( 'Job #%d', 'llamahire' ), $event->subject_id ) ); ?></td><td><?php echo esc_html( $actor ? $actor->display_name : __( 'System', 'llamahire' ) ); ?></td><td><?php echo esc_html( get_date_from_gmt( $event->created_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></td></tr><?php endforeach; else : ?><tr><td colspan="5"><?php esc_html_e( 'No hiring activity has been recorded yet.', 'llamahire' ); ?></td></tr><?php endif; ?>
-		</tbody></table><?php if ( $result['pages'] > 1 ) : ?><div class="tablenav"><div class="tablenav-pages"><?php echo wp_kses_post( paginate_links( array( 'base' => add_query_arg( 'paged', '%#%' ), 'format' => '', 'current' => $result['page'], 'total' => $result['pages'] ) ) ); ?></div></div><?php endif; ?></div>
+		<div class="wrap llamahire-activity-screen"><h1><?php esc_html_e( 'Hiring activity', 'llamahire' ); ?></h1><p><?php esc_html_e( 'Privacy-safe operational history. Candidate names, contact details, notes, resume filenames, IP addresses, and browser data are never copied here.', 'llamahire' ); ?></p>
+		<div id="llamahire-activity-root"><p><?php esc_html_e( 'Loading activity…', 'llamahire' ); ?></p></div>
+		<noscript><div class="notice notice-error inline"><p><?php esc_html_e( 'The Activity interface requires JavaScript.', 'llamahire' ); ?></p></div></noscript>
+		</div>
 		<?php
+	}
+
+	public static function activity_url( array $arguments = array() ) {
+		return add_query_arg(
+			array_merge(
+				array(
+					'post_type' => Jobs::POST_TYPE,
+					'page'      => 'llamahire-activity',
+				),
+				$arguments
+			),
+			admin_url( 'edit.php' )
+		);
 	}
 
 	public static function dashboard() {
@@ -126,8 +280,8 @@ final class Admin {
 
 	public static function applications_page() {
 		self::require_capability( Capabilities::VIEW_APPLICATIONS );
-		if ( isset( $_GET['application'] ) ) {
-			self::application_detail( absint( $_GET['application'] ) );
+		if ( isset( $_GET['application'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only detail routing; authorization is checked in application_detail().
+			self::application_detail( absint( $_GET['application'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only application identifier; authorization is checked in application_detail().
 			return;
 		}
 		$asset_path = LLAMAHIRE_PATH . 'build/admin-applications.asset.php';
@@ -153,19 +307,23 @@ final class Admin {
 		wp_style_add_data( 'llamahire-admin-applications', 'rtl', 'replace' );
 		$scope = Ownership::query_arguments();
 		$jobs  = self::application_filter_jobs( absint( $scope['author_id'] ?? 0 ) );
-		$status = sanitize_key( wp_unslash( $_GET['status'] ?? '' ) );
+		$status = sanitize_key( wp_unslash( $_GET['status'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only inbox filter.
 		$status = array_key_exists( $status, Applications::workflow_statuses() ) ? $status : '';
 		wp_localize_script(
 			'llamahire-admin-applications',
 			'llamahireApplications',
 			array(
 				'apiPath'       => '/llamahire/v1/applications',
+				'bulkStatusPath' => '/llamahire/v1/applications/bulk-status',
+				'noteMaxLength' => Application_Notes::MAX_LENGTH,
 				'baseUrl'       => self::applications_url(),
 				'exportUrl'     => wp_nonce_url( add_query_arg( 'action', 'llamahire_export', admin_url( 'admin-post.php' ) ), 'llamahire_export' ),
 				'canExport'     => current_user_can( Capabilities::EXPORT_APPLICATIONS ),
-				'initialSearch' => sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) ),
+				'canManage'     => current_user_can( Capabilities::MANAGE_APPLICATIONS ),
+				'canDownload'   => current_user_can( Capabilities::DOWNLOAD_RESUMES ),
+				'initialSearch' => sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only inbox filter.
 				'initialStatus' => $status,
-				'initialJobId'  => absint( $_GET['job_id'] ?? 0 ),
+				'initialJobId'  => absint( $_GET['job_id'] ?? 0 ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only inbox filter.
 				'jobs'          => array_map(
 					static function ( $job ) {
 						return array( 'value' => (int) $job->ID, 'label' => $job->post_title );
@@ -176,7 +334,9 @@ final class Admin {
 		);
 		?>
 		<div class="wrap llamahire-applications-screen"><h1><?php esc_html_e( 'Applications', 'llamahire' ); ?></h1>
-		<?php if ( ! empty( $_GET['application_erased'] ) ) : ?><div class="notice notice-success inline" role="status"><p><?php esc_html_e( 'The application and its private resume were permanently erased.', 'llamahire' ); ?></p></div><?php endif; ?>
+		<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action.
+		if ( ! empty( $_GET['application_erased'] ) ) : ?>
+		<div class="notice notice-success inline" role="status"><p><?php esc_html_e( 'The application and its private resume were permanently erased.', 'llamahire' ); ?></p></div><?php endif; ?>
 		<div id="llamahire-applications-root"><p><?php esc_html_e( 'Loading applications…', 'llamahire' ); ?></p></div>
 		<noscript><div class="notice notice-error inline"><p><?php esc_html_e( 'The Applications inbox requires JavaScript. Candidate detail and privacy actions remain server-rendered.', 'llamahire' ); ?></p></div></noscript>
 		</div>
@@ -200,7 +360,7 @@ final class Admin {
 		$args = array(
 			'post_type'      => Jobs::POST_TYPE,
 			'post_status'    => array( 'publish', 'draft', 'pending', 'future', 'private' ),
-			'posts_per_page' => 250,
+			'posts_per_page' => 250, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- Deliberately bounded admin-only selector; no post content or metadata is primed.
 			'orderby'        => 'title',
 			'order'          => 'ASC',
 		);
@@ -216,19 +376,21 @@ final class Admin {
 		}
 		$row = Plugin::instance()->services()->get( Service_IDs::APPLICATION_REPOSITORY )->find( $id );
 		if ( ! $row ) { wp_die( esc_html__( 'Application not found.', 'llamahire' ) ); }
-		$updated = ! empty( $_GET['updated'] );
-		$retried = ! empty( $_GET['notifications_retried'] );
-		$data_action = sanitize_key( wp_unslash( $_GET['data_action'] ?? '' ) );
+		$private_notes = Application_Notes::for_application( $id, 50 );
+		$updated = ! empty( $_GET['updated'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action.
+		$retried = ! empty( $_GET['notifications_retried'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action.
+		$data_action = sanitize_key( wp_unslash( $_GET['data_action'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action.
 		?>
 		<div class="wrap"><p><a href="<?php echo esc_url( self::applications_url() ); ?>">&larr; <?php esc_html_e( 'All applications', 'llamahire' ); ?></a></p><h1><?php echo esc_html( $row->name ); ?></h1>
 		<?php if ( $updated ) : ?><div class="notice notice-success inline" role="status"><p><?php esc_html_e( 'Application review saved.', 'llamahire' ); ?></p></div><?php endif; ?>
+		<?php if ( ! empty( $_GET['note_added'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action. ?><div class="notice notice-success inline" role="status"><p><?php esc_html_e( 'Private note added.', 'llamahire' ); ?></p></div><?php elseif ( ! empty( $_GET['note_error'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action. ?><div class="notice notice-error inline" role="alert"><p><?php esc_html_e( 'The private note could not be added.', 'llamahire' ); ?></p></div><?php endif; ?>
 		<?php if ( $retried ) : ?><div class="notice notice-success inline" role="status"><p><?php esc_html_e( 'Missing email notifications were retried.', 'llamahire' ); ?></p></div><?php endif; ?>
 		<?php if ( 'resume_deleted' === $data_action ) : ?><div class="notice notice-success inline" role="status"><p><?php esc_html_e( 'The private resume was permanently deleted.', 'llamahire' ); ?></p></div><?php elseif ( 'resume_replaced' === $data_action ) : ?><div class="notice notice-success inline" role="status"><p><?php esc_html_e( 'The private resume was replaced.', 'llamahire' ); ?></p></div><?php elseif ( 'error' === $data_action ) : ?><div class="notice notice-error inline" role="alert"><p><?php esc_html_e( 'The candidate-data change could not be completed. No application record was removed.', 'llamahire' ); ?></p></div><?php endif; ?>
 		<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:24px;max-width:1000px">
-		<div class="card" style="max-width:none"><h2><?php esc_html_e( 'Candidate', 'llamahire' ); ?></h2><p><strong><?php esc_html_e( 'Email:', 'llamahire' ); ?></strong> <a href="mailto:<?php echo esc_attr( $row->email ); ?>"><?php echo esc_html( $row->email ); ?></a></p><?php if ( $row->phone ) : ?><p><strong><?php esc_html_e( 'Phone:', 'llamahire' ); ?></strong> <?php echo esc_html( $row->phone ); ?></p><?php endif; ?><p><strong><?php esc_html_e( 'Applied for:', 'llamahire' ); ?></strong> <?php echo esc_html( get_the_title( $row->job_id ) ); ?></p><?php if ( $row->has_resume && current_user_can( Capabilities::DOWNLOAD_RESUMES ) ) : ?><p><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=llamahire_resume&application=' . $id ), 'llamahire_resume_' . $id ) ); ?>"><?php esc_html_e( 'Download resume', 'llamahire' ); ?></a></p><?php endif; ?><h2><?php esc_html_e( 'Cover letter', 'llamahire' ); ?></h2><p style="white-space:pre-wrap"><?php echo esc_html( $row->cover_letter ?: __( 'No cover letter provided.', 'llamahire' ) ); ?></p><h2><?php esc_html_e( 'Notifications', 'llamahire' ); ?></h2><p><strong><?php esc_html_e( 'Status:', 'llamahire' ); ?></strong> <?php echo esc_html( ucfirst( $row->notification_status ) ); ?><br><strong><?php esc_html_e( 'Attempts:', 'llamahire' ); ?></strong> <?php echo esc_html( $row->notification_attempts ); ?></p><?php if ( in_array( $row->notification_status, array( 'pending', 'partial', 'failed' ), true ) && current_user_can( Capabilities::RETRY_NOTIFICATIONS ) ) : ?><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="llamahire_retry_notifications"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_retry_notifications_' . $id ); ?><button class="button"><?php esc_html_e( 'Retry missing emails', 'llamahire' ); ?></button></form><?php endif; ?></div>
-		<div><?php if ( current_user_can( Capabilities::MANAGE_APPLICATIONS ) ) : ?><form class="card" style="max-width:none" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><h2><?php esc_html_e( 'Review', 'llamahire' ); ?></h2><input type="hidden" name="action" value="llamahire_update_application"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_update_' . $id ); ?><p><label for="status"><strong><?php esc_html_e( 'Status', 'llamahire' ); ?></strong></label><br><select id="status" name="status" style="width:100%"><?php foreach ( Applications::workflow_statuses() as $key => $label ) : ?><option value="<?php echo esc_attr( $key ); ?>" <?php selected( $row->status, $key ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></p><p><label for="notes"><strong><?php esc_html_e( 'Private notes', 'llamahire' ); ?></strong></label><textarea id="notes" name="notes" rows="8" style="width:100%"><?php echo esc_textarea( $row->notes ); ?></textarea></p><button class="button button-primary"><?php esc_html_e( 'Save changes', 'llamahire' ); ?></button></form><?php else : ?><div class="card" style="max-width:none"><h2><?php esc_html_e( 'Review', 'llamahire' ); ?></h2><p><strong><?php esc_html_e( 'Status:', 'llamahire' ); ?></strong> <?php echo esc_html( Applications::status_label( $row->status ) ); ?></p><p><strong><?php esc_html_e( 'Private notes:', 'llamahire' ); ?></strong><br><?php echo nl2br( esc_html( $row->notes ?: __( 'No private notes.', 'llamahire' ) ) ); ?></p></div><?php endif; ?></div>
-		<div class="card" style="max-width:none"><h2><?php esc_html_e( 'Activity', 'llamahire' ); ?></h2><?php $history = Audit_Log::search( array( 'application_id' => $id, 'per_page' => 20 ) ); ?><?php if ( $history['items'] ) : ?><ol><?php foreach ( $history['items'] as $event ) : $actor = $event->actor_user_id ? get_userdata( $event->actor_user_id ) : null; ?><li><strong><?php echo esc_html( Audit_Log::describe( $event ) ); ?></strong><br><span><?php echo esc_html( $actor ? $actor->display_name : __( 'System', 'llamahire' ) ); ?> — <?php echo esc_html( get_date_from_gmt( $event->created_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></span></li><?php endforeach; ?></ol><?php else : ?><p><?php esc_html_e( 'No activity recorded yet.', 'llamahire' ); ?></p><?php endif; ?></div>
-		<?php if ( current_user_can( Capabilities::ERASE_APPLICATIONS ) ) : ?><div class="card" style="max-width:none"><h2><?php esc_html_e( 'Candidate data', 'llamahire' ); ?></h2><p><?php esc_html_e( 'Resume changes and erasure are permanent and are not restored from LlamaHire.', 'llamahire' ); ?></p><form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="llamahire_replace_resume"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_replace_resume_' . $id ); ?><p><label for="llamahire-replacement-resume"><strong><?php echo $row->has_resume ? esc_html__( 'Replace resume', 'llamahire' ) : esc_html__( 'Add resume', 'llamahire' ); ?></strong></label><br><input id="llamahire-replacement-resume" type="file" name="resume" accept=".pdf,.doc,.docx" required></p><button class="button"><?php echo $row->has_resume ? esc_html__( 'Replace resume', 'llamahire' ) : esc_html__( 'Upload resume', 'llamahire' ); ?></button></form><?php if ( $row->has_resume ) : ?><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:12px"><input type="hidden" name="action" value="llamahire_delete_resume"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_delete_resume_' . $id ); ?><p><label><input type="checkbox" name="confirm_delete_resume" value="1" required> <?php esc_html_e( 'I understand the current resume will be permanently deleted.', 'llamahire' ); ?></label></p><button class="button button-link-delete"><?php esc_html_e( 'Delete resume permanently', 'llamahire' ); ?></button></form><?php endif; ?><hr><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="llamahire_erase_application"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_erase_application_' . $id ); ?><p><label><input type="checkbox" name="confirm_erase" value="1" required> <?php esc_html_e( 'I understand this permanently deletes the application, notes, notification history, and private resume.', 'llamahire' ); ?></label></p><button class="button button-link-delete"><?php esc_html_e( 'Erase application permanently', 'llamahire' ); ?></button></form></div><?php endif; ?>
+		<div class="card" style="max-width:none"><h2><?php esc_html_e( 'Candidate', 'llamahire' ); ?></h2><p><strong><?php esc_html_e( 'Email:', 'llamahire' ); ?></strong> <a href="mailto:<?php echo esc_attr( $row->email ); ?>"><?php echo esc_html( $row->email ); ?></a></p><?php if ( $row->phone ) : ?><p><strong><?php esc_html_e( 'Phone:', 'llamahire' ); ?></strong> <?php echo esc_html( $row->phone ); ?></p><?php endif; ?><p><strong><?php esc_html_e( 'Applied for:', 'llamahire' ); ?></strong> <?php echo esc_html( get_the_title( $row->job_id ) ); ?></p><?php if ( $row->has_resume && current_user_can( Capabilities::DOWNLOAD_RESUMES ) ) : ?><p><?php if ( Applications::resume_is_previewable( $row->resume_name ) ) : ?><a class="button" href="<?php echo esc_url( Applications::resume_url( $id, true ) ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'View resume', 'llamahire' ); ?></a> <?php endif; ?><a class="button" href="<?php echo esc_url( Applications::resume_url( $id ) ); ?>"><?php esc_html_e( 'Download resume', 'llamahire' ); ?></a></p><?php endif; ?><h2><?php esc_html_e( 'Cover letter', 'llamahire' ); ?></h2><p style="white-space:pre-wrap"><?php echo esc_html( $row->cover_letter ?: __( 'No cover letter provided.', 'llamahire' ) ); ?></p><h2><?php esc_html_e( 'Notifications', 'llamahire' ); ?></h2><p><strong><?php esc_html_e( 'Status:', 'llamahire' ); ?></strong> <?php echo esc_html( ucfirst( $row->notification_status ) ); ?><br><strong><?php esc_html_e( 'Attempts:', 'llamahire' ); ?></strong> <?php echo esc_html( $row->notification_attempts ); ?></p><?php if ( in_array( $row->notification_status, array( 'pending', 'partial', 'failed' ), true ) && current_user_can( Capabilities::RETRY_NOTIFICATIONS ) ) : ?><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="llamahire_retry_notifications"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_retry_notifications_' . $id ); ?><button class="button"><?php esc_html_e( 'Retry missing emails', 'llamahire' ); ?></button></form><?php endif; ?></div>
+		<div><div class="card" style="max-width:none"><h2><?php esc_html_e( 'Review', 'llamahire' ); ?></h2><?php if ( current_user_can( Capabilities::MANAGE_APPLICATIONS ) ) : ?><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="llamahire_update_application"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_update_' . $id ); ?><p><label for="status"><strong><?php esc_html_e( 'Status', 'llamahire' ); ?></strong></label><br><select id="status" name="status" style="width:100%"><?php foreach ( Applications::workflow_statuses() as $key => $label ) : ?><option value="<?php echo esc_attr( $key ); ?>" <?php selected( $row->status, $key ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></p><button class="button"><?php esc_html_e( 'Save status', 'llamahire' ); ?></button></form><hr><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="llamahire_add_application_note"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_add_note_' . $id ); ?><p><label for="notes"><strong><?php esc_html_e( 'Add private note', 'llamahire' ); ?></strong></label><textarea id="notes" name="note" rows="5" maxlength="<?php echo esc_attr( Application_Notes::MAX_LENGTH ); ?>" style="width:100%" required></textarea></p><button class="button button-primary"><?php esc_html_e( 'Add note', 'llamahire' ); ?></button></form><?php else : ?><p><strong><?php esc_html_e( 'Status:', 'llamahire' ); ?></strong> <?php echo esc_html( Applications::status_label( $row->status ) ); ?></p><?php endif; ?><h3><?php esc_html_e( 'Private notes', 'llamahire' ); ?></h3><?php if ( $private_notes ) : ?><ol><?php foreach ( $private_notes as $note ) : ?><li><p style="white-space:pre-wrap"><?php echo esc_html( $note->body ); ?></p><small><?php echo esc_html( Application_Notes::author_label( $note ) ); ?> · <?php echo esc_html( get_date_from_gmt( $note->created_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></small></li><?php endforeach; ?></ol><?php else : ?><p><?php esc_html_e( 'No private notes yet.', 'llamahire' ); ?></p><?php endif; ?></div></div>
+		<div id="llamahire-application-activity" class="card" style="max-width:none"><h2><?php esc_html_e( 'Activity', 'llamahire' ); ?></h2><?php $history = Audit_Log::search( array( 'application_id' => $id, 'per_page' => 20 ) ); ?><?php if ( $history['items'] ) : ?><ol><?php foreach ( $history['items'] as $event ) : $actor = $event->actor_user_id ? get_userdata( $event->actor_user_id ) : null; ?><li><strong><?php echo esc_html( Audit_Log::describe( $event ) ); ?></strong><br><span><?php echo esc_html( $actor ? $actor->display_name : __( 'System', 'llamahire' ) ); ?> — <?php echo esc_html( get_date_from_gmt( $event->created_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></span></li><?php endforeach; ?></ol><?php else : ?><p><?php esc_html_e( 'No activity recorded yet.', 'llamahire' ); ?></p><?php endif; ?></div>
+		<?php if ( Ownership::user_can_access_application( $id, Capabilities::ERASE_APPLICATIONS ) ) : ?><div class="card" style="max-width:none"><h2><?php esc_html_e( 'Candidate data', 'llamahire' ); ?></h2><p><?php esc_html_e( 'Resume changes and erasure are permanent and are not restored from LlamaHire.', 'llamahire' ); ?></p><form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="llamahire_replace_resume"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_replace_resume_' . $id ); ?><p><label for="llamahire-replacement-resume"><strong><?php echo $row->has_resume ? esc_html__( 'Replace resume', 'llamahire' ) : esc_html__( 'Add resume', 'llamahire' ); ?></strong></label><br><input id="llamahire-replacement-resume" type="file" name="resume" accept=".pdf,.docx" required></p><button class="button"><?php echo $row->has_resume ? esc_html__( 'Replace resume', 'llamahire' ) : esc_html__( 'Upload resume', 'llamahire' ); ?></button></form><?php if ( $row->has_resume ) : ?><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:12px"><input type="hidden" name="action" value="llamahire_delete_resume"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_delete_resume_' . $id ); ?><p><label><input type="checkbox" name="confirm_delete_resume" value="1" required> <?php esc_html_e( 'I understand the current resume will be permanently deleted.', 'llamahire' ); ?></label></p><button class="button button-link-delete"><?php esc_html_e( 'Delete resume permanently', 'llamahire' ); ?></button></form><?php endif; ?><hr><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="llamahire_erase_application"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_erase_application_' . $id ); ?><p><label><input type="checkbox" name="confirm_erase" value="1" required> <?php esc_html_e( 'I understand this permanently deletes the application, notes, notification history, and private resume.', 'llamahire' ); ?></label></p><button class="button button-link-delete"><?php esc_html_e( 'Erase application permanently', 'llamahire' ); ?></button></form></div><?php endif; ?>
 		</div></div>
 		<?php
 	}
@@ -238,13 +400,9 @@ final class Admin {
 		if ( ! Ownership::user_can_access_application( $id, Capabilities::MANAGE_APPLICATIONS ) ) { wp_die( esc_html__( 'You cannot update applications.', 'llamahire' ), 403 ); }
 		$status = sanitize_key( wp_unslash( $_POST['status'] ?? '' ) );
 		if ( ! array_key_exists( $status, Applications::workflow_statuses() ) ) { $status = 'new'; }
-		$changes = array( 'status' => $status );
-		if ( array_key_exists( 'notes', $_POST ) ) {
-			$changes['notes'] = sanitize_textarea_field( wp_unslash( $_POST['notes'] ) );
-		}
 		Plugin::instance()->services()->get( Service_IDs::APPLICATION_REPOSITORY )->update(
 			$id,
-			$changes
+			array( 'status' => $status )
 		);
 		$redirect = esc_url_raw( wp_unslash( $_POST['redirect_to'] ?? '' ) );
 		if ( ! $redirect || 0 !== strpos( $redirect, admin_url() ) ) {
@@ -253,10 +411,26 @@ final class Admin {
 		wp_safe_redirect( $redirect ); exit;
 	}
 
+	public static function add_application_note() {
+		$id = absint( $_POST['application'] ?? 0 );
+		check_admin_referer( 'llamahire_add_note_' . $id );
+		if ( ! Ownership::user_can_access_application( $id, Capabilities::MANAGE_APPLICATIONS ) ) {
+			wp_die( esc_html__( 'You cannot update applications.', 'llamahire' ), 403 );
+		}
+		$result   = Application_Notes::add( $id, sanitize_textarea_field( wp_unslash( $_POST['note'] ?? '' ) ) );
+		$redirect = esc_url_raw( wp_unslash( $_POST['redirect_to'] ?? '' ) );
+		if ( ! $redirect || 0 !== strpos( $redirect, admin_url() ) ) {
+			$redirect = self::applications_url( array( 'application' => $id ) );
+		}
+		$redirect = add_query_arg( is_wp_error( $result ) ? 'note_error' : 'note_added', 1, $redirect );
+		wp_safe_redirect( $redirect );
+		exit;
+	}
+
 	public static function delete_resume() {
 		$id = absint( $_POST['application'] ?? 0 );
 		check_admin_referer( 'llamahire_delete_resume_' . $id );
-		self::require_erasure_capability();
+		self::require_erasure_capability( $id );
 		if ( '1' !== sanitize_text_field( wp_unslash( $_POST['confirm_delete_resume'] ?? '' ) ) ) {
 			self::candidate_data_redirect( $id, 'error' );
 		}
@@ -267,7 +441,7 @@ final class Admin {
 	public static function replace_resume() {
 		$id = absint( $_POST['application'] ?? 0 );
 		check_admin_referer( 'llamahire_replace_resume_' . $id );
-		self::require_erasure_capability();
+		self::require_erasure_capability( $id );
 		$file = isset( $_FILES['resume'] ) && is_array( $_FILES['resume'] ) ? $_FILES['resume'] : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The storage service validates the HTTP upload, extension, MIME type, signature, and size.
 		$result = Plugin::instance()->services()->get( Service_IDs::CANDIDATE_DATA )->replace_resume( $id, $file );
 		self::candidate_data_redirect( $id, is_wp_error( $result ) ? 'error' : 'resume_replaced' );
@@ -276,7 +450,7 @@ final class Admin {
 	public static function erase_application() {
 		$id = absint( $_POST['application'] ?? 0 );
 		check_admin_referer( 'llamahire_erase_application_' . $id );
-		self::require_erasure_capability();
+		self::require_erasure_capability( $id );
 		if ( '1' !== sanitize_text_field( wp_unslash( $_POST['confirm_erase'] ?? '' ) ) ) {
 			self::candidate_data_redirect( $id, 'error' );
 		}
@@ -288,8 +462,8 @@ final class Admin {
 		exit;
 	}
 
-	private static function require_erasure_capability() {
-		if ( ! current_user_can( Capabilities::ERASE_APPLICATIONS ) ) {
+	private static function require_erasure_capability( $application_id ) {
+		if ( ! Ownership::user_can_access_application( $application_id, Capabilities::ERASE_APPLICATIONS ) ) {
 			wp_die( esc_html__( 'You cannot erase candidate data.', 'llamahire' ), 403 );
 		}
 	}
@@ -325,7 +499,7 @@ final class Admin {
 	public static function export() {
 		check_admin_referer( 'llamahire_export' ); if ( ! current_user_can( Capabilities::EXPORT_APPLICATIONS ) ) { wp_die( esc_html__( 'You cannot export applications.', 'llamahire' ) ); }
 		header( 'Content-Type: text/csv; charset=utf-8' ); header( 'Content-Disposition: attachment; filename=llamahire-applications-' . gmdate( 'Y-m-d' ) . '.csv' );
-		$out = fopen( 'php://output', 'w' ); fputcsv( $out, array( 'ID', 'Job', 'Name', 'Email', 'Phone', 'Cover letter', 'Status', 'Received' ), ',', '"', '\\' );
+		$out = fopen( 'php://output', 'w' ); fputcsv( $out, array( 'ID', 'Job', 'Name', 'Email', 'Phone', 'Cover letter', 'Status', 'Received' ), ',', '"', '\\' ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_fputcsv -- Streams an authorized CSV response directly; no VIP filesystem path is accessed.
 		$rows = Plugin::instance()->services()->get( Service_IDs::APPLICATION_QUERY )->export_rows(
 			array_merge(
 				REST_API::application_query_arguments( $_GET ),
@@ -334,7 +508,7 @@ final class Admin {
 		);
 		foreach ( $rows as $row ) {
 			$values = array( $row['id'], $row['job_title'], $row['name'], $row['email'], $row['phone'], $row['cover_letter'], $row['status'], $row['created_at'] );
-			fputcsv( $out, array_map( array( __CLASS__, 'safe_csv_value' ), $values ), ',', '"', '\\' );
+			fputcsv( $out, array_map( array( __CLASS__, 'safe_csv_value' ), $values ), ',', '"', '\\' ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_fputcsv -- Streams an authorized CSV response directly; no VIP filesystem path is accessed.
 		}
 		fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing the streamed CSV output handle.
 		exit;
@@ -370,6 +544,97 @@ final class Admin {
 		/* translators: %s: Number of applications for a job. */
 		$label = sprintf( _n( '%s application', '%s applications', $count, 'llamahire' ), number_format_i18n( $count ) );
 		echo '<br><a href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
+		if ( 'pending' === get_post_status( $post_id ) && self::can_moderate_job( $post_id ) ) {
+			echo self::moderation_form( $post_id, true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The helper escapes all dynamic output.
+		}
+	}
+
+	public static function moderate_job() {
+		$job_id   = absint( $_POST['job_id'] ?? $_GET['job_id'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended -- Used to select the nonce action; verified immediately below.
+		$decision = sanitize_key( wp_unslash( $_POST['moderation_decision'] ?? $_GET['moderation_decision'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended -- The request is verified immediately below.
+		check_admin_referer( 'llamahire_moderate_job_' . $job_id );
+		$job = get_post( $job_id );
+		if ( ! $job || Jobs::POST_TYPE !== $job->post_type || 'pending' !== $job->post_status || ! self::can_moderate_job( $job_id ) ) {
+			wp_die( esc_html__( 'This job listing cannot be moderated.', 'llamahire' ), 403 );
+		}
+		$statuses = array(
+			'approve'         => 'publish',
+			'request_changes' => 'draft',
+			'decline'         => 'trash',
+		);
+		if ( ! isset( $statuses[ $decision ] ) ) {
+			wp_die( esc_html__( 'Choose a valid moderation action.', 'llamahire' ), 400 );
+		}
+		if ( 'trash' === $statuses[ $decision ] ) {
+			$result = wp_trash_post( $job_id );
+		} else {
+			$result = wp_update_post( array( 'ID' => $job_id, 'post_status' => $statuses[ $decision ] ), true );
+		}
+		if ( ! $result || is_wp_error( $result ) ) {
+			wp_die( esc_html__( 'The moderation decision could not be saved. Please try again.', 'llamahire' ), 500 );
+		}
+		$url = add_query_arg(
+			array(
+				'post_type'            => Jobs::POST_TYPE,
+				'post_status'          => 'pending',
+				'llamahire_moderated' => $decision,
+			),
+			admin_url( 'edit.php' )
+		);
+		wp_safe_redirect( $url );
+		exit;
+	}
+
+	public static function moderation_notices() {
+		$decision = sanitize_key( wp_unslash( $_GET['llamahire_moderated'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only confirmation of a completed nonce-protected action.
+		$messages = array(
+			'approve'         => __( 'The job was approved and published.', 'llamahire' ),
+			'request_changes' => __( 'The job was returned to the employer as a draft for changes.', 'llamahire' ),
+			'decline'         => __( 'The job was declined and moved to the trash.', 'llamahire' ),
+		);
+		if ( isset( $messages[ $decision ] ) ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $messages[ $decision ] ) . '</p></div>';
+		}
+	}
+
+	public static function pending_job_prompt() {
+		$post_id = absint( $_GET['post'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only editor context.
+		$action  = sanitize_key( wp_unslash( $_GET['action'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only editor context.
+		if ( 'edit' !== $action || ! $post_id || 'pending' !== get_post_status( $post_id ) || ! self::can_moderate_job( $post_id ) ) {
+			return;
+		}
+		echo '<div class="notice notice-info llamahire-moderation-prompt"><h2>' . esc_html__( 'This job is awaiting your review', 'llamahire' ) . '</h2><p>' . esc_html__( 'Review the listing details, then choose an explicit moderation outcome.', 'llamahire' ) . '</p>';
+		echo self::moderation_form( $post_id, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The helper escapes all dynamic output.
+		echo '</div>';
+	}
+
+	private static function can_moderate_job( $post_id ) {
+		return current_user_can( 'publish_llamahire_jobs' ) && current_user_can( 'edit_post', absint( $post_id ) );
+	}
+
+	private static function moderation_form( $post_id, $compact ) {
+		$classes = 'llamahire-moderation-actions' . ( $compact ? ' is-compact' : '' );
+		$actions = array(
+			'approve'         => array( 'button button-primary', __( 'Approve and publish', 'llamahire' ) ),
+			'request_changes' => array( 'button', __( 'Request changes', 'llamahire' ) ),
+			'decline'         => array( 'button-link-delete', __( 'Decline', 'llamahire' ) ),
+		);
+		$output = '<div class="' . esc_attr( $classes ) . '">';
+		foreach ( $actions as $decision => $action ) {
+			$url = wp_nonce_url(
+				add_query_arg(
+					array(
+						'action'              => 'llamahire_moderate_job',
+						'job_id'              => absint( $post_id ),
+						'moderation_decision' => $decision,
+					),
+					admin_url( 'admin-post.php' )
+				),
+				'llamahire_moderate_job_' . absint( $post_id )
+			);
+			$output .= '<a class="' . esc_attr( $action[0] ) . '" href="' . esc_url( $url ) . '">' . esc_html( $action[1] ) . '</a>';
+		}
+		return $output . '</div>';
 	}
 
 	private static function visible_job_application_counts( $fallback_job_id = 0 ) {

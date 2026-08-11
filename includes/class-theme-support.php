@@ -7,6 +7,7 @@ final class Theme_Support {
 	const TEMPLATE_PREFIX = 'llamahire//';
 
 	public static function register() {
+		add_filter( 'render_block_core/post-excerpt', array( __CLASS__, 'manual_job_excerpt' ), 10, 3 );
 		if ( ! function_exists( 'register_block_template' ) ) {
 			return;
 		}
@@ -31,6 +32,14 @@ final class Theme_Support {
 			$args['plugin']  = 'llamahire';
 			register_block_template( self::TEMPLATE_PREFIX . $slug, $args );
 		}
+	}
+
+	public static function manual_job_excerpt( $block_content, $block, $instance ) {
+		$job_id = get_the_ID();
+		if ( $job_id && Jobs::POST_TYPE === get_post_type( $job_id ) && is_singular( Jobs::POST_TYPE ) && ! has_excerpt( $job_id ) ) {
+			return '';
+		}
+		return $block_content;
 	}
 
 	private static function template_content( $filename ) {

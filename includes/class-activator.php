@@ -6,12 +6,11 @@ defined( 'ABSPATH' ) || exit;
 final class Activator {
 	public static function activate( $network_wide = false ) {
 		if ( is_multisite() && $network_wide ) {
-			$site_ids = get_sites( array( 'fields' => 'ids', 'number' => 0 ) );
-			foreach ( $site_ids as $site_id ) {
-				switch_to_blog( $site_id );
-				self::install_current_site();
-				restore_current_blog();
-			}
+			self::for_each_site(
+				static function () {
+					self::install_current_site();
+				}
+			);
 			return;
 		}
 		self::install_current_site();
@@ -19,23 +18,43 @@ final class Activator {
 
 	public static function deactivate( $network_wide = false ) {
 		if ( is_multisite() && $network_wide ) {
-			foreach ( get_sites( array( 'fields' => 'ids', 'number' => 0 ) ) as $site_id ) {
-				switch_to_blog( $site_id );
-				wp_clear_scheduled_hook( Applications::RETENTION_HOOK );
-				restore_current_blog();
-			}
-			flush_rewrite_rules();
+			self::for_each_site(
+				static function () {
+					wp_clear_scheduled_hook( Applications::RETENTION_HOOK );
+					wp_clear_scheduled_hook( Employer_Notifications::EXPIRING_HOOK );
+					delete_option( 'rewrite_rules' );
+				}
+			);
 			return;
 		}
 		wp_clear_scheduled_hook( Applications::RETENTION_HOOK );
-		flush_rewrite_rules();
+		wp_clear_scheduled_hook( Employer_Notifications::EXPIRING_HOOK );
+		delete_option( 'rewrite_rules' );
+	}
+
+	private static function for_each_site( $callback ) {
+		$offset = 0;
+		do {
+			$site_ids = get_sites(
+				array(
+					'fields' => 'ids',
+					'number' => 100,
+					'offset' => $offset,
+				)
+			);
+			foreach ( $site_ids as $site_id ) {
+				switch_to_blog( $site_id );
+				$callback();
+				restore_current_blog();
+			}
+			$offset += count( $site_ids );
+		} while ( 100 === count( $site_ids ) );
 	}
 
 	private static function install_current_site() {
 		Migrations::run();
 		Capabilities::install();
 		Setup::mark_pending();
-		Jobs::register();
-		flush_rewrite_rules();
+		delete_option( 'rewrite_rules' );
 	}
 }

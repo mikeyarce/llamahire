@@ -110,7 +110,7 @@ final class Privacy {
 			__( 'Phone', 'llamahire' )                       => $application->phone,
 			__( 'Cover letter', 'llamahire' )                => $application->cover_letter,
 			__( 'Resume filename', 'llamahire' )             => $application->resume_name,
-			__( 'Private hiring notes', 'llamahire' )         => $application->notes,
+			__( 'Private hiring notes', 'llamahire' )         => Application_Notes::export_text( $application->id ) ?: $application->notes,
 			__( 'Email notification error', 'llamahire' )    => $application->notification_error_code,
 			__( 'Employer notified', 'llamahire' )            => self::format_date( $application->employer_notified_at ),
 			__( 'Candidate confirmation sent', 'llamahire' )  => self::format_date( $application->candidate_notified_at ),

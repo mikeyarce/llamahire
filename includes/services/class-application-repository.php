@@ -2,10 +2,13 @@
 namespace LlamaHire\Services;
 
 use LlamaHire\Applications;
+use LlamaHire\Application_Notes;
 use LlamaHire\Audit_Log;
 use LlamaHire\Contracts\Application_Repository as Application_Repository_Contract;
 
 defined( 'ABSPATH' ) || exit;
+
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- This repository is the persistence boundary for LlamaHire's private custom table; caching candidate records would risk stale sensitive data.
 
 final class Application_Repository implements Application_Repository_Contract {
 	public function create( array $application ) {
@@ -121,33 +124,48 @@ final class Application_Repository implements Application_Repository_Contract {
 	}
 
 	public function update( $application_id, array $changes ) {
-		$before = $this->find( $application_id );
-		$allowed = array_intersect_key( $changes, array_flip( array( 'status', 'notes' ) ) );
+		$before  = $this->find( $application_id );
+		$note    = isset( $changes['notes'] ) ? sanitize_textarea_field( $changes['notes'] ) : '';
+		$allowed = array_intersect_key( $changes, array_flip( array( 'status' ) ) );
+		if ( ! $before ) {
+			return new \WP_Error( 'llamahire_application_not_found', __( 'Application not found.', 'llamahire' ) );
+		}
 		if ( isset( $allowed['status'] ) && ! array_key_exists( $allowed['status'], Applications::workflow_statuses() ) ) {
 			return new \WP_Error( 'llamahire_invalid_status', __( 'The application status is invalid.', 'llamahire' ) );
 		}
-		if ( isset( $allowed['notes'] ) ) {
-			$allowed['notes'] = sanitize_textarea_field( $allowed['notes'] );
+		if ( $allowed ) {
+			$allowed['updated_at'] = current_time( 'mysql', true );
+			if ( isset( $allowed['status'] ) && $before->status !== $allowed['status'] ) {
+				$allowed['stage_changed_at'] = $allowed['updated_at'];
+			}
+			$formats = array_fill( 0, count( $allowed ), '%s' );
+			global $wpdb;
+			$result = $wpdb->update( Applications::table(), $allowed, array( 'id' => absint( $application_id ) ), $formats, array( '%d' ) );
+			if ( false === $result ) {
+				return false;
+			}
+			if ( isset( $allowed['status'] ) && $before->status !== $allowed['status'] ) {
+				Audit_Log::record( 'application_status_changed', $before->job_id, $application_id, $before->status, $allowed['status'] );
+			}
 		}
-		if ( ! $allowed ) {
-			return true;
+		if ( '' !== $note ) {
+			$result = Application_Notes::add( $application_id, $note );
+			return is_wp_error( $result ) ? $result : true;
 		}
-		$allowed['updated_at'] = current_time( 'mysql', true );
-		if ( $before && isset( $allowed['status'] ) && $before->status !== $allowed['status'] ) {
-			$allowed['stage_changed_at'] = $allowed['updated_at'];
-		}
-		$formats = array_fill( 0, count( $allowed ), '%s' );
-		global $wpdb;
-		$result = $wpdb->update( Applications::table(), $allowed, array( 'id' => absint( $application_id ) ), $formats, array( '%d' ) );
-		if ( false !== $result && $before && isset( $allowed['status'] ) && $before->status !== $allowed['status'] ) {
-			Audit_Log::record( 'application_status_changed', $before->job_id, $application_id, $before->status, $allowed['status'] );
-		}
-		return false !== $result;
+		return true;
 	}
 
 	public function delete( $application_id ) {
 		global $wpdb;
-		return false !== $wpdb->delete( Applications::table(), array( 'id' => absint( $application_id ) ), array( '%d' ) );
+		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$notes_deleted = Application_Notes::delete_for_application( $application_id );
+		$deleted       = $wpdb->delete( Applications::table(), array( 'id' => absint( $application_id ) ), array( '%d' ) );
+		if ( false === $notes_deleted || false === $deleted ) {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			return false;
+		}
+		$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		return true;
 	}
 
 	public function record_notification_result( $application_id, array $result ) {

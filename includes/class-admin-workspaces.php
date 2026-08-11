@@ -15,7 +15,7 @@ final class Admin_Workspaces {
 	}
 
 	public static function enqueue_assets() {
-		$page = sanitize_key( wp_unslash( $_GET['page'] ?? '' ) );
+		$page = sanitize_key( wp_unslash( $_GET['page'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin screen selection.
 		if ( ! in_array( $page, array( 'llamahire-dashboard', 'llamahire-hiring' ), true ) ) {
 			return;
 		}
@@ -77,6 +77,7 @@ final class Admin_Workspaces {
 		$job_ids     = wp_list_pluck( $jobs, 'ID' );
 		$job_counts  = $query->counts_by_job_and_status( $job_ids, $scope );
 		$pending     = self::job_count( 'pending', $author_id );
+		$pending_employers = $is_operator ? Employer_Registration::pending_count() : 0;
 		$expiring    = self::expiring_job_count( $author_id );
 		$activity    = Audit_Log::search( array_merge( array( 'per_page' => 5 ), $scope ) );
 		$title       = $is_operator ? __( 'Job board dashboard', 'llamahire' ) : __( 'Hiring dashboard', 'llamahire' );
@@ -100,12 +101,15 @@ final class Admin_Workspaces {
 				<div class="llamahire-attention-list">
 					<?php
 					if ( $is_operator ) {
-						self::attention_row( 'flag', sprintf( _n( '%d listing is waiting for review', '%d listings are waiting for review', $pending, 'llamahire' ), $pending ), __( 'Moderate submitted jobs before they appear publicly.', 'llamahire' ), $pending, add_query_arg( array( 'post_type' => Jobs::POST_TYPE, 'post_status' => 'pending' ), admin_url( 'edit.php' ) ), __( 'Review listings', 'llamahire' ) );
+						/* translators: %d: Number of employer accounts awaiting approval. */
+						self::attention_row( 'businessperson', sprintf( _n( '%d employer account is awaiting approval', '%d employer accounts are awaiting approval', $pending_employers, 'llamahire' ), $pending_employers ), __( 'Review verified employers before they can submit job listings.', 'llamahire' ), $pending_employers, Employer_Registration::pending_url(), __( 'Review employers', 'llamahire' ) );
+						/* translators: %d: Number of submitted job listings awaiting review. */
+						self::attention_row( 'flag', sprintf( _n( '%d job listing is waiting for review', '%d job listings are waiting for review', $pending, 'llamahire' ), $pending ), __( 'Moderate submitted jobs before they appear publicly.', 'llamahire' ), $pending, add_query_arg( array( 'post_type' => Jobs::POST_TYPE, 'post_status' => 'pending' ), admin_url( 'edit.php' ) ), __( 'Review listings', 'llamahire' ) );
 					} else {
 						self::attention_row( 'groups', sprintf( _n( '%d new application', '%d new applications', $counts['new'], 'llamahire' ), $counts['new'] ), __( 'Candidates are waiting for an initial review.', 'llamahire' ), $counts['new'], self::hiring_available() ? self::hiring_url() : Admin::applications_url( array( 'status' => 'new' ) ), __( 'Review candidates', 'llamahire' ) );
 					}
 					self::attention_row( 'email-alt', sprintf( _n( '%d email needs attention', '%d emails need attention', $counts['notification_attention'], 'llamahire' ), $counts['notification_attention'] ), __( 'A candidate or employer notification may not have arrived.', 'llamahire' ), $counts['notification_attention'], Admin::applications_url( array( 'notification_statuses' => 'pending,partial,failed' ) ), __( 'Check email issues', 'llamahire' ) );
-					self::attention_row( 'calendar-alt', sprintf( _n( '%d job closes soon', '%d jobs close soon', $expiring, 'llamahire' ), $expiring ), __( 'These listings reach their deadline in the next seven days.', 'llamahire' ), $expiring, admin_url( 'edit.php?post_type=' . Jobs::POST_TYPE ), __( 'Review jobs', 'llamahire' ) );
+					self::attention_row( 'calendar-alt', sprintf( _n( '%d job closes soon', '%d jobs close soon', $expiring, 'llamahire' ), $expiring ), __( 'These listings reach their application deadline or listing expiration in the next seven days.', 'llamahire' ), $expiring, add_query_arg( 'llamahire_job_state', 'closing-soon', $jobs_url ), __( 'Review jobs', 'llamahire' ) );
 					?>
 				</div>
 			</section>
@@ -168,8 +172,8 @@ final class Admin_Workspaces {
 			wp_die( esc_html__( 'The Hiring workspace is available to company hiring teams and employers managing their own jobs.', 'llamahire' ), 403 );
 		}
 		$scope     = Ownership::query_arguments();
-		$search    = sanitize_text_field( wp_unslash( $_GET['candidate'] ?? '' ) );
-		$job_token = sanitize_text_field( wp_unslash( $_GET['job_id'] ?? '' ) );
+		$search    = sanitize_text_field( wp_unslash( $_GET['candidate'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only hiring workspace filter.
+		$job_token = sanitize_text_field( wp_unslash( $_GET['job_id'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only hiring workspace filter.
 		$show_all  = '' === $job_token || 'all' === $job_token;
 		$job_id    = $show_all ? 0 : absint( $job_token );
 		$jobs      = Admin::application_filter_jobs( absint( $scope['author_id'] ?? 0 ) );
@@ -180,7 +184,7 @@ final class Admin_Workspaces {
 		foreach ( $result['items'] as $candidate ) {
 			$columns[ $candidate->status ][] = $candidate;
 		}
-		$selected_id = absint( $_GET['application'] ?? 0 );
+		$selected_id = absint( $_GET['application'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only selection; ownership is checked immediately below.
 		$selected = $selected_id && Ownership::user_can_access_application( $selected_id, Capabilities::VIEW_APPLICATIONS )
 			? Plugin::instance()->services()->get( Service_IDs::APPLICATION_REPOSITORY )->find( $selected_id )
 			: null;
@@ -223,29 +227,38 @@ final class Admin_Workspaces {
 		<article class="llamahire-candidate-card<?php echo (int) $selected_id === (int) $candidate->id ? ' is-selected' : ''; ?>" draggable="true" data-candidate-id="<?php echo esc_attr( $candidate->id ); ?>" data-candidate-status="<?php echo esc_attr( $candidate->status ); ?>">
 			<a class="llamahire-candidate-main" href="<?php echo esc_url( $url ); ?>"><strong><?php echo esc_html( $candidate->name ); ?></strong><small><?php echo esc_html( $candidate->job_title ); ?></small><small><?php printf( esc_html__( 'Applied %s', 'llamahire' ), esc_html( get_date_from_gmt( $candidate->created_at, get_option( 'date_format' ) ) ) ); ?></small><small><span class="dashicons dashicons-clock"></span><?php printf( esc_html__( '%s in stage', 'llamahire' ), esc_html( self::time_in_stage( $candidate ) ) ); ?></small></a>
 			<span class="llamahire-card-menu dashicons dashicons-move" title="<?php esc_attr_e( 'Drag candidate', 'llamahire' ); ?>" aria-hidden="true"></span>
-			<footer><span class="llamahire-avatar"><?php echo esc_html( self::initials( $candidate->name ) ); ?></span><?php if ( $candidate->notes ) : ?><span class="screen-reader-text"><?php esc_html_e( 'Has a private note', 'llamahire' ); ?></span><?php endif; ?></footer>
+			<footer><span class="llamahire-avatar"><?php echo esc_html( self::initials( $candidate->name ) ); ?></span><?php if ( ! empty( $candidate->has_notes ) || $candidate->notes ) : ?><span class="screen-reader-text"><?php esc_html_e( 'Has a private note', 'llamahire' ); ?></span><?php endif; ?></footer>
 		</article>
 		<?php
 	}
 
 	private static function candidate_drawer( $candidate, $job_argument, $search ) {
 		$return_url = self::hiring_url( array_filter( array( 'job_id' => $job_argument, 'candidate' => $search, 'application' => $candidate->id, 'updated' => 1 ) ) );
+		$note_return_url = self::hiring_url( array_filter( array( 'job_id' => $job_argument, 'candidate' => $search, 'application' => $candidate->id ) ) );
 		$history = Audit_Log::search( array( 'application_id' => $candidate->id, 'per_page' => 5 ) );
+		$private_notes = Application_Notes::for_application( $candidate->id, 10 );
 		$close_url = self::hiring_url( array_filter( array( 'job_id' => $job_argument, 'candidate' => $search ) ) );
 		$next_status = self::next_pipeline_status( $candidate->status );
-		$updated = ! empty( $_GET['updated'] );
+		$updated = ! empty( $_GET['updated'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action.
+		$note_added = ! empty( $_GET['note_added'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action.
 		?>
 		<aside class="llamahire-candidate-drawer" aria-labelledby="llamahire-candidate-title">
 			<a href="<?php echo esc_url( $close_url ); ?>" class="llamahire-drawer-close" aria-label="<?php esc_attr_e( 'Close candidate details', 'llamahire' ); ?>"><span class="dashicons dashicons-no-alt"></span></a>
 			<div class="llamahire-candidate-heading"><div><h2 id="llamahire-candidate-title"><?php echo esc_html( $candidate->name ); ?></h2><p><?php echo esc_html( get_the_title( $candidate->job_id ) ); ?></p></div></div>
-			<div class="llamahire-contact"><a href="mailto:<?php echo esc_attr( $candidate->email ); ?>"><span class="dashicons dashicons-email"></span><?php echo esc_html( $candidate->email ); ?></a><?php if ( $candidate->has_resume && current_user_can( Capabilities::DOWNLOAD_RESUMES ) ) : ?><a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=llamahire_resume&application=' . $candidate->id ), 'llamahire_resume_' . $candidate->id ) ); ?>"><span class="dashicons dashicons-media-document"></span><?php esc_html_e( 'Download resume', 'llamahire' ); ?></a><?php endif; ?></div>
+			<div class="llamahire-contact"><a href="mailto:<?php echo esc_attr( $candidate->email ); ?>"><span class="dashicons dashicons-email"></span><?php echo esc_html( $candidate->email ); ?></a><?php if ( $candidate->has_resume && current_user_can( Capabilities::DOWNLOAD_RESUMES ) ) : ?><?php if ( Applications::resume_is_previewable( $candidate->resume_name ) ) : ?><a href="<?php echo esc_url( Applications::resume_url( $candidate->id, true ) ); ?>" target="_blank" rel="noopener noreferrer"><span class="dashicons dashicons-visibility"></span><?php esc_html_e( 'View resume', 'llamahire' ); ?></a><?php endif; ?><a href="<?php echo esc_url( Applications::resume_url( $candidate->id ) ); ?>"><span class="dashicons dashicons-download"></span><?php esc_html_e( 'Download resume', 'llamahire' ); ?></a><?php endif; ?></div>
 			<?php if ( $updated ) : ?><div class="llamahire-save-confirmation" role="status"><span class="dashicons dashicons-yes-alt" aria-hidden="true"></span><span><?php esc_html_e( 'Changes saved.', 'llamahire' ); ?></span></div><?php endif; ?>
+			<?php if ( $note_added ) : ?><div class="llamahire-save-confirmation" role="status"><span class="dashicons dashicons-yes-alt" aria-hidden="true"></span><span><?php esc_html_e( 'Private note added.', 'llamahire' ); ?></span></div><?php endif; ?>
 			<form class="llamahire-drawer-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="llamahire_update_application"><input type="hidden" name="application" value="<?php echo esc_attr( $candidate->id ); ?>"><input type="hidden" name="redirect_to" value="<?php echo esc_attr( $return_url ); ?>"><?php wp_nonce_field( 'llamahire_update_' . $candidate->id ); ?>
 				<section><label for="llamahire-drawer-status"><strong><?php esc_html_e( 'Stage', 'llamahire' ); ?></strong></label><select id="llamahire-drawer-status" name="status"><?php foreach ( Applications::workflow_statuses() as $status => $label ) : ?><option value="<?php echo esc_attr( $status ); ?>" <?php selected( $candidate->status, $status ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></section>
-				<section><label for="llamahire-drawer-notes"><strong><?php esc_html_e( 'Private note', 'llamahire' ); ?></strong></label><textarea id="llamahire-drawer-notes" name="notes" rows="5" placeholder="<?php esc_attr_e( 'Interview feedback, next steps, or context for the team…', 'llamahire' ); ?>"><?php echo esc_textarea( $candidate->notes ); ?></textarea><small><?php printf( esc_html__( 'Updated %s', 'llamahire' ), esc_html( get_date_from_gmt( $candidate->updated_at, get_option( 'date_format' ) ) ) ); ?></small></section>
-				<button class="button"><?php esc_html_e( 'Save changes', 'llamahire' ); ?></button>
+				<button class="button"><?php esc_html_e( 'Save status', 'llamahire' ); ?></button>
 			</form>
+			<form class="llamahire-drawer-form llamahire-drawer-note-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="llamahire_add_application_note"><input type="hidden" name="application" value="<?php echo esc_attr( $candidate->id ); ?>"><input type="hidden" name="redirect_to" value="<?php echo esc_attr( $note_return_url ); ?>"><?php wp_nonce_field( 'llamahire_add_note_' . $candidate->id ); ?>
+				<section><label for="llamahire-drawer-notes"><strong><?php esc_html_e( 'Add private note', 'llamahire' ); ?></strong></label><textarea id="llamahire-drawer-notes" name="note" rows="4" maxlength="<?php echo esc_attr( Application_Notes::MAX_LENGTH ); ?>" placeholder="<?php esc_attr_e( 'Interview feedback, next steps, or context for the team…', 'llamahire' ); ?>" required></textarea></section>
+				<button class="button button-primary"><?php esc_html_e( 'Add note', 'llamahire' ); ?></button>
+			</form>
+			<div class="llamahire-drawer-notes"><h3><?php esc_html_e( 'Private notes', 'llamahire' ); ?></h3><?php if ( $private_notes ) : ?><ol><?php foreach ( $private_notes as $note ) : ?><li><p><?php echo nl2br( esc_html( $note->body ) ); ?></p><small><?php echo esc_html( Application_Notes::author_label( $note ) ); ?> · <?php echo esc_html( get_date_from_gmt( $note->created_at, get_option( 'date_format' ) . ' · ' . get_option( 'time_format' ) ) ); ?></small></li><?php endforeach; ?></ol><?php else : ?><p><?php esc_html_e( 'No private notes yet.', 'llamahire' ); ?></p><?php endif; ?></div>
 			<div class="llamahire-drawer-activity"><h3><?php esc_html_e( 'Recent activity', 'llamahire' ); ?></h3><?php if ( $history['items'] ) : ?><ol><?php foreach ( $history['items'] as $event ) : ?><li><span></span><div><strong><?php echo esc_html( Audit_Log::describe( $event ) ); ?></strong><small><?php echo esc_html( get_date_from_gmt( $event->created_at, get_option( 'date_format' ) . ' · ' . get_option( 'time_format' ) ) ); ?></small></div></li><?php endforeach; ?></ol><?php else : ?><p><?php esc_html_e( 'No recorded changes yet.', 'llamahire' ); ?></p><?php endif; ?></div>
 			<div class="llamahire-drawer-actions"><?php if ( $next_status ) : self::quick_stage_form( $candidate->id, $next_status, $return_url, sprintf( __( 'Move to %s', 'llamahire' ), Applications::status_label( $next_status ) ) ); endif; ?><details><summary class="button"><?php esc_html_e( 'Move candidate', 'llamahire' ); ?></summary><?php self::stage_form( $candidate->id, $candidate->status, $return_url ); ?></details><button type="button" class="button-link-delete" data-open-reject-dialog="llamahire-reject-dialog-<?php echo esc_attr( $candidate->id ); ?>" aria-haspopup="dialog"><?php esc_html_e( 'Reject candidate', 'llamahire' ); ?></button></div>
 			<?php self::reject_dialog( $candidate, $return_url ); ?>
@@ -341,7 +354,7 @@ final class Admin_Workspaces {
 	private static function expiring_job_count( $author_id ) {
 		$args = array(
 			'post_type' => Jobs::POST_TYPE, 'post_status' => 'publish', 'posts_per_page' => 1, 'fields' => 'ids',
-			'meta_query' => array( array( 'key' => Jobs::META_DEADLINE, 'value' => array( current_time( 'Y-m-d' ), gmdate( 'Y-m-d', current_time( 'timestamp', true ) + 7 * DAY_IN_SECONDS ) ), 'compare' => 'BETWEEN', 'type' => 'DATE' ) ), // phpcs:ignore WordPress.DB.SlowDBQuery
+			'meta_query' => Jobs::closing_soon_meta_query(), // phpcs:ignore WordPress.DB.SlowDBQuery
 		);
 		if ( $author_id ) {
 			$args['author'] = $author_id;
@@ -352,6 +365,7 @@ final class Admin_Workspaces {
 
 	private static function active_employer_count() {
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Aggregate dashboard count must reflect the current bounded job table state.
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(DISTINCT post_author) FROM {$wpdb->posts} WHERE post_type = %s AND post_status IN ('publish','pending','draft','future','private')",
@@ -366,8 +380,12 @@ final class Admin_Workspaces {
 			$parts[] = Jobs::organization( $meta )['name'];
 		}
 		$parts[] = Jobs::location_label( $meta );
-		if ( $meta['deadline'] ) {
+		if ( $meta['deadline'] && ( empty( $meta['listing_expires'] ) || $meta['deadline'] <= $meta['listing_expires'] ) ) {
+			/* translators: %s: formatted application deadline. */
 			$parts[] = sprintf( __( 'Closes %s', 'llamahire' ), date_i18n( get_option( 'date_format' ), strtotime( $meta['deadline'] ) ) );
+		} elseif ( $meta['listing_expires'] ) {
+			/* translators: %s: formatted listing-expiration date. */
+			$parts[] = sprintf( __( 'Listing ends %s', 'llamahire' ), date_i18n( get_option( 'date_format' ), strtotime( $meta['listing_expires'] ) ) );
 		}
 		return implode( ' · ', array_filter( $parts ) );
 	}

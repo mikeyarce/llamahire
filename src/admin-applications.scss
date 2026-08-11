@@ -89,6 +89,473 @@
 	color: #8a2424;
 }
 
+.llamahire-bulk-status {
+	display: grid;
+	gap: 20px;
+}
+
+.llamahire-bulk-status__confirmation {
+	background: #f6f7f7;
+	border-left: 4px solid #2271b1;
+	padding: 12px 16px;
+}
+
+.llamahire-bulk-status__confirmation p {
+	margin: 0;
+}
+
+.llamahire-bulk-status__confirmation p + p {
+	margin-top: 8px;
+}
+
+.llamahire-bulk-status__actions {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+}
+
+.llamahire-dataviews-toolbar {
+	align-items: center;
+	display: flex;
+	gap: 16px;
+	justify-content: space-between;
+	padding: 16px;
+}
+
+.llamahire-dataviews-toolbar__search,
+.llamahire-dataviews-toolbar__view {
+	align-items: center;
+	display: flex;
+	gap: 8px;
+}
+
+.llamahire-applications-table {
+	border-top: 1px solid #e0e0e0;
+	overflow-x: auto;
+}
+
+.llamahire-applications-table table {
+	border-collapse: collapse;
+	min-width: 860px;
+	table-layout: fixed;
+	width: 100%;
+}
+
+.llamahire-applications-table th,
+.llamahire-applications-table td {
+	border-bottom: 1px solid #e0e0e0;
+	padding: 12px;
+	text-align: left;
+	vertical-align: middle;
+}
+
+.llamahire-applications-table--compact th,
+.llamahire-applications-table--compact td {
+	padding-block: 8px;
+}
+
+.llamahire-applications-table--comfortable th,
+.llamahire-applications-table--comfortable td {
+	padding-block: 16px;
+}
+
+.llamahire-applications-table th {
+	background: #fff;
+	color: #1e1e1e;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.llamahire-applications-table th:nth-child(2) {
+	width: 24%;
+}
+
+.llamahire-applications-table__check {
+	box-sizing: border-box;
+	width: 48px;
+}
+
+.llamahire-applications-table__check input {
+	margin: 0;
+}
+
+.llamahire-applications-table__actions {
+	text-align: right !important;
+	width: 72px;
+}
+
+.llamahire-applications-table__sort {
+	align-items: center;
+	background: transparent;
+	border: 0;
+	color: inherit;
+	cursor: pointer;
+	display: inline-flex;
+	font: inherit;
+	gap: 3px;
+	letter-spacing: inherit;
+	margin: -8px;
+	min-height: 36px;
+	padding: 8px;
+	text-transform: inherit;
+}
+
+.llamahire-applications-table__sort:hover,
+.llamahire-applications-table__sort:focus-visible {
+	color: #3858e9;
+}
+
+.llamahire-applications-table__sort .dashicons {
+	font-size: 16px;
+	height: 16px;
+	width: 16px;
+}
+
+.llamahire-applications-table tbody > tr:not(.llamahire-applications-table__expanded-row):hover > td {
+	background: #f8f9f9;
+}
+
+.llamahire-applications-table tbody > tr.is-expanded > td {
+	background: #f3f6ff;
+	border-bottom-color: transparent;
+}
+
+.llamahire-applications-table__review-button.components-button {
+	height: 36px;
+	justify-content: center;
+	min-width: 36px;
+	padding: 0;
+	width: 36px;
+}
+
+.llamahire-applications-table__review-button .dashicons {
+	font-size: 18px;
+	height: 18px;
+	width: 18px;
+}
+
+.llamahire-applications-table__expanded-row > td {
+	background: #fff;
+	padding: 0 16px 16px;
+}
+
+.llamahire-applications-table__empty {
+	color: #50575e;
+	height: 120px;
+	text-align: center !important;
+}
+
+.llamahire-inline-review {
+	background: #f7f9ff;
+	border: 1px solid #3858e9;
+	border-radius: 2px;
+	box-sizing: border-box;
+	outline: none;
+	padding: 0 24px 24px;
+}
+
+.llamahire-inline-review:focus-visible {
+	box-shadow: 0 0 0 1px #fff, 0 0 0 3px #3858e9;
+}
+
+.llamahire-inline-review__header {
+	align-items: center;
+	border-bottom: 1px solid #dcdcde;
+	display: flex;
+	justify-content: flex-start;
+	min-height: 48px;
+}
+
+.llamahire-inline-review__body {
+	padding-top: 20px;
+}
+
+.llamahire-inline-review__summary,
+.llamahire-inline-review__content {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.llamahire-inline-review__summary > section,
+.llamahire-inline-review__content > section {
+	min-width: 0;
+	padding: 0 30px;
+}
+
+.llamahire-inline-review__summary > section:first-child,
+.llamahire-inline-review__content > section:first-child {
+	padding-left: 0;
+}
+
+.llamahire-inline-review__summary > section:last-child,
+.llamahire-inline-review__content > section:last-child {
+	padding-right: 0;
+}
+
+.llamahire-inline-review__summary > section + section,
+.llamahire-inline-review__content > section + section {
+	border-left: 1px solid #dcdcde;
+}
+
+.llamahire-inline-review__summary {
+	border-bottom: 1px solid #dcdcde;
+	padding-bottom: 20px;
+}
+
+.llamahire-inline-review__content {
+	padding-top: 22px;
+}
+
+.llamahire-inline-review h3 {
+	font-size: 14px;
+	line-height: 1.4;
+	margin: 0 0 14px;
+}
+
+.llamahire-inline-review__loading {
+	align-items: center;
+	color: #50575e;
+	display: flex;
+	gap: 10px;
+	justify-content: center;
+	min-height: 190px;
+}
+
+.llamahire-inline-review > .notice {
+	margin: 20px 0 0;
+}
+
+.llamahire-materials-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.llamahire-materials-list {
+	display: grid;
+	gap: 8px;
+}
+
+.llamahire-materials-list li {
+	align-items: center;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 2px;
+	display: grid;
+	gap: 10px;
+	grid-template-columns: 24px minmax(0, 1fr) auto;
+	min-height: 58px;
+	padding: 10px 12px;
+}
+
+.llamahire-materials-list > li > .dashicons {
+	color: #2c3338;
+	font-size: 22px;
+	height: 22px;
+	width: 22px;
+}
+
+.llamahire-materials-list__label {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.llamahire-materials-list__label strong {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.llamahire-materials-list__label small {
+	color: #50575e;
+}
+
+.llamahire-materials-list .components-button.is-link {
+	height: auto;
+	min-width: 0;
+	padding: 4px;
+}
+
+.llamahire-materials-list__actions {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	justify-content: flex-end;
+	white-space: nowrap;
+}
+
+.llamahire-inline-review__status-form {
+	align-items: end;
+	display: grid;
+	gap: 10px;
+	grid-template-columns: minmax(180px, 1fr) auto;
+	max-width: 430px;
+}
+
+.llamahire-inline-review__status-form > .components-button {
+	align-self: end;
+	height: 40px;
+}
+
+.llamahire-inline-review__note-composer {
+	display: grid;
+	gap: 14px;
+}
+
+.llamahire-inline-review__note-composer {
+	max-width: 560px;
+}
+
+.llamahire-inline-review__note-composer label {
+	display: grid;
+	font-weight: 500;
+	gap: 7px;
+}
+
+.llamahire-inline-review__note-composer textarea {
+	box-sizing: border-box;
+	min-height: 88px;
+	resize: vertical;
+	width: 100%;
+}
+
+.llamahire-inline-review__save {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.llamahire-inline-review__save > span {
+	color: #008a20;
+	font-size: 12px;
+}
+
+.llamahire-inline-review__confirmation {
+	color: #008a20;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 18px;
+	min-height: 18px;
+	padding-top: 10px;
+}
+
+.llamahire-cover-letter-modal__content {
+	white-space: pre-wrap;
+}
+
+.llamahire-inline-review__latest-note {
+	border-top: 1px solid #dcdcde;
+	margin-top: 18px;
+	padding-top: 18px;
+}
+
+.llamahire-inline-review__latest-note h4 {
+	font-size: 13px;
+	margin: 0 0 10px;
+}
+
+.llamahire-note-card {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	margin-bottom: 4px;
+	padding: 10px 12px;
+}
+
+.llamahire-note-card p {
+	margin: 0 0 6px;
+	white-space: pre-wrap;
+}
+
+.llamahire-note-card small,
+.llamahire-inline-review__latest-entry span,
+.llamahire-history-list span {
+	color: #646970;
+	font-size: 12px;
+}
+
+.llamahire-inline-review__latest-entry {
+	align-items: flex-start;
+	display: flex;
+	gap: 18px;
+	justify-content: space-between;
+}
+
+.llamahire-inline-review__latest-entry > div {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.llamahire-inline-review__latest-entry .components-button.is-link,
+.llamahire-inline-review__latest-note .components-button.is-link {
+	height: auto;
+	min-width: 0;
+	padding: 4px 0;
+	white-space: nowrap;
+}
+
+.llamahire-inline-review__empty {
+	color: #50575e;
+	margin: 0 0 16px;
+}
+
+.llamahire-cover-letter-modal {
+	max-width: min(680px, calc(100vw - 48px));
+	width: 100%;
+}
+
+.llamahire-history-modal {
+	max-width: min(680px, calc(100vw - 48px));
+	width: 100%;
+}
+
+.llamahire-history-list {
+	display: grid;
+	gap: 0;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.llamahire-history-list li {
+	border-bottom: 1px solid #dcdcde;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 14px 2px;
+}
+
+.llamahire-history-list li:first-child {
+	padding-top: 2px;
+}
+
+.llamahire-history-list li:last-child {
+	border-bottom: 0;
+}
+
+.llamahire-history-list p {
+	margin: 0;
+	white-space: pre-wrap;
+}
+
+.llamahire-cover-letter-modal__content {
+	font-size: 15px;
+	line-height: 1.65;
+	margin: 0;
+	max-width: 65ch;
+}
+
+.llamahire-list-review {
+	padding: 16px;
+}
+
 @media (max-width: 782px) {
 	.llamahire-dataviews-summary {
 		align-items: flex-start;
@@ -97,5 +564,65 @@
 
 	.llamahire-dataviews-summary .button {
 		width: 100%;
+	}
+
+	.llamahire-bulk-status__actions {
+		align-items: stretch;
+		flex-direction: column-reverse;
+	}
+
+	.llamahire-bulk-status__actions .components-button {
+		justify-content: center;
+		width: 100%;
+	}
+
+	.llamahire-dataviews-toolbar {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.llamahire-dataviews-toolbar__search {
+		justify-content: space-between;
+	}
+
+	.llamahire-dataviews-toolbar__view {
+		justify-content: flex-end;
+	}
+
+	.llamahire-inline-review__summary,
+	.llamahire-inline-review__content {
+		grid-template-columns: 1fr;
+	}
+
+	.llamahire-inline-review__summary > section,
+	.llamahire-inline-review__content > section {
+		padding: 20px 0;
+	}
+
+	.llamahire-inline-review__summary > section + section,
+	.llamahire-inline-review__content > section + section {
+		border-left: 0;
+		border-top: 1px solid #dcdcde;
+	}
+
+	.llamahire-inline-review__summary > section:first-child,
+	.llamahire-inline-review__content > section:first-child {
+		padding-top: 0;
+	}
+
+	.llamahire-inline-review__summary > section:last-child,
+	.llamahire-inline-review__content > section:last-child {
+		padding-bottom: 0;
+	}
+
+	.llamahire-inline-review__status-form {
+		align-items: stretch;
+		grid-template-columns: 1fr;
+	}
+
+	.llamahire-inline-review__latest-entry {
+		align-items: flex-start;
+		flex-direction: column;
+		gap: 8px;
 	}
 }

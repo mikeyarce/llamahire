@@ -9,6 +9,8 @@ use LlamaHire\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Lifecycle mutations target LlamaHire's private custom table and must not use a stale candidate-data cache.
+
 final class Candidate_Data_Lifecycle implements Candidate_Data_Lifecycle_Contract {
 	private $applications;
 	private $resumes;

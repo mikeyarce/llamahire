@@ -63,11 +63,11 @@ final class Notification_Service implements Notification_Service_Contract {
 		$results = array( 'employer' => false, 'candidate' => false, 'error_codes' => array() );
 		if ( in_array( 'employer', $channels, true ) ) {
 			$message = $messages['employer'];
-			$results['employer'] = wp_mail( $message['to'], $message['subject'], $message['message'], $message['headers'] );
+			$results['employer'] = wp_mail( $message['to'], $message['subject'], $message['message'], $message['headers'] ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_mail_wp_mail -- One transactional application notice to the configured hiring inbox.
 		}
 		if ( in_array( 'candidate', $channels, true ) ) {
 			$message = $messages['candidate'];
-			$results['candidate'] = wp_mail( $message['to'], $message['subject'], $message['message'], $message['headers'] );
+			$results['candidate'] = wp_mail( $message['to'], $message['subject'], $message['message'], $message['headers'] ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_mail_wp_mail -- One transactional acknowledgement to the applicant.
 		}
 		remove_action( 'wp_mail_failed', $listener );
 		$results['error_codes'] = array_values( array_unique( array_filter( $errors ) ) );
@@ -95,7 +95,7 @@ final class Notification_Service implements Notification_Service_Contract {
 			}
 		};
 		add_action( 'wp_mail_failed', $listener );
-		$success = wp_mail(
+		$success = wp_mail( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_mail_wp_mail -- One administrator-initiated delivery test to the configured inbox.
 			$to,
 			__( 'LlamaHire email delivery test', 'llamahire' ),
 			__( "WordPress accepted this test message from LlamaHire. Receiving it confirms that the configured sender and your site's mail transport can deliver to this address.", 'llamahire' ),

@@ -8,6 +8,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Capabilities {
 	const EMPLOYER_ROLE       = 'llamahire_employer';
+	const HIRING_MANAGER_ROLE = 'llamahire_hiring_manager';
 	const OPTION              = 'llamahire_capabilities_version';
 	const VIEW_APPLICATIONS   = 'llamahire_view_applications';
 	const MANAGE_APPLICATIONS = 'llamahire_manage_applications';
@@ -28,18 +29,21 @@ final class Capabilities {
 	 * Other roles receive no access by default and may be configured explicitly.
 	 */
 	public static function install() {
-		$role = get_role( 'administrator' );
-		if ( $role ) {
-			foreach ( self::all() as $capability ) {
-				$role->add_cap( $capability );
-			}
-		}
-		$employer = add_role( self::EMPLOYER_ROLE, __( 'Employer', 'llamahire' ), array( 'read' => true ) );
-		$employer = $employer ?: get_role( self::EMPLOYER_ROLE );
-		if ( $employer ) {
-			foreach ( self::employer_capabilities() as $capability ) {
-				$employer->add_cap( $capability );
-			}
+		$administrator_capabilities = self::all();
+		$employer_capabilities      = self::employer_capabilities();
+		$hiring_manager_capabilities = self::hiring_manager_capabilities();
+		if ( function_exists( 'wpcom_vip_add_role' ) && function_exists( 'wpcom_vip_add_role_caps' ) ) {
+			wpcom_vip_add_role( self::EMPLOYER_ROLE, __( 'Employer', 'llamahire' ), array_fill_keys( $employer_capabilities, true ) );
+			wpcom_vip_add_role( self::HIRING_MANAGER_ROLE, __( 'Hiring Manager', 'llamahire' ), array_fill_keys( $hiring_manager_capabilities, true ) );
+			wpcom_vip_add_role_caps( 'administrator', $administrator_capabilities );
+			wpcom_vip_add_role_caps( self::EMPLOYER_ROLE, $employer_capabilities );
+			wpcom_vip_add_role_caps( self::HIRING_MANAGER_ROLE, $hiring_manager_capabilities );
+		} else {
+			add_role( self::EMPLOYER_ROLE, __( 'Employer', 'llamahire' ), array_fill_keys( $employer_capabilities, true ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.custom_role_add_role -- Portable fallback when the VIP role API is not installed.
+			add_role( self::HIRING_MANAGER_ROLE, __( 'Hiring Manager', 'llamahire' ), array_fill_keys( $hiring_manager_capabilities, true ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.custom_role_add_role -- Portable fallback when the VIP role API is not installed.
+			self::add_capabilities( 'administrator', $administrator_capabilities );
+			self::add_capabilities( self::EMPLOYER_ROLE, $employer_capabilities );
+			self::add_capabilities( self::HIRING_MANAGER_ROLE, $hiring_manager_capabilities );
 		}
 		update_option( self::OPTION, LLAMAHIRE_CAPABILITIES_VERSION, false );
 	}
@@ -58,6 +62,7 @@ final class Capabilities {
 		}
 		delete_option( self::OPTION );
 		remove_role( self::EMPLOYER_ROLE );
+		remove_role( self::HIRING_MANAGER_ROLE );
 	}
 
 	/**
@@ -73,6 +78,10 @@ final class Capabilities {
 				'edit_llamahire_departments',
 				'delete_llamahire_departments',
 				'assign_llamahire_departments',
+				'manage_llamahire_job_types',
+				'edit_llamahire_job_types',
+				'delete_llamahire_job_types',
+				'assign_llamahire_job_types',
 				self::VIEW_APPLICATIONS,
 				self::MANAGE_APPLICATIONS,
 				self::EXPORT_APPLICATIONS,
@@ -111,12 +120,60 @@ final class Capabilities {
 			'delete_llamahire_jobs',
 			'delete_published_llamahire_jobs',
 			'assign_llamahire_departments',
+			'assign_llamahire_job_types',
 			self::VIEW_APPLICATIONS,
 			self::MANAGE_APPLICATIONS,
 			self::EXPORT_APPLICATIONS,
 			self::DOWNLOAD_RESUMES,
 			self::RETRY_NOTIFICATIONS,
 		);
+	}
+
+	/**
+	 * Capabilities for an internal hiring team member without site administration.
+	 *
+	 * Permanent candidate erasure and site configuration remain administrator-only.
+	 *
+	 * @return string[]
+	 */
+	public static function hiring_manager_capabilities() {
+		return array(
+			'read',
+			'edit_llamahire_jobs',
+			'edit_others_llamahire_jobs',
+			'publish_llamahire_jobs',
+			'read_private_llamahire_jobs',
+			'delete_llamahire_jobs',
+			'delete_private_llamahire_jobs',
+			'delete_published_llamahire_jobs',
+			'delete_others_llamahire_jobs',
+			'edit_private_llamahire_jobs',
+			'edit_published_llamahire_jobs',
+			'assign_llamahire_departments',
+			'assign_llamahire_job_types',
+			self::VIEW_APPLICATIONS,
+			self::MANAGE_APPLICATIONS,
+			self::EXPORT_APPLICATIONS,
+			self::DOWNLOAD_RESUMES,
+			self::RETRY_NOTIFICATIONS,
+		);
+	}
+
+	/**
+	 * Add capabilities with the portable WordPress role API.
+	 *
+	 * @param string   $role_name    Role identifier.
+	 * @param string[] $capabilities Capability identifiers.
+	 * @return void
+	 */
+	private static function add_capabilities( $role_name, array $capabilities ) {
+		$role = get_role( $role_name );
+		if ( ! $role ) {
+			return;
+		}
+		foreach ( $capabilities as $capability ) {
+			$role->add_cap( $capability );
+		}
 	}
 
 	private function __construct() {}
