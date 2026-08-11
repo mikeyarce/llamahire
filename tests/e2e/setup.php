@@ -38,9 +38,10 @@ foreach ( $employer_jobs as $employer_job_id ) {
 	wp_delete_post( $employer_job_id, true );
 }
 
-$email = 'browser-test@example.test';
+$fixture_emails = array( 'browser-test@example.test', 'critical-browser@example.test', 'bulk-workflow@example.test' );
 $table = \LlamaHire\Applications::table();
-$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT id, resume_path FROM {$table} WHERE email = %s", $email ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+$email_placeholders = implode( ', ', array_fill( 0, count( $fixture_emails ), '%s' ) );
+$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT id, resume_path FROM {$table} WHERE email IN ({$email_placeholders})", $fixture_emails ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- The placeholders are generated from the fixed fixture email list.
 $store = \LlamaHire\Plugin::instance()->services()->get( \LlamaHire\Service_IDs::RESUME_STORAGE );
 $repo  = \LlamaHire\Plugin::instance()->services()->get( \LlamaHire\Service_IDs::APPLICATION_REPOSITORY );
 foreach ( $rows as $row ) {
@@ -75,6 +76,12 @@ if ( $old_department_term_id ) {
 	wp_delete_term( $old_department_term_id, 'llamahire_department' );
 }
 delete_option( 'llamahire_e2e_department_term_id' );
+$old_job_type_term_id = absint( get_option( 'llamahire_e2e_job_type_term_id' ) );
+foreach ( array_unique( array_merge( $old_job_type_term_id ? array( $old_job_type_term_id ) : array(), array_map( 'absint', (array) get_option( 'llamahire_e2e_job_type_term_ids', array() ) ) ) ) as $old_term_id ) {
+	wp_delete_term( $old_term_id, \LlamaHire\Jobs::TYPE_TAXONOMY );
+}
+delete_option( 'llamahire_e2e_job_type_term_id' );
+delete_option( 'llamahire_e2e_job_type_term_ids' );
 
 $privacy_page_id = wp_insert_post(
 	array(
@@ -108,6 +115,9 @@ update_option(
 		'privacy_text'       => 'Candidate information is used only to review this application.',
 		'privacy_page_id'    => $privacy_page_id,
 		'careers_page_id'    => 0,
+		'anti_spam_provider' => 'none',
+		'anti_spam_registration' => 1,
+		'anti_spam_applications' => 1,
 		'application_phone'  => 'required',
 		'application_resume' => 'required',
 		'application_letter' => 'required',
@@ -130,10 +140,30 @@ if ( is_wp_error( $job_id ) ) {
 	WP_CLI::error( $job_id->get_error_message() );
 }
 
+$job_type_term_ids         = array();
+$created_job_type_term_ids = array();
+foreach ( array( 'full_time' => 'Full time', 'part_time' => 'Part time' ) as $job_type_slug => $job_type_name ) {
+	$job_type_term = get_term_by( 'slug', $job_type_slug, \LlamaHire\Jobs::TYPE_TAXONOMY );
+	if ( $job_type_term instanceof WP_Term ) {
+		$job_type_term_ids[ $job_type_slug ] = (int) $job_type_term->term_id;
+		continue;
+	}
+	$job_type_term = wp_insert_term( $job_type_name, \LlamaHire\Jobs::TYPE_TAXONOMY, array( 'slug' => $job_type_slug ) );
+	if ( is_wp_error( $job_type_term ) ) {
+		WP_CLI::error( $job_type_term->get_error_message() );
+	}
+	$job_type_term_ids[ $job_type_slug ] = (int) $job_type_term['term_id'];
+	$created_job_type_term_ids[]         = (int) $job_type_term['term_id'];
+}
+if ( $created_job_type_term_ids ) {
+	update_option( 'llamahire_e2e_job_type_term_ids', $created_job_type_term_ids, false );
+}
+$job_type_term_id = $job_type_term_ids['full_time'];
+
 \LlamaHire\Jobs::set_meta(
 	$job_id,
 	array(
-		'employment_type'  => 'FULL_TIME',
+		'employment_type'  => 'full_time',
 		'workplace'        => 'hybrid',
 		'address_street'   => '1285 W Pender St',
 		'address_locality' => 'Vancouver',
@@ -150,6 +180,7 @@ if ( is_wp_error( $job_id ) ) {
 		'organization_url' => home_url( '/' ),
 	)
 );
+wp_set_object_terms( $job_id, $job_type_term_id, \LlamaHire\Jobs::TYPE_TAXONOMY );
 
 $department_term = wp_insert_term( 'LlamaHire E2E Engineering', 'llamahire_department', array( 'slug' => 'llamahire-e2e-engineering' ) );
 if ( is_wp_error( $department_term ) ) {
@@ -158,6 +189,18 @@ if ( is_wp_error( $department_term ) ) {
 $department_term_id = (int) $department_term['term_id'];
 wp_set_object_terms( $job_id, $department_term_id, 'llamahire_department' );
 update_option( 'llamahire_e2e_department_term_id', $department_term_id, false );
+
+$bulk_application_id = $repo->create(
+	array(
+		'job_id' => $job_id,
+		'name'   => 'Bulk Workflow Candidate',
+		'email'  => 'bulk-workflow@example.test',
+		'status' => 'new',
+	)
+);
+if ( is_wp_error( $bulk_application_id ) ) {
+	WP_CLI::error( $bulk_application_id->get_error_message() );
+}
 
 $pattern_registry = WP_Block_Patterns_Registry::get_instance();
 $hero_pattern     = $pattern_registry->get_registered( 'llamahire/careers-hero' );

@@ -4,14 +4,18 @@
   "private": true,
   "description": "Development and integration-test tooling for LlamaHire.",
   "scripts": {
-    "build": "wp-scripts build src/admin-applications.js",
-    "start": "wp-scripts start src/admin-applications.js",
+    "build": "wp-scripts build src/admin-applications.js src/admin-activity.js",
+    "start": "wp-scripts start src/admin-applications.js src/admin-activity.js",
     "wp-env": "wp-env --config=.wp-env.ci.json",
     "env:start": "wp-env --config=.wp-env.ci.json start",
     "env:stop": "wp-env --config=.wp-env.ci.json stop",
+    "env:multisite:start": "wp-env --config=.wp-env.multisite.json start",
+    "env:multisite:stop": "wp-env --config=.wp-env.multisite.json stop",
     "test:smoke": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/smoke.php",
+    "test:uninstall:multisite": "wp-env --config=.wp-env.multisite.json run cli wp eval-file wp-content/plugins/llamahire/tests/uninstall-multisite.php",
     "test:e2e:setup": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/e2e/setup.php",
     "test:e2e": "playwright test",
+    "test:e2e:critical": "playwright test --grep @critical",
     "test:e2e:cleanup": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/e2e/cleanup.php",
     "fixtures:generate": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures generate --scenario=small",
     "fixtures:status": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures status",
@@ -20,12 +24,28 @@
     "i18n:make-pot": "wp i18n make-pot . languages/llamahire.pot --domain=llamahire --exclude=.git,.github,.wordpress-org,build,dist,docs,node_modules,test-results,tests,tools,vendor --headers='{\"Report-Msgid-Bugs-To\":\"https://github.com/mikeyarce/llamahire/issues\",\"POT-Creation-Date\":\"\",\"X-Generator\":\"WP-CLI\"}'"
   },
   "dependencies": {
-    "@wordpress/dataviews": "17.2.0"
+    "@wordpress/dataviews": "17.2.0",
+    "@wordpress/views": "1.18.0"
   },
   "devDependencies": {
     "@playwright/test": "1.61.1",
-    "@wordpress/env": "11.11.0",
-    "@wordpress/scripts": "31.7.0"
+    "@wordpress/env": "11.12.0",
+    "@wordpress/scripts": "34.0.0"
+  },
+  "overrides": {
+    "@sentry/node": "10.54.0",
+    "adm-zip": "0.6.0",
+    "copy-webpack-plugin": {
+      "serialize-javascript": "7.1.0"
+    },
+    "linkify-it": "6.1.0",
+    "markdown-it": "15.0.0",
+    "markdownlint-cli": {
+      "minimatch": "3.1.5"
+    },
+    "sockjs": {
+      "uuid": "11.1.1"
+    }
   },
   "engines": {
     "node": ">=20"

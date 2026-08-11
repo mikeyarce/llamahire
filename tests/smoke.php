@@ -23,7 +23,9 @@ $job_id = 0;
 $sitemap_job_id = 0;
 $filter_job_id = 0;
 $department_term_id = 0;
+$job_type_term_ids = array();
 $application_id = 0;
+$bulk_application_id = 0;
 $retention_application_id = 0;
 $retention_resume_path = '';
 $privacy_application_id = 0;
@@ -32,13 +34,19 @@ $privacy_page_id = 0;
 $employer_user_ids = array();
 $employer_job_ids = array();
 $employer_application_ids = array();
+$registration_user_id = 0;
+$lifecycle_duplicate_id = 0;
+$uninstall_local_path = '';
+$uninstall_attachment_id = 0;
 $original_settings = get_option( \LlamaHire\Settings::OPTION, false );
 $original_setup    = get_option( \LlamaHire\Setup::OPTION, false );
 $original_legacy_settings = get_option( 'llamahire_settings', false );
 $original_current_user_id = get_current_user_id();
 
+require_once LLAMAHIRE_PATH . 'includes/class-uninstaller.php';
+
 try {
-	$assert( defined( 'LLAMAHIRE_API_VERSION' ) && '1.0.0-alpha.8' === LLAMAHIRE_API_VERSION, 'Public API version is declared' );
+	$assert( defined( 'LLAMAHIRE_API_VERSION' ) && '1.0.0-alpha.12' === LLAMAHIRE_API_VERSION, 'Public API version is declared' );
 	$assert( 1 === did_action( 'llamahire_ready' ), 'Public ready action fired once' );
 	$services = \LlamaHire\Plugin::instance()->services();
 	$assert( $services instanceof \LlamaHire\Contracts\Service_Container, 'Public service container is available' );
@@ -46,6 +54,13 @@ try {
 	$assert( $services->get( \LlamaHire\Service_IDs::APPLICATION_QUERY ) instanceof \LlamaHire\Contracts\Application_Query, 'Application query satisfies its public contract' );
 	$assert( $services->get( \LlamaHire\Service_IDs::NOTIFICATIONS ) instanceof \LlamaHire\Contracts\Notification_Service, 'Notification service satisfies its public contract' );
 	$assert( $services->get( \LlamaHire\Service_IDs::RESUME_STORAGE ) instanceof \LlamaHire\Contracts\Resume_Storage, 'Resume storage satisfies its public contract' );
+	$assert( \LlamaHire\Services\Resume_Storage::class === get_class( $services->get( \LlamaHire\Service_IDs::RESUME_STORAGE ) ), 'Private outside-webroot resume storage is the default driver' );
+	$vip_storage        = new \LlamaHire\Services\VIP_ACL_Resume_Storage();
+	$vip_storage_health = $vip_storage->health();
+	$assert( 'vip_acl' === $vip_storage_health['driver'] && ! $vip_storage_health['available'] && ! $vip_storage_health['protected'], 'VIP ACL resume storage fails closed when platform access controls are unavailable' );
+	$vip_path_method = new ReflectionMethod( \LlamaHire\Services\VIP_ACL_Resume_Storage::class, 'is_private_path' );
+	$vip_path_method->setAccessible( true );
+	$assert( $vip_path_method->invoke( $vip_storage, '/wp-content/uploads/llamahire-private/resume.pdf' ) && ! $vip_path_method->invoke( $vip_storage, '/wp-content/uploads/resume.pdf' ), 'VIP ACL driver limits its deny rule to the dedicated private resume prefix' );
 	$assert( $services->get( \LlamaHire\Service_IDs::CANDIDATE_DATA ) instanceof \LlamaHire\Contracts\Candidate_Data_Lifecycle, 'Candidate-data lifecycle satisfies its public contract' );
 	$assert( $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER ) instanceof \LlamaHire\Contracts\Schema_Builder, 'Schema builder satisfies its public contract' );
 	$locked = false;
@@ -67,13 +82,18 @@ try {
 	$assert( $administrator && $administrator->has_cap( \LlamaHire\Capabilities::VIEW_APPLICATIONS ) && $administrator->has_cap( \LlamaHire\Capabilities::RETRY_NOTIFICATIONS ) && $administrator->has_cap( \LlamaHire\Capabilities::ERASE_APPLICATIONS ) && $administrator->has_cap( 'publish_llamahire_jobs' ), 'Administrators receive candidate and job capabilities' );
 	$assert( ! $subscriber || ( ! $subscriber->has_cap( \LlamaHire\Capabilities::VIEW_APPLICATIONS ) && ! $subscriber->has_cap( 'edit_llamahire_jobs' ) ), 'Subscribers receive no hiring capabilities by default' );
 	$assert( $employer && $employer->has_cap( 'edit_llamahire_jobs' ) && $employer->has_cap( \LlamaHire\Capabilities::VIEW_APPLICATIONS ) && ! $employer->has_cap( 'edit_others_llamahire_jobs' ) && ! $employer->has_cap( 'publish_llamahire_jobs' ) && ! $employer->has_cap( \LlamaHire\Capabilities::ERASE_APPLICATIONS ), 'Employers manage their pending jobs and candidates without board-wide publication, ownership, or erasure powers' );
+	$hiring_manager = get_role( \LlamaHire\Capabilities::HIRING_MANAGER_ROLE );
+	$assert( $hiring_manager && $hiring_manager->has_cap( 'edit_others_llamahire_jobs' ) && $hiring_manager->has_cap( 'publish_llamahire_jobs' ) && $hiring_manager->has_cap( \LlamaHire\Capabilities::MANAGE_APPLICATIONS ) && $hiring_manager->has_cap( \LlamaHire\Capabilities::EXPORT_APPLICATIONS ) && $hiring_manager->has_cap( \LlamaHire\Capabilities::DOWNLOAD_RESUMES ) && ! $hiring_manager->has_cap( \LlamaHire\Capabilities::ERASE_APPLICATIONS ) && ! $hiring_manager->has_cap( 'manage_options' ), 'Hiring Managers operate site-wide jobs and candidate workflows without site settings or permanent erasure access' );
 
 	$assert( post_type_exists( 'llamahire_job' ), 'Job post type is registered' );
 	$assert( taxonomy_exists( 'llamahire_department' ), 'Department taxonomy is registered' );
+	$assert( taxonomy_exists( \LlamaHire\Jobs::TYPE_TAXONOMY ), 'Operator-managed job type taxonomy is registered' );
 	$job_type = get_post_type_object( 'llamahire_job' );
 	$department_type = get_taxonomy( 'llamahire_department' );
+	$employment_type_taxonomy = get_taxonomy( \LlamaHire\Jobs::TYPE_TAXONOMY );
 	$assert( 'edit_llamahire_jobs' === $job_type->cap->edit_posts && 'edit_llamahire_job' === $job_type->cap->edit_post, 'Job post type maps dedicated capabilities' );
 	$assert( 'manage_llamahire_departments' === $department_type->cap->manage_terms, 'Department taxonomy maps dedicated capabilities' );
+	$assert( 'manage_llamahire_job_types' === $employment_type_taxonomy->cap->manage_terms && $employer->has_cap( 'assign_llamahire_job_types' ) && ! $employer->has_cap( 'manage_llamahire_job_types' ), 'Job types are operator-managed while employers can assign existing types' );
 	$registered_job_meta = get_registered_meta_keys( 'post', 'llamahire_job' );
 	$assert( isset( $registered_job_meta[ \LlamaHire\Jobs::META_KEY ] ) && ! empty( $registered_job_meta[ \LlamaHire\Jobs::META_KEY ]['show_in_rest'] ), 'Structured job settings are registered for the block editor' );
 	$privacy_page_id = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'LlamaHire Smoke Privacy', 'post_content' => 'Privacy fixture.' ) );
@@ -82,9 +102,15 @@ try {
 	$assert( 'Vancouver' === $sanitized_settings['default_locality'] && 'bc' === $sanitized_settings['default_region'] && 'CA' === $sanitized_settings['default_country'] && 'CAD' === $sanitized_settings['default_currency'] && 'hiring@example.test' === $sanitized_settings['notification_email'] && 'Candidate data is used only for hiring.' === $sanitized_settings['privacy_text'] && $privacy_page_id === $sanitized_settings['privacy_page_id'] && 365 === $sanitized_settings['retention_days'], 'Setup defaults normalize organization, privacy, retention, and hiring inbox values' );
 	$assert( 'job_board' === \LlamaHire\Settings::sanitize_site_mode( 'job_board' ) && 'company' === \LlamaHire\Settings::sanitize_site_mode( 'marketplace' ), 'Site purpose accepts the documented job-board mode and fails unknown values to company mode' );
 	$assert( isset( \LlamaHire\Settings::country_options()['CA'] ) && isset( \LlamaHire\Settings::currency_options()['CAD'] ), 'Country and currency selectors include normalized ISO options' );
-	$job_board_settings = \LlamaHire\Settings::sanitize( array( 'site_mode' => 'job_board', 'name' => 'Hamilton Job Board', 'website' => 'https://unrelated.example.test/' ) );
+	$job_board_settings = \LlamaHire\Settings::sanitize( array( 'site_mode' => 'job_board', 'name' => 'Hamilton Job Board', 'website' => 'https://unrelated.example.test/', 'employer_approval' => 'automatic', 'employer_policy_text' => 'Only accurate listings are allowed.', 'active_listing_limit' => 7, 'listing_duration_days' => 60 ) );
 	$assert( home_url( '/' ) === $job_board_settings['website'], 'Job-board mode uses the known WordPress site URL instead of asking for a duplicate board website' );
+	$assert( 'automatic' === $job_board_settings['employer_approval'] && 'Only accurate listings are allowed.' === $job_board_settings['employer_policy_text'] && 'manual' === \LlamaHire\Settings::employer_approval( 'unknown' ), 'Employer registration settings allow automatic approval and fail unknown approval policies to operator review' );
+	$assert( 7 === $job_board_settings['active_listing_limit'] && 60 === $job_board_settings['listing_duration_days'] && 30 === \LlamaHire\Settings::listing_duration_days( 31 ), 'Listing policy settings normalize an active-listing allowance and an allow-listed default duration' );
+	$anti_spam_settings = \LlamaHire\Settings::sanitize( array( 'site_mode' => 'job_board', 'anti_spam_provider' => 'turnstile', 'anti_spam_site_key' => ' test-site-key ', 'anti_spam_secret_key' => ' test-secret-key ', 'anti_spam_registration' => 1, 'anti_spam_applications' => 1 ) );
+	$assert( 'turnstile' === $anti_spam_settings['anti_spam_provider'] && 'test-site-key' === $anti_spam_settings['anti_spam_site_key'] && 'test-secret-key' === $anti_spam_settings['anti_spam_secret_key'] && 1 === $anti_spam_settings['anti_spam_registration'] && 'none' === \LlamaHire\Anti_Spam::sanitize_provider( 'unknown' ), 'Spam-protection settings allow supported providers and fail unknown providers closed to disabled' );
+	$anti_spam_config = array_intersect_key( $anti_spam_settings, array_flip( array( 'anti_spam_provider', 'anti_spam_site_key', 'anti_spam_secret_key', 'anti_spam_registration', 'anti_spam_applications' ) ) );
 	$assert( false !== strpos( \LlamaHire\Settings::default_privacy_text( 'job_board' ), 'job-board operator' ), 'Job-board mode has candidate privacy copy that names both data recipients' );
+	$assert( null === \LlamaHire\Settings::public_page( 0 ), 'An unset public-page setting never resolves to the current front-end page' );
 	$assert( 'required' === $sanitized_settings['application_phone'] && 'required' === $sanitized_settings['application_resume'] && 'hidden' === $sanitized_settings['application_letter'], 'Application field modes accept required and hidden states' );
 	$assert( 'Example Hiring' === $sanitized_settings['email_sender_name'] && 'jobs@example.test' === $sanitized_settings['email_sender_email'] && false !== strpos( $sanitized_settings['candidate_email_body'], '{site_name}' ), 'Email sender and plain-text templates are normalized without removing supported placeholders' );
 	$invalid_settings = \LlamaHire\Settings::sanitize( array( 'name' => 'Example Employer', 'default_currency' => 'dollars', 'notification_email' => 'not-an-email' ) );
@@ -112,8 +138,8 @@ try {
 	if ( ! is_wp_error( $compatible_jobs_page_id ) ) {
 		wp_delete_post( $compatible_jobs_page_id, true );
 	}
-	$invalid_job_meta = \LlamaHire\Jobs::sanitize_meta( array( 'deadline' => '2026-99-99', 'salary_min' => 120000, 'salary_max' => 90000, 'salary_currency' => 'dollars' ) );
-	$assert( '' === $invalid_job_meta['deadline'] && '' === $invalid_job_meta['salary_min'] && '' === $invalid_job_meta['salary_max'] && '' === $invalid_job_meta['salary_currency'], 'Invalid dates, reversed salary ranges, and invalid currencies fail safe' );
+	$invalid_job_meta = \LlamaHire\Jobs::sanitize_meta( array( 'deadline' => '2026-99-99', 'listing_expires' => 'not-a-date', 'salary_min' => 120000, 'salary_max' => 90000, 'salary_currency' => 'dollars' ) );
+	$assert( '' === $invalid_job_meta['deadline'] && '' === $invalid_job_meta['listing_expires'] && '' === $invalid_job_meta['salary_min'] && '' === $invalid_job_meta['salary_max'] && '' === $invalid_job_meta['salary_currency'], 'Invalid dates, reversed salary ranges, and invalid currencies fail safe' );
 	$non_positive_salary = \LlamaHire\Jobs::sanitize_meta( array( 'salary_min' => -1, 'salary_max' => 0, 'salary_currency' => 'USD' ) );
 	$assert( '' === $non_positive_salary['salary_min'] && '' === $non_positive_salary['salary_max'], 'Non-positive salary boundaries are omitted' );
 	$assert( \LlamaHire\Jobs::valid_date( '2028-02-29' ) && ! \LlamaHire\Jobs::valid_date( '2027-02-29' ), 'Application deadlines require a real calendar date' );
@@ -127,6 +153,8 @@ try {
 	$assert( in_array( 'llamahire/jobId', $job_card_type->uses_context, true ) && ! isset( $job_card_type->attributes['jobId'] ), 'Job Card consumes job context without a manual job ID attribute' );
 	$job_details_type = WP_Block_Type_Registry::get_instance()->get_registered( 'llamahire/single-job-details' );
 	$assert( in_array( 'llamahire/jobId', $job_details_type->uses_context, true ) && ! isset( $job_details_type->attributes['jobId'] ), 'Single Job Details consumes job context without a manual job ID attribute' );
+	$discovery_blocks = array_map( static function ( $name ) { return WP_Block_Type_Registry::get_instance()->get_registered( $name ); }, array( 'llamahire/job-search', 'llamahire/job-filters', 'llamahire/jobs-directory' ) );
+	$assert( ! array_filter( $discovery_blocks, static function ( $block_type ) { return empty( $block_type->supports['interactivity'] ); } ), 'Job discovery blocks declare Interactivity API support' );
 	$pattern_registry = WP_Block_Patterns_Registry::get_instance();
 	$pattern_names = array( 'llamahire/careers-page', 'llamahire/careers-hero', 'llamahire/featured-jobs', 'llamahire/department-landing-page' );
 	$registered_patterns = array_filter( $pattern_names, static function ( $pattern_name ) use ( $pattern_registry ) { return $pattern_registry->is_registered( $pattern_name ); } );
@@ -153,6 +181,11 @@ try {
 	$index_names = array_unique( wp_list_pluck( $wpdb->get_results( "SHOW INDEX FROM {$table}" ), 'Key_name' ) );
 	$assert( in_array( 'submission_key', $index_names, true ), 'Submission keys have a unique database index' );
 	$assert( in_array( 'candidate_key', $index_names, true ), 'Canonical job and candidate identities have a unique database index' );
+	$assert( in_array( 'notification_created', $index_names, true ), 'Notification filters have a composite status and received-date index' );
+	update_option( \LlamaHire\Migrations::OPTION, '10', false );
+	$assert( \LlamaHire\Migrations::run() && LLAMAHIRE_SCHEMA_VERSION === (string) get_option( \LlamaHire\Migrations::OPTION ), 'Schema version 10 upgrades through the application-note history migration' );
+	$notes_table = \LlamaHire\Application_Notes::table();
+	$assert( $notes_table === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $notes_table ) ), 'Private application notes table exists' );
 
 	$job_id = wp_insert_post(
 		array(
@@ -165,6 +198,12 @@ try {
 	);
 	$assert( ! is_wp_error( $job_id ) && $job_id > 0, 'A job can be published' );
 
+	foreach ( array( 'full_time' => 'Full time', 'part_time' => 'Part time' ) as $slug => $name ) {
+		$term = wp_insert_term( $name, \LlamaHire\Jobs::TYPE_TAXONOMY, array( 'slug' => $slug ) );
+		if ( ! is_wp_error( $term ) ) {
+			$job_type_term_ids[] = (int) $term['term_id'];
+		}
+	}
 	\LlamaHire\Jobs::set_meta(
 		$job_id,
 		array(
@@ -174,7 +213,7 @@ try {
 			'address_region'  => 'BC',
 			'postal_code'     => 'V6E 4B1',
 			'address_country' => 'CA',
-			'employment_type' => 'FULL_TIME',
+			'employment_type' => 'full_time',
 			'workplace'       => 'hybrid',
 			'salary_min'      => 90000,
 			'salary_max'      => 110000,
@@ -190,6 +229,7 @@ try {
 	$department_term = wp_insert_term( 'Engineering', 'llamahire_department', array( 'slug' => 'engineering' ) );
 	$department_term_id = is_wp_error( $department_term ) ? 0 : (int) $department_term['term_id'];
 	$assert( $department_term_id && ! is_wp_error( wp_set_object_terms( $job_id, $department_term_id, 'llamahire_department' ) ), 'Published jobs can be assigned to a department used by landing pages' );
+	wp_set_object_terms( $job_id, array( 'full_time' ), \LlamaHire\Jobs::TYPE_TAXONOMY );
 	delete_post_meta( $job_id, \LlamaHire\Jobs::META_EMPLOYMENT );
 	delete_post_meta( $job_id, \LlamaHire\Jobs::META_LOCATION );
 	$legacy_duplicate_ids = array();
@@ -208,7 +248,7 @@ try {
 		$legacy_duplicate_ids[] = (int) $wpdb->insert_id;
 	}
 	update_option( \LlamaHire\Migrations::OPTION, '5', false );
-	$assert( \LlamaHire\Migrations::run() && 'FULL_TIME' === get_post_meta( $job_id, \LlamaHire\Jobs::META_EMPLOYMENT, true ) && false !== strpos( get_post_meta( $job_id, \LlamaHire\Jobs::META_LOCATION, true ), 'Vancouver' ), 'Schema migration 6 backfills normalized employment and location filters' );
+	$assert( \LlamaHire\Migrations::run() && 'full_time' === get_post_meta( $job_id, \LlamaHire\Jobs::META_EMPLOYMENT, true ) && false !== strpos( get_post_meta( $job_id, \LlamaHire\Jobs::META_LOCATION, true ), 'Vancouver' ), 'Schema migrations backfill normalized employment and location filters and convert job types to terms' );
 	$legacy_rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, candidate_key FROM {$table} WHERE email = %s ORDER BY id ASC", 'legacy-duplicate@example.test' ) ); // phpcs:ignore WordPress.DB.PreparedSQL
 	$assert( 2 === count( $legacy_rows ) && ! empty( $legacy_rows[0]->candidate_key ) && empty( $legacy_rows[1]->candidate_key ), 'Schema migration 7 preserves legacy duplicate rows and assigns only the original canonical key' );
 	foreach ( $legacy_duplicate_ids as $legacy_duplicate_id ) {
@@ -227,7 +267,7 @@ try {
 		array( 'llamahire/jobId' => $job_id )
 	);
 	$details_html = $contextual_details->render();
-	$assert( false !== strpos( $details_html, 'llamahire-job-facts' ) && false !== strpos( $details_html, 'Company' ) && false !== strpos( $details_html, 'Employment type' ) && false !== strpos( $details_html, 'LlamaHire Test Employer' ) && false !== strpos( $details_html, '1285 W Pender St' ) && false !== strpos( $details_html, $job_meta['job_identifier'] ), 'Single Job Details renders structured candidate-facing facts supplied through job context' );
+	$assert( false !== strpos( $details_html, 'llamahire-job-facts' ) && false !== strpos( $details_html, 'Company' ) && false !== strpos( $details_html, 'Employment' ) && false !== strpos( $details_html, 'LlamaHire Test Employer' ) && false !== strpos( $details_html, '1285 W Pender St' ) && false !== strpos( $details_html, $job_meta['job_identifier'] ), 'Single Job Details renders structured candidate-facing facts supplied through job context' );
 	$custom_details = new WP_Block(
 		array(
 			'blockName'    => 'llamahire/single-job-details',
@@ -269,7 +309,7 @@ try {
 	wp_update_post( array( 'ID' => $job_id, 'post_content' => $original_job_content ) );
 	$assert( 1 === substr_count( $single_job_content, 'llamahire-job-facts' ), 'An inserted Single Job Details block replaces the automatic compatibility panel without duplication' );
 	$assert( false !== strpos( $automatic_single_job_content, 'llamahire-single-layout' ) && false !== strpos( $automatic_single_job_content, 'llamahire-single-apply' ), 'Automatic single-job content uses the editorial two-column detail and application layout' );
-	$assert( false !== strpos( $automatic_single_job_content, 'llamahire-job-facts is-compact has-last-row-3' ) && false !== strpos( $automatic_single_job_content, 'class="is-posted"' ) && false !== strpos( $automatic_single_job_content, 'class="is-deadline"' ) && false === strpos( $automatic_single_job_content, '1285 W Pender St' ), 'Automatic single-job facts use a balanced compact grid with scannable date labels and no street address' );
+	$assert( false !== strpos( $automatic_single_job_content, 'llamahire-job-facts is-compact has-last-row-3' ) && false !== strpos( $automatic_single_job_content, 'class="is-posted"' ) && false !== strpos( $automatic_single_job_content, 'class="is-deadline"' ) && false === strpos( $automatic_single_job_content, 'llamahire-job-fact-icon' ) && false === strpos( $automatic_single_job_content, '1285 W Pender St' ), 'Automatic single-job facts use balanced text-only cells with scannable date labels and no street address' );
 	$assert( false !== strpos( $automatic_single_job_content, 'Drag and drop a file here' ) && false !== strpos( $automatic_single_job_content, 'Enter your full name' ), 'Automatic application form renders the friendly upload control and field guidance' );
 	$contextual_card = new WP_Block(
 		array(
@@ -305,7 +345,7 @@ try {
 	$job_sitemap_urls = $posts_sitemap->get_url_list( 1, \LlamaHire\Jobs::POST_TYPE );
 	$job_sitemap_entry = current( array_filter( $job_sitemap_urls, static function ( $url ) use ( $job_id ) { return get_permalink( $job_id ) === $url['loc']; } ) );
 	$assert( $job_sitemap_entry && get_post_modified_time( DATE_W3C, true, $job_id ) === $job_sitemap_entry['lastmod'], 'Published jobs appear in the XML sitemap with an accurate modification time' );
-	$assert( 'JobPosting' === ( $schema['@type'] ?? '' ) && 90000.0 === ( $schema['baseSalary']['value']['minValue'] ?? null ) && 'YEAR' === ( $schema['baseSalary']['value']['unitText'] ?? '' ), 'Schema builder exposes employer-provided salary range and pay unit' );
+	$assert( 'JobPosting' === ( $schema['@type'] ?? '' ) && 'FULL_TIME' === ( $schema['employmentType'] ?? '' ) && 90000.0 === ( $schema['baseSalary']['value']['minValue'] ?? null ) && 'YEAR' === ( $schema['baseSalary']['value']['unitText'] ?? '' ), 'Schema builder exposes a supported job type plus the employer-provided salary range and pay unit' );
 	$assert( 'CA' === ( $schema['jobLocation']['address']['addressCountry'] ?? '' ) && 'Vancouver' === ( $schema['jobLocation']['address']['addressLocality'] ?? '' ), 'Schema builder emits a complete physical location' );
 	$assert( 'LlamaHire Test Employer' === ( $schema['hiringOrganization']['name'] ?? '' ) && $job_meta['job_identifier'] === ( $schema['identifier']['value'] ?? '' ), 'Schema builder emits the hiring organization and stable identifier' );
 	$assert( false === isset( $schema['jobLocationType'] ), 'Hybrid jobs are not incorrectly marked as fully remote' );
@@ -321,7 +361,7 @@ try {
 	$rest_response = rest_do_request( $rest_request );
 	wp_set_current_user( $original_user_id );
 	$rest_saved = \LlamaHire\Jobs::get_meta( $job_id );
-	$assert( 200 === $rest_response->get_status() && 'remote' === $rest_saved['workplace'] && 'remote' === get_post_meta( $job_id, \LlamaHire\Jobs::META_WORKPLACE, true ) && 'FULL_TIME' === get_post_meta( $job_id, \LlamaHire\Jobs::META_EMPLOYMENT, true ) && false !== strpos( get_post_meta( $job_id, \LlamaHire\Jobs::META_LOCATION, true ), 'Vancouver' ), 'Block editor REST saves persist and synchronize query metadata' );
+	$assert( 200 === $rest_response->get_status() && 'remote' === $rest_saved['workplace'] && 'remote' === get_post_meta( $job_id, \LlamaHire\Jobs::META_WORKPLACE, true ) && 'full_time' === get_post_meta( $job_id, \LlamaHire\Jobs::META_EMPLOYMENT, true ) && 'US, CA' === get_post_meta( $job_id, \LlamaHire\Jobs::META_LOCATION, true ), 'Block editor REST saves persist and synchronize query metadata' );
 	$remote_schema = $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id );
 	$assert( 'TELECOMMUTE' === ( $remote_schema['jobLocationType'] ?? '' ) && 2 === count( $remote_schema['applicantLocationRequirements'] ?? array() ), 'Fully remote schema includes eligible applicant countries' );
 	$assert( false === isset( $remote_schema['jobLocation'] ), 'Fully remote schema does not claim a physical reporting location' );
@@ -336,6 +376,7 @@ try {
 	\LlamaHire\Jobs::set_meta( $job_id, array( 'salary_min' => 90000, 'salary_max' => 110000, 'address_country' => '' ) );
 	$assert( array() === $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id ), 'Incomplete physical location suppresses invalid JobPosting markup' );
 	\LlamaHire\Jobs::set_meta( $job_id, array( 'address_country' => 'CA', 'closed' => '1' ) );
+	$assert( isset( \LlamaHire\Jobs::post_states( array(), get_post( $job_id ) )['llamahire_closed'] ), 'Manually closed jobs are identified as closed in the job list' );
 	$assert( '' === $contextual_card->render(), 'Job Card suppresses jobs that are no longer open' );
 	$assert( false !== strpos( $contextual_details->render(), $job_meta['job_identifier'] ), 'Single Job Details remains available for a closed historical job' );
 	$limit_empty_featured_query = static function ( $query ) use ( $job_id ) {
@@ -351,8 +392,15 @@ try {
 	$closed_url_retained = (bool) array_filter( $closed_sitemap_urls, static function ( $url ) use ( $job_id ) { return get_permalink( $job_id ) === $url['loc']; } );
 	$assert( array() === $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id ) && false !== strpos( \LlamaHire\Blocks::render_form( array( 'jobId' => $job_id ) ), 'closed' ) && $closed_url_retained, 'Closed jobs retain their historical sitemap URL while suppressing active schema and applications' );
 	\LlamaHire\Jobs::set_meta( $job_id, array( 'closed' => '0', 'deadline' => gmdate( 'Y-m-d', strtotime( '-1 day' ) ) ) );
+	$assert( isset( \LlamaHire\Jobs::post_states( array(), get_post( $job_id ) )['llamahire_expired'] ), 'Deadline-ended jobs are identified as expired in the job list' );
 	$assert( ! \LlamaHire\Jobs::is_open( $job_id ) && array() === $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id ), 'Expired jobs suppress active JobPosting markup' );
 	\LlamaHire\Jobs::set_meta( $job_id, array( 'deadline' => gmdate( 'Y-m-d', strtotime( '+30 days' ) ) ) );
+	\LlamaHire\Jobs::set_meta( $job_id, array( 'listing_expires' => gmdate( 'Y-m-d', strtotime( '-1 day' ) ) ) );
+	$assert( ! \LlamaHire\Jobs::is_open( $job_id ) && array() === $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id ), 'Listing expiration independently closes applications and suppresses active JobPosting markup' );
+	\LlamaHire\Jobs::set_meta( $job_id, array( 'listing_expires' => gmdate( 'Y-m-d', strtotime( '+15 days' ) ) ) );
+	$expiry_schema = $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id );
+	$assert( false !== strpos( $expiry_schema['validThrough'] ?? '', gmdate( 'Y-m-d', strtotime( '+15 days' ) ) ), 'Schema availability uses the earlier listing expiration when it precedes the application deadline' );
+	\LlamaHire\Jobs::set_meta( $job_id, array( 'listing_expires' => '' ) );
 	$sitemap_job_id = wp_insert_post( array( 'post_type' => \LlamaHire\Jobs::POST_TYPE, 'post_status' => 'publish', 'post_title' => 'Disposable Sitemap Role', 'post_content' => 'Temporary sitemap lifecycle fixture.' ) );
 	$sitemap_job_url = get_permalink( $sitemap_job_id );
 	wp_delete_post( $sitemap_job_id, true );
@@ -365,6 +413,7 @@ try {
 	$search_block = do_blocks( '<!-- wp:llamahire/job-search /-->' );
 	$filters_block = do_blocks( '<!-- wp:llamahire/job-filters /-->' );
 	$assert( false !== strpos( $search_block, 'name="workplace" value="hybrid"' ) && false !== strpos( $filters_block, 'name="job_search" value="LlamaHire Smoke"' ), 'Composable search and filter forms preserve each other\'s URL state' );
+	$assert( false !== strpos( $search_block, 'data-llamahire-query-form' ) && false !== strpos( $search_block, 'data-wp-on--input="actions.debounce"' ) && false !== strpos( $filters_block, 'data-wp-on--change="actions.update"' ) && false !== strpos( $filters_block, 'llamahire-query-submit' ), 'Job discovery forms expose automatic Interactivity API updates while retaining their submit fallback' );
 	$empty_text_search = do_blocks( '<!-- wp:llamahire/job-search {"label":"  ","placeholder":"","buttonLabel":""} /-->' );
 	$empty_text_filters = do_blocks( '<!-- wp:llamahire/job-filters {"buttonLabel":""} /-->' );
 	$assert( false !== strpos( $empty_text_search, '>Search jobs</span>' ) && false !== strpos( $empty_text_search, 'placeholder="Job title or keyword"' ) && false !== strpos( $empty_text_search, '>Search</button>' ) && false !== strpos( $empty_text_filters, '>Apply filters</button>' ), 'Empty customizable query labels retain accessible translated defaults' );
@@ -373,8 +422,31 @@ try {
 	$_GET['featured'] = '1';
 	$directory = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":true,"featuredOnly":false,"perPage":12} /-->' );
 	$assert( false !== strpos( $directory, 'LlamaHire Smoke Test Role' ), 'Directory combines keyword, employment, workplace, location, and featured filters' );
+	$assert( false !== strpos( $directory, 'data-llamahire-location-menu' ) && false !== strpos( $directory, 'data-llamahire-location-search' ) && false !== strpos( $directory, 'name="location[]"' ) && false !== strpos( $directory, 'Vancouver, BC, CA' ), 'Directory offers a searchable location menu populated from open job locations' );
 	$assert( false !== strpos( $directory, '1 open role' ) && false !== strpos( $directory, 'Clear filters' ), 'Directory reports matching results and offers a clear action' );
+	$feed_url = \LlamaHire\Job_Feed::url();
+	parse_str( wp_parse_url( $feed_url, PHP_URL_QUERY ) ?: '', $feed_query_args );
+	$feed_query = new WP_Query( \LlamaHire\Job_Feed::query_args( \LlamaHire\Job_Feed::state() ) );
+	$assert( false !== strpos( $directory, 'Subscribe to these jobs (RSS)' ) && false !== strpos( $directory, '(opens in a new tab)' ) && false !== strpos( $directory, 'target="_blank"' ) && false !== strpos( $directory, esc_url( $feed_url ) ), 'Directory exposes an explicit new-tab RSS subscription link for the current result state' );
+	$assert( 'LlamaHire Smoke' === ( $feed_query_args['job_search'] ?? '' ) && 'full_time' === ( $feed_query_args['employment_type'] ?? '' ) && 'hybrid' === ( $feed_query_args['workplace'] ?? '' ) && 'Vancouver' === ( $feed_query_args['location'] ?? '' ) && '1' === ( $feed_query_args['featured'] ?? '' ) && in_array( $job_id, wp_list_pluck( $feed_query->posts, 'ID' ), true ), 'Job feed URLs and queries preserve sanitized search, employment, workplace, location, and featured filters' );
+	\LlamaHire\Jobs::set_meta( $job_id, array( 'listing_expires' => gmdate( 'Y-m-d', strtotime( '-1 day' ) ) ) );
+	$expired_feed_query = new WP_Query( \LlamaHire\Job_Feed::query_args( \LlamaHire\Job_Feed::state() ) );
+	$assert( ! in_array( $job_id, wp_list_pluck( $expired_feed_query->posts, 'ID' ), true ), 'Job feeds exclude listings that are no longer open' );
+	\LlamaHire\Jobs::set_meta( $job_id, array( 'listing_expires' => '' ) );
+	$assert( false !== strpos( $directory, 'data-wp-router-region="llamahire-job-results"' ) && false !== strpos( $directory, 'llamahire-active-filter' ) && false !== strpos( $directory, 'data-wp-on--click="actions.remove"' ), 'Directory renders an interactive results region and removable active-filter chips' );
+	$_GET['employment_type'] = 'full_time,part_time';
+	$_GET['workplace'] = array( 'hybrid', 'remote' );
+	$_GET['location'] = 'Vancouver, BC, CA|Toronto, ON, CA';
+	$multi_state = \LlamaHire\Blocks::query_state();
+	$multi_directory = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":true,"featuredOnly":false,"perPage":12} /-->' );
+	$assert( array( 'full_time', 'part_time' ) === $multi_state['employment_type'] && array( 'hybrid', 'remote' ) === $multi_state['workplace'] && array( 'Vancouver, BC, CA', 'Toronto, ON, CA' ) === $multi_state['location'], 'Directory accepts multiple operator-managed job types, workplaces, and locations' );
+	$assert( false !== strpos( $multi_directory, 'LlamaHire Smoke Test Role' ), 'Directory applies OR matching within multi-value filters' );
+	$assert( false !== strpos( $multi_directory, 'name="employment_type[]"' ) && false !== strpos( $multi_directory, 'name="location[]"' ), 'Directory renders multi-value job type and location checkbox controls' );
+	$assert( false !== strpos( $multi_directory, 'Location · 2' ), 'Directory summarizes the number of selected locations' );
+	$job_type_options = \LlamaHire\Jobs::employment_types();
+	$assert( false !== strpos( $multi_directory, $job_type_options['full_time'] ) && false !== strpos( $multi_directory, $job_type_options['part_time'] ), 'Directory renders operator-managed job type labels' );
 	$_GET['employment_type'] = 'part_time';
+	unset( $_GET['location'] );
 	$empty_directory = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":false,"perPage":12} /-->' );
 	$assert( false !== strpos( $empty_directory, 'No matching open roles' ) && false !== strpos( $empty_directory, 'Clear filters' ), 'Directory provides a recoverable filtered empty state' );
 	unset( $_GET['employment_type'], $_GET['location'], $_GET['featured'], $_GET['workplace'] );
@@ -384,7 +456,7 @@ try {
 	unset( $_GET['job_search'] );
 	$department_directory = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":true,"department":"engineering","perPage":12} /-->' );
 	$_GET['job_search'] = $active_job_search;
-	$assert( false !== strpos( $department_directory, 'LlamaHire Smoke Test Role' ) && false === strpos( $department_directory, 'LlamaHire Smoke Pagination Role' ) && false !== strpos( $department_directory, 'name="department" value="engineering"' ) && false === strpos( $department_directory, '<select name="department"' ) && false === strpos( $department_directory, 'Clear filters' ), 'A fixed department directory limits results and preserves its department without presenting a misleading clear action' );
+	$assert( false !== strpos( $department_directory, 'LlamaHire Smoke Test Role' ) && false === strpos( $department_directory, 'LlamaHire Smoke Pagination Role' ) && false !== strpos( $department_directory, 'name="department" value="engineering"' ) && false !== strpos( $department_directory, 'department=engineering' ) && false === strpos( $department_directory, '<select name="department"' ) && false === strpos( $department_directory, 'Clear filters' ), 'A fixed department directory limits results and preserves its department in the RSS link without presenting a misleading clear action' );
 	$paginated_directory = do_blocks( '<!-- wp:llamahire/jobs-directory {"showFilters":false,"perPage":1} /-->' );
 	$assert( false !== strpos( $paginated_directory, '2 open roles' ) && false !== strpos( $paginated_directory, 'job_page=2' ) && false !== strpos( $paginated_directory, 'Job results pages' ), 'Directory pagination preserves query state and exposes navigation semantics' );
 	$_GET['job_page'] = '999';
@@ -404,6 +476,42 @@ try {
 	$assert( false !== strpos( $form, 'scheduled for deletion from this site after 365 days' ), 'Application privacy disclosure states the configured live-site retention period' );
 	$assert( false !== strpos( $form, 'data-upload-feedback hidden' ) && false !== strpos( $form, 'role="status"' ) && false !== strpos( $form, '<progress data-upload-progress value="0" max="100" aria-label="Resume upload progress">' ), 'Application form includes hidden accessible upload status and progress semantics for progressive enhancement' );
 	$assert( preg_match( '/name="phone"[^>]*required/', $form ) && preg_match( '/name="resume"[^>]*required/', $form ) && false === strpos( $form, 'name="cover_letter"' ), 'Application form renders configured required fields and omits hidden fields' );
+	update_option( \LlamaHire\Settings::OPTION, array_merge( $sanitized_settings, $anti_spam_config ), false );
+	$protected_form = do_blocks( '<!-- wp:llamahire/application-form {"jobId":' . (int) $job_id . '} /-->' );
+	$assert( false !== strpos( $protected_form, 'cf-turnstile' ) && false !== strpos( $protected_form, 'data-action="job_application"' ), 'Configured Turnstile protection renders on public candidate applications' );
+	$allow_anti_spam = static function () { return true; };
+	add_filter( 'llamahire_anti_spam_pre_verify', $allow_anti_spam );
+	$assert( true === \LlamaHire\Anti_Spam::verify( \LlamaHire\Anti_Spam::CONTEXT_APPLICATION ), 'Extensions can provide a successful anti-spam verification result without exposing provider credentials' );
+	remove_filter( 'llamahire_anti_spam_pre_verify', $allow_anti_spam );
+	$deny_anti_spam = static function () { return false; };
+	add_filter( 'llamahire_anti_spam_pre_verify', $deny_anti_spam );
+	$assert( is_wp_error( \LlamaHire\Anti_Spam::verify( \LlamaHire\Anti_Spam::CONTEXT_APPLICATION ) ), 'Failed anti-spam verification blocks a protected public form' );
+	remove_filter( 'llamahire_anti_spam_pre_verify', $deny_anti_spam );
+	$original_post = $_POST; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Disposable test controls the simulated provider request.
+	$_POST['cf-turnstile-response'] = 'smoke-provider-token'; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Disposable test controls the simulated provider request.
+	$provider_body = array();
+	$provider_response = static function () use ( &$provider_body ) {
+		return array( 'headers' => array(), 'body' => wp_json_encode( $provider_body ), 'response' => array( 'code' => 200, 'message' => 'OK' ), 'cookies' => array(), 'filename' => null );
+	};
+	add_filter( 'pre_http_request', $provider_response );
+	$provider_body = array( 'success' => true, 'action' => \LlamaHire\Anti_Spam::CONTEXT_APPLICATION, 'hostname' => wp_parse_url( home_url( '/' ), PHP_URL_HOST ) );
+	$assert( true === \LlamaHire\Anti_Spam::verify( \LlamaHire\Anti_Spam::CONTEXT_APPLICATION ), 'Anti-spam verification accepts an exact action and site hostname' );
+	$provider_body = array( 'success' => true, 'hostname' => wp_parse_url( home_url( '/' ), PHP_URL_HOST ) );
+	$missing_action = \LlamaHire\Anti_Spam::verify( \LlamaHire\Anti_Spam::CONTEXT_APPLICATION );
+	$assert( is_wp_error( $missing_action ) && 'anti_spam_action' === $missing_action->get_error_code(), 'Turnstile verification fails closed when the expected action is missing' );
+	$provider_body = array( 'success' => true, 'action' => \LlamaHire\Anti_Spam::CONTEXT_APPLICATION, 'hostname' => 'unrelated.example.test' );
+	$wrong_hostname = \LlamaHire\Anti_Spam::verify( \LlamaHire\Anti_Spam::CONTEXT_APPLICATION );
+	$assert( is_wp_error( $wrong_hostname ) && 'anti_spam_hostname' === $wrong_hostname->get_error_code(), 'Anti-spam verification rejects a token issued for another hostname' );
+	$mapped_hostname = static function ( $hostnames ) { $hostnames[] = 'mapped.example.test'; return $hostnames; };
+	add_filter( 'llamahire_anti_spam_allowed_hostnames', $mapped_hostname );
+	$provider_body = array( 'success' => true, 'action' => \LlamaHire\Anti_Spam::CONTEXT_APPLICATION, 'hostname' => 'MAPPED.EXAMPLE.TEST.' );
+	$assert( true === \LlamaHire\Anti_Spam::verify( \LlamaHire\Anti_Spam::CONTEXT_APPLICATION ), 'Mapped domains can extend exact anti-spam hostname validation' );
+	remove_filter( 'llamahire_anti_spam_allowed_hostnames', $mapped_hostname );
+	$_POST['cf-turnstile-response'] = str_repeat( 'x', 2049 ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Disposable test controls the simulated provider request.
+	$oversized_token = \LlamaHire\Anti_Spam::verify( \LlamaHire\Anti_Spam::CONTEXT_APPLICATION );
+	$assert( is_wp_error( $oversized_token ) && 'anti_spam_missing' === $oversized_token->get_error_code(), 'Oversized anti-spam tokens are rejected before provider verification' );
+	remove_filter( 'pre_http_request', $provider_response );
+	$_POST = $original_post;
 	$optional_settings = array_merge( $sanitized_settings, array( 'application_phone' => 'hidden', 'application_resume' => 'optional', 'application_letter' => 'optional' ) );
 	update_option( \LlamaHire\Settings::OPTION, $optional_settings, false );
 	$optional_form = do_blocks( '<!-- wp:llamahire/application-form {"jobId":' . (int) $job_id . '} /-->' );
@@ -427,7 +535,7 @@ try {
 	$_GET['application'] = 'duplicate';
 	$duplicate_form = do_blocks( '<!-- wp:llamahire/application-form {"jobId":' . (int) $job_id . '} /-->' );
 	unset( $_GET['application'] );
-	$assert( false !== strpos( $duplicate_form, 'role="status"' ) && false !== strpos( $duplicate_form, 'We already have your application for this role.' ) && false === strpos( $duplicate_form, '<form method="post"' ), 'Duplicate applications receive a neutral success state without another form' );
+	$assert( false !== strpos( $duplicate_form, 'role="status"' ) && false !== strpos( $duplicate_form, 'Thanks! Your application has been received.' ) && false === strpos( $duplicate_form, 'already have your application' ) && false === strpos( $duplicate_form, '<form method="post"' ), 'Legacy duplicate result URLs reveal no more applicant state than the generic success response' );
 	$client_limit = static function () { return 1; };
 	$job_limit    = static function () { return 0; };
 	add_filter( 'llamahire_submission_rate_limit', $client_limit );
@@ -444,6 +552,51 @@ try {
 	file_put_contents( $invalid_resume, 'not a pdf' );
 	$assert( is_wp_error( $signature_method->invoke( $services->get( \LlamaHire\Service_IDs::RESUME_STORAGE ), $invalid_resume, 'pdf' ) ), 'Resume content must match the allowed file signature' );
 	wp_delete_file( $invalid_resume );
+	$allowed_mimes_method = new ReflectionMethod( get_class( $services->get( \LlamaHire\Service_IDs::RESUME_STORAGE ) ), 'allowed_mimes' );
+	$allowed_mimes_method->setAccessible( true );
+	$assert( ! isset( $allowed_mimes_method->invoke( $services->get( \LlamaHire\Service_IDs::RESUME_STORAGE ) )['doc'] ), 'Legacy DOC uploads are disabled unless a trusted scanner explicitly opts in' );
+	$delivery_mimes_method = new ReflectionMethod( get_class( $services->get( \LlamaHire\Service_IDs::RESUME_STORAGE ) ), 'delivery_mimes' );
+	$delivery_mimes_method->setAccessible( true );
+	$assert( 'application/msword' === $delivery_mimes_method->invoke( $services->get( \LlamaHire\Service_IDs::RESUME_STORAGE ) )['doc'], 'Existing legacy DOC resumes retain their MIME type and filename extension when downloaded' );
+	$allow_legacy_doc = static function () { return true; };
+	add_filter( 'llamahire_allow_legacy_doc_uploads', $allow_legacy_doc );
+	$assert( isset( $allowed_mimes_method->invoke( $services->get( \LlamaHire\Service_IDs::RESUME_STORAGE ) )['doc'] ), 'Trusted security integrations can explicitly enable legacy DOC uploads' );
+	remove_filter( 'llamahire_allow_legacy_doc_uploads', $allow_legacy_doc );
+	$invalid_docx = wp_tempnam( 'llamahire-invalid-resume.docx' );
+	file_put_contents( $invalid_docx, "PK\x03\x04invalid office container" );
+	$assert( is_wp_error( $signature_method->invoke( $services->get( \LlamaHire\Service_IDs::RESUME_STORAGE ), $invalid_docx, 'docx' ) ), 'DOCX uploads fail closed unless the full Office container can be inspected' );
+	wp_delete_file( $invalid_docx );
+	$local_storage = $services->get( \LlamaHire\Service_IDs::RESUME_STORAGE );
+	$local_directory_method = new ReflectionMethod( get_class( $local_storage ), 'directory' );
+	$local_directory_method->setAccessible( true );
+	$local_directory = $local_directory_method->invoke( $local_storage, true );
+	$uninstall_local_path = trailingslashit( $local_directory ) . wp_generate_uuid4() . '.pdf';
+	file_put_contents( $uninstall_local_path, '%PDF-1.4 uninstall cleanup fixture' );
+	$assert( \LlamaHire\Uninstaller::delete_resume_token( $uninstall_local_path, $local_storage, $vip_storage ) && ! file_exists( $uninstall_local_path ), 'Full-uninstall cleanup deletes managed local resume tokens before database references are removed' );
+	$uninstall_local_path = '';
+	$vip_directory_method = new ReflectionMethod( \LlamaHire\Services\VIP_ACL_Resume_Storage::class, 'directory' );
+	$vip_directory_method->setAccessible( true );
+	$vip_directory = $vip_directory_method->invoke( $vip_storage, true );
+	$vip_fixture_path = trailingslashit( $vip_directory ) . wp_generate_uuid4() . '.pdf';
+	file_put_contents( $vip_fixture_path, '%PDF-1.4 VIP uninstall cleanup fixture' );
+	$uninstall_attachment_id = wp_insert_attachment( array( 'post_mime_type' => 'application/pdf', 'post_title' => 'Private uninstall fixture', 'post_status' => 'inherit' ), $vip_fixture_path );
+	update_attached_file( $uninstall_attachment_id, $vip_fixture_path );
+	update_post_meta( $uninstall_attachment_id, \LlamaHire\Services\VIP_ACL_Resume_Storage::MARKER_META, '1' );
+	$assert( \LlamaHire\Uninstaller::delete_resume_token( \LlamaHire\Services\VIP_ACL_Resume_Storage::TOKEN_PREFIX . $uninstall_attachment_id, $local_storage, $vip_storage ) && ! get_post( $uninstall_attachment_id ) && ! file_exists( $vip_fixture_path ), 'Full-uninstall cleanup deletes marked VIP resume attachments before database references are removed' );
+	$uninstall_attachment_id = 0;
+	$custom_deleted_token = '';
+	$custom_cleanup       = static function ( $deleted, $token, $site_id ) use ( &$custom_deleted_token ) {
+		if ( 'custom:smoke-token' !== $token ) {
+			return $deleted;
+		}
+		$custom_deleted_token = $token;
+
+		return get_current_blog_id() === $site_id;
+	};
+	add_filter( 'llamahire_uninstall_delete_resume_token', $custom_cleanup, 10, 3 );
+	$assert( \LlamaHire\Uninstaller::delete_resume_token( 'custom:smoke-token', $local_storage, $vip_storage ) && 'custom:smoke-token' === $custom_deleted_token, 'Custom resume drivers can delete opaque tokens during full uninstall' );
+	remove_filter( 'llamahire_uninstall_delete_resume_token', $custom_cleanup, 10 );
+	$assert( ! \LlamaHire\Uninstaller::delete_resume_token( 'custom:unhandled', $local_storage, $vip_storage ), 'Full uninstall retains database references when no driver handles an opaque resume token' );
 
 	$repository     = $services->get( \LlamaHire\Service_IDs::APPLICATION_REPOSITORY );
 	$invalid_repository_application = $repository->create(
@@ -461,6 +614,7 @@ try {
 			'name'   => 'Smoke Test Candidate',
 			'email'  => 'candidate@example.test',
 			'phone'  => '555-0100',
+			'cover_letter' => 'Smoke test cover letter.',
 			'status' => 'new',
 		)
 	);
@@ -469,16 +623,34 @@ try {
 	$assert( $application && 'new' === $application->status, 'Application repository retrieves the stored application' );
 	$assert( true === $repository->update( $application_id, array( 'status' => 'reviewing', 'notes' => 'Smoke test note' ) ), 'Application repository updates allowed fields' );
 	$application = $repository->find( $application_id );
-	$assert( 'reviewing' === $application->status && 'Smoke test note' === $application->notes, 'Application repository persists status and notes' );
+	$private_notes = \LlamaHire\Application_Notes::for_application( $application_id );
+	$assert( 'reviewing' === $application->status && 1 === count( $private_notes ) && 'Smoke test note' === $private_notes[0]->body, 'Application repository appends status and private-note updates without overwriting history' );
 	$assert( true === $repository->update( $application_id, array( 'status' => 'interviewing' ) ), 'Application repository accepts the expanded hiring pipeline' );
 	$application = $repository->find( $application_id );
 	$assert( 'interviewing' === $application->status && ! empty( $application->stage_changed_at ), 'Application repository tracks the current stage and when it changed' );
 	$application_history = \LlamaHire\Audit_Log::search( array( 'application_id' => $application_id ) );
-	$assert( 2 === $application_history['total'] && 'application_status_changed' === $application_history['items'][0]->event_type && 'reviewing' === $application_history['items'][0]->from_state && 'interviewing' === $application_history['items'][0]->to_state, 'Application status changes create content-free audit events' );
+	$assert( 3 === $application_history['total'] && 'application_status_changed' === $application_history['items'][0]->event_type && 'reviewing' === $application_history['items'][0]->from_state && 'interviewing' === $application_history['items'][0]->to_state, 'Application status changes and private-note additions create content-free audit events' );
+	$activity_date = substr( $application_history['items'][0]->created_at, 0, 10 );
+	$activity_results = \LlamaHire\Audit_Log::search(
+		array(
+			'event_types'    => array( 'application_status_changed' ),
+			'job_ids'        => array( $job_id ),
+			'search'         => get_the_title( $job_id ),
+			'occurred_after' => $activity_date . ' 00:00:00',
+			'occurred_before'=> $activity_date . ' 23:59:59',
+			'orderby'        => 'event',
+			'order'          => 'asc',
+		)
+	);
+	$assert( 2 === $activity_results['total'] && ! property_exists( $activity_results['items'][0], 'name' ) && ! property_exists( $activity_results['items'][0], 'email' ), 'Activity DataViews queries filter and sort privacy-safe audit records without candidate data' );
 	$assert( ! property_exists( $application, 'resume_path' ), 'Public application records do not expose private storage paths' );
+	$assert( \LlamaHire\Applications::resume_is_previewable( 'candidate.pdf' ) && ! \LlamaHire\Applications::resume_is_previewable( 'candidate.docx' ) && false === strpos( \LlamaHire\Applications::resume_url( $application_id ), '&amp;' ) && false !== strpos( \LlamaHire\Applications::resume_url( $application_id, true ), 'preview=1' ), 'Private resume actions expose raw nonce URLs and limit browser preview to PDF files' );
 	$query = $services->get( \LlamaHire\Service_IDs::APPLICATION_QUERY );
 	$results = $query->search( array( 'job_id' => $job_id, 'status' => 'interviewing', 'per_page' => 1 ) );
 	$assert( 1 === $results['total'] && 1 === count( $results['items'] ), 'Application query filters and paginates results' );
+	$bounded_application_args = \LlamaHire\REST_API::application_query_arguments( array( 'job_ids' => array_merge( range( 1, 150 ), array( 1 ) ), 'statuses' => array( 'new', 'new', 'invalid' ), 'notification_statuses' => array( 'failed', 'failed', 'invalid' ) ) );
+	$bounded_activity_args = \LlamaHire\REST_API::activity_query_arguments( array( 'job_ids' => array_merge( range( 1, 150 ), array( 1 ) ), 'actor_ids' => array_merge( range( 1, 150 ), array( 1 ) ), 'event_types' => array( 'job_submitted', 'job_submitted', 'invalid' ) ) );
+	$assert( 100 === count( $bounded_application_args['job_ids'] ) && array( 'new' ) === $bounded_application_args['statuses'] && array( 'failed' ) === $bounded_application_args['notification_statuses'] && 100 === count( $bounded_activity_args['job_ids'] ) && 100 === count( $bounded_activity_args['actor_ids'] ) && array( 'job_submitted' ) === $bounded_activity_args['event_types'], 'REST list filters are deduplicated, allow-listed, and bounded before query construction' );
 	$received_date = substr( $application->created_at, 0, 10 );
 	$dataview_results = $query->search(
 		array(
@@ -510,11 +682,56 @@ try {
 	$filtered_applications_html = ob_get_clean();
 	$_GET = $original_get;
 	$assert( false !== strpos( $filtered_applications_html, 'llamahire-applications-root' ) && wp_script_is( 'llamahire-admin-applications', 'enqueued' ) && wp_style_is( 'llamahire-admin-applications', 'enqueued' ), 'Recruiter inbox mounts the compiled DataViews interface and its WordPress component styles' );
+	$detail_request = new WP_REST_Request( 'GET', '/llamahire/v1/applications/' . $application_id );
+	$detail_response = rest_do_request( $detail_request );
+	$detail_data = $detail_response->get_data();
+	$assert( 200 === $detail_response->get_status() && 'Smoke test cover letter.' === $detail_data['cover_letter'] && 'Smoke test note' === $detail_data['private_notes'][0]['body'] && 3 === count( $detail_data['activity'] ) && ! isset( $detail_data['candidate'], $detail_data['email'] ) && null === $detail_data['resume'], 'Authorized inline review details expose only the selected application materials, append-only notes, review fields, and bounded activity' );
+	$detail_update_request = new WP_REST_Request( 'POST', '/llamahire/v1/applications/' . $application_id );
+	$detail_update_request->set_param( 'status', 'reviewing' );
+	$detail_update_response = rest_do_request( $detail_update_request );
+	$detail_update_data = $detail_update_response->get_data();
+	$assert( 200 === $detail_update_response->get_status() && 'reviewing' === $detail_update_data['status'] && 4 === count( $detail_update_data['activity'] ), 'Authorized inline review saves status independently and refreshes bounded activity history' );
+	$note_request = new WP_REST_Request( 'POST', '/llamahire/v1/applications/' . $application_id . '/notes' );
+	$note_request->set_param( 'note', 'Updated inline review note' );
+	$note_response = rest_do_request( $note_request );
+	$note_data = $note_response->get_data();
+	$assert( 200 === $note_response->get_status() && 2 === count( $note_data['private_notes'] ) && 'Updated inline review note' === $note_data['private_notes'][0]['body'] && 'Smoke test note' === $note_data['private_notes'][1]['body'] && 5 === count( $note_data['activity'] ), 'Authorized inline review appends a private note, preserves earlier notes, and returns bounded activity for the history modal' );
+	wp_set_current_user( 0 );
+	$denied_detail_response = rest_do_request( $detail_request );
+	$denied_note_response = rest_do_request( $note_request );
+	$assert( 404 === $denied_detail_response->get_status() && 404 === $denied_note_response->get_status(), 'Inline application review details and note creation do not reveal inaccessible records' );
+	wp_set_current_user( (int) reset( $filter_admin_ids ) );
+	$activity_request = new WP_REST_Request( 'GET', '/llamahire/v1/activity' );
+	$activity_request->set_param( 'event_types', array( 'application_status_changed' ) );
+	$activity_request->set_param( 'job_ids', array( $job_id ) );
+	$activity_request->set_param( 'per_page', 1 );
+	$activity_response = rest_do_request( $activity_request );
+	$activity_data = $activity_response->get_data();
+	$assert( 200 === $activity_response->get_status() && 1 === count( $activity_data['items'] ) && ! isset( $activity_data['items'][0]['candidate'], $activity_data['items'][0]['email'] ), 'Authorized Activity REST responses expose linked operational context without candidate identity' );
+	ob_start();
+	\LlamaHire\Admin::activity_page();
+	$activity_page_html = ob_get_clean();
+	$assert( false !== strpos( $activity_page_html, 'llamahire-activity-root' ) && wp_script_is( 'llamahire-admin-activity', 'enqueued' ) && wp_style_is( 'llamahire-admin-activity', 'enqueued' ), 'Activity mounts its compiled read-only DataViews interface and WordPress component styles' );
 	ob_start();
 	\LlamaHire\Admin::job_column( 'llamahire_status', $job_id );
 	$job_hiring_column_html = ob_get_clean();
 	wp_set_current_user( $original_user_id );
 	$assert( false !== strpos( $job_hiring_column_html, '1 application' ) && false !== strpos( $job_hiring_column_html, 'job_id=' . $job_id ), 'Job list links application counts directly to the filtered recruiter inbox' );
+	wp_set_current_user( (int) reset( $filter_admin_ids ) );
+	$bulk_application_id = $repository->create( array( 'job_id' => $job_id, 'name' => 'Bulk Status Candidate', 'email' => 'bulk-status@example.test', 'status' => 'new' ) );
+	$assert( ! is_wp_error( $bulk_application_id ), 'A second application is available for bulk workflow checks' );
+	$bulk_request = new WP_REST_Request( 'POST', '/llamahire/v1/applications/bulk-status' );
+	$bulk_request->set_param( 'application_ids', array( $application_id, $bulk_application_id ) );
+	$bulk_request->set_param( 'status', 'offer' );
+	$bulk_response = rest_do_request( $bulk_request );
+	$bulk_data = $bulk_response->get_data();
+	$assert( 200 === $bulk_response->get_status() && 2 === $bulk_data['updated'] && 'offer' === $repository->find( $application_id )->status && 'offer' === $repository->find( $bulk_application_id )->status, 'Authorized bulk status changes update every selected application through the repository contract' );
+	wp_set_current_user( 0 );
+	$denied_bulk_response = rest_do_request( $bulk_request );
+	$assert( 401 === $denied_bulk_response->get_status(), 'Bulk status changes require the application-management capability' );
+	$repository->update( $application_id, array( 'status' => 'interviewing' ) );
+	$repository->update( $bulk_application_id, array( 'status' => 'new' ) );
+	wp_set_current_user( $original_user_id );
 	$administrator_ids = get_users( array( 'role' => 'administrator', 'fields' => 'ids', 'number' => 1 ) );
 	$board_manager_id = (int) reset( $administrator_ids );
 	$assert( $board_manager_id > 0, 'Isolation fixtures have an explicit board manager account' );
@@ -529,6 +746,7 @@ try {
 	}
 	\LlamaHire\Audit_Log::record( 'job_submitted', $employer_job_ids[0], 0, '', '', $employer_user_ids[0] );
 	\LlamaHire\Audit_Log::record( 'job_submitted', $employer_job_ids[1], 0, '', '', $employer_user_ids[1] );
+	$assert( 1 === \LlamaHire\Employer_Portal::active_listing_count( $employer_user_ids[0] ) && 0 === \LlamaHire\Employer_Portal::active_listing_count( $employer_user_ids[0], $employer_job_ids[0] ), 'Pending and published employer listings consume the active allowance while the current listing can be excluded during resubmission' );
 	wp_set_current_user( $employer_user_ids[0] );
 	$scoped_results = $query->search( array_merge( array( 'per_page' => 20 ), \LlamaHire\Ownership::query_arguments() ) );
 	$scoped_counts = $query->counts( \LlamaHire\Ownership::query_arguments() );
@@ -536,9 +754,79 @@ try {
 	$scoped_export = iterator_to_array( $query->export_rows( \LlamaHire\Ownership::query_arguments() ) );
 	$assert( 1 === $scoped_results['total'] && 1 === array_sum( array_intersect_key( $scoped_counts, array_flip( array_keys( \LlamaHire\Applications::workflow_statuses() ) ) ) ) && 1 === count( $scoped_recent ) && 1 === count( $scoped_export ), 'Employer application lists, counts, recent rows, and exports are scoped to authored jobs' );
 	$assert( \LlamaHire\Ownership::user_can_access_application( $employer_application_ids[0], \LlamaHire\Capabilities::VIEW_APPLICATIONS ) && ! \LlamaHire\Ownership::user_can_access_application( $employer_application_ids[1], \LlamaHire\Capabilities::VIEW_APPLICATIONS ), 'Employer ownership checks allow own candidates and deny another company candidate' );
+	$scoped_erasure_user = get_userdata( $employer_user_ids[0] );
+	$scoped_erasure_user->add_cap( \LlamaHire\Capabilities::ERASE_APPLICATIONS );
+	$assert( \LlamaHire\Ownership::user_can_access_application( $employer_application_ids[0], \LlamaHire\Capabilities::ERASE_APPLICATIONS ) && ! \LlamaHire\Ownership::user_can_access_application( $employer_application_ids[1], \LlamaHire\Capabilities::ERASE_APPLICATIONS ), 'Candidate-data erasure capability remains scoped to applications owned by the employer' );
+	$scoped_erasure_user->remove_cap( \LlamaHire\Capabilities::ERASE_APPLICATIONS );
+	$ownership_bulk_request = new WP_REST_Request( 'POST', '/llamahire/v1/applications/bulk-status' );
+	$ownership_bulk_request->set_param( 'application_ids', $employer_application_ids );
+	$ownership_bulk_request->set_param( 'status', 'hired' );
+	$ownership_bulk_response = rest_do_request( $ownership_bulk_request );
+	$assert( 403 === $ownership_bulk_response->get_status() && 'new' === $repository->find( $employer_application_ids[0] )->status, 'Bulk status changes reject a mixed-ownership selection before changing an employer-owned application' );
 	$scoped_audit = \LlamaHire\Audit_Log::search( \LlamaHire\Ownership::query_arguments() );
 	$assert( $scoped_audit['total'] >= 1 && ! array_filter( $scoped_audit['items'], static function ( $event ) use ( $employer_job_ids ) { return (int) $event->job_id === (int) $employer_job_ids[1]; } ), 'Employer audit history includes owned jobs and excludes another company’s events' );
-	$board_settings = array_merge( $sanitized_settings, array( 'site_mode' => \LlamaHire\Settings::SITE_MODE_JOB_BOARD ) );
+	$board_settings = array_merge(
+		$sanitized_settings,
+		$anti_spam_config,
+		array(
+			'site_mode'               => \LlamaHire\Settings::SITE_MODE_JOB_BOARD,
+			'employer_policy_text'    => 'I agree to follow the {listing_policy}.',
+			'employer_policy_page_id' => $privacy_page_id,
+		)
+	);
+	update_option( \LlamaHire\Settings::OPTION, $board_settings, false );
+	wp_set_current_user( 0 );
+	$registration_form = do_shortcode( '[llamahire_employer_registration]' );
+	$assert( false !== strpos( $registration_form, 'name="company_name"' ) && false !== strpos( $registration_form, 'name="password"' ) && false !== strpos( $registration_form, 'name="accept_policy"' ) && false !== strpos( $registration_form, 'minlength="12"' ), 'Employer registration collects company and account details with explicit policy consent and a strong-password baseline' );
+	$assert( false !== strpos( $registration_form, 'cf-turnstile' ) && false !== strpos( $registration_form, 'data-action="employer_registration"' ), 'Configured Turnstile protection renders at the public employer-account perimeter' );
+	$assert( false !== strpos( $registration_form, 'href="' . esc_url( get_permalink( $privacy_page_id ) ) . '"' ) && false !== strpos( $registration_form, '>listing rules</a>' ) && false === strpos( $registration_form, '{listing_policy}' ), 'Employer registration links the agreement text to the selected listing-policy page' );
+	$registration_user_id = wp_insert_user( array( 'user_login' => 'llamahire-registration-smoke', 'user_email' => 'registration@example.test', 'user_pass' => wp_generate_password( 24 ), 'display_name' => 'Registration Smoke' ) );
+	$assert( ! is_wp_error( $registration_user_id ), 'Employer registration test account can be created' );
+	$registration_user = get_userdata( $registration_user_id );
+	$registration_user->set_role( '' );
+	update_user_meta( $registration_user_id, \LlamaHire\Employer_Registration::STATUS_META, \LlamaHire\Employer_Registration::STATUS_EMAIL );
+	update_user_meta( $registration_user_id, \LlamaHire\Employer_Registration::COMPANY_META, 'Registration Company' );
+	$registration_mail = array();
+	$capture_registration_mail = static function ( $return, $attributes ) use ( &$registration_mail ) {
+		$registration_mail[] = $attributes;
+		return true;
+	};
+	add_filter( 'pre_wp_mail', $capture_registration_mail, 10, 2 );
+	$send_verification = new ReflectionMethod( \LlamaHire\Employer_Registration::class, 'send_verification' );
+	$send_verification->setAccessible( true );
+	$send_verification->invoke( null, $registration_user );
+	remove_filter( 'pre_wp_mail', $capture_registration_mail );
+	preg_match( '/[?&]token=([^&\s]+)/', $registration_mail[0]['message'], $verification_match );
+	$stored_verification_hash = get_user_meta( $registration_user_id, \LlamaHire\Employer_Registration::TOKEN_META, true );
+	$assert( 1 === count( $registration_mail ) && $registration_user->user_email === $registration_mail[0]['to'] && ! empty( $verification_match[1] ) && $verification_match[1] !== $stored_verification_hash && absint( get_user_meta( $registration_user_id, \LlamaHire\Employer_Registration::TOKEN_EXPIRY_META, true ) ) > time(), 'Employer verification sends a time-limited link while storing only a one-way token hash' );
+	$registration_mail = array();
+	add_filter( 'pre_wp_mail', $capture_registration_mail, 10, 2 );
+	$verification_result = \LlamaHire\Employer_Registration::verify_token( $registration_user_id, rawurldecode( $verification_match[1] ) );
+	remove_filter( 'pre_wp_mail', $capture_registration_mail );
+	$assert( 'awaiting_approval' === $verification_result && \LlamaHire\Employer_Registration::STATUS_APPROVAL === get_user_meta( $registration_user_id, \LlamaHire\Employer_Registration::STATUS_META, true ) && 1 === count( $registration_mail ) && 'hiring@example.test' === $registration_mail[0]['to'], 'A valid one-use email token advances manual registrations to operator approval and notifies the board inbox' );
+	wp_set_current_user( $board_manager_id );
+	$pending_employer_column = \LlamaHire\Employer_Registration::user_column( '', 'llamahire_employer_status', $registration_user_id );
+	$assert( 1 <= \LlamaHire\Employer_Registration::pending_count() && false !== strpos( \LlamaHire\Employer_Registration::pending_url(), 'llamahire_employer_status=pending_approval' ) && false !== strpos( $pending_employer_column, 'Approve employer' ), 'Operators get a filtered employer-approval queue with a visible approval action' );
+	wp_set_current_user( 0 );
+	$assert( 'invalid_link' === \LlamaHire\Employer_Registration::verify_token( $registration_user_id, rawurldecode( $verification_match[1] ) ), 'An employer verification token cannot be reused' );
+	$registration_mail = array();
+	add_filter( 'pre_wp_mail', $capture_registration_mail, 10, 2 );
+	$assert( \LlamaHire\Employer_Registration::approve( $registration_user_id ), 'A verified employer can be approved' );
+	remove_filter( 'pre_wp_mail', $capture_registration_mail );
+	$registration_user = get_userdata( $registration_user_id );
+	$assert( in_array( \LlamaHire\Capabilities::EMPLOYER_ROLE, $registration_user->roles, true ) && \LlamaHire\Employer_Registration::STATUS_APPROVED === get_user_meta( $registration_user_id, \LlamaHire\Employer_Registration::STATUS_META, true ), 'Approval grants only the existing restricted Employer role and records the approved state' );
+	$assert( 2 === count( $registration_mail ) && $registration_user->user_email === $registration_mail[0]['to'] && 'hiring@example.test' === $registration_mail[1]['to'], 'Employer approval notifies both the employer and board operator' );
+	update_option( \LlamaHire\Settings::OPTION, array_merge( $board_settings, array( 'employer_approval' => 'automatic' ) ), false );
+	$registration_user->set_role( '' );
+	update_user_meta( $registration_user_id, \LlamaHire\Employer_Registration::STATUS_META, \LlamaHire\Employer_Registration::STATUS_EMAIL );
+	$registration_mail = array();
+	add_filter( 'pre_wp_mail', $capture_registration_mail, 10, 2 );
+	$send_verification->invoke( null, $registration_user );
+	preg_match( '/[?&]token=([^&\s]+)/', $registration_mail[0]['message'], $automatic_verification_match );
+	$automatic_verification_result = \LlamaHire\Employer_Registration::verify_token( $registration_user_id, rawurldecode( $automatic_verification_match[1] ?? '' ) );
+	remove_filter( 'pre_wp_mail', $capture_registration_mail );
+	$registration_user = get_userdata( $registration_user_id );
+	$assert( 'approved' === $automatic_verification_result && in_array( \LlamaHire\Capabilities::EMPLOYER_ROLE, $registration_user->roles, true ) && 3 === count( $registration_mail ), 'Automatic approval grants the restricted Employer role immediately after valid email verification and sends employer and operator notices' );
 	update_option( \LlamaHire\Settings::OPTION, $board_settings, false );
 	$moderation_mail = array();
 	$capture_moderation_mail = static function ( $return, $attributes ) use ( &$moderation_mail ) {
@@ -553,20 +841,82 @@ try {
 	$employer_one = get_userdata( $employer_user_ids[0] );
 	$assert( 2 === count( $moderation_mail ) && 'hiring@example.test' === $moderation_mail[0]['to'] && $employer_one->user_email === $moderation_mail[1]['to'], 'Submission notifies the board inbox and approval notifies the owning employer' );
 	$assert( false !== strpos( $moderation_mail[0]['message'], admin_url( 'post.php?post=' . $employer_job_ids[0] ) ) && false !== strpos( $moderation_mail[1]['message'], 'approved and published' ), 'Moderation emails contain the review destination and a clear employer outcome' );
+	update_user_meta( $registration_user_id, \LlamaHire\Employer_Registration::STATUS_META, \LlamaHire\Employer_Registration::STATUS_APPROVAL );
 	ob_start();
 	\LlamaHire\Admin_Workspaces::render_dashboard();
 	$board_dashboard = ob_get_clean();
 	$assert( false !== strpos( $board_dashboard, 'llamahire_job_state=open' ) && false !== strpos( $board_dashboard, 'post_status=pending' ) && false !== strpos( $board_dashboard, 'users.php?role=llamahire_employer' ) && false !== strpos( $board_dashboard, 'page=llamahire-applications' ), 'Board summary metrics link to live listings, awaiting review, employers, and applications' );
+	$assert( false !== strpos( $board_dashboard, 'employer account is awaiting approval' ) && false !== strpos( $board_dashboard, 'llamahire_employer_status=pending_approval' ) && false !== strpos( $board_dashboard, 'job listing is waiting for review' ), 'The board dashboard separates employer-account approvals from submitted job moderation' );
+	update_user_meta( $registration_user_id, \LlamaHire\Employer_Registration::STATUS_META, \LlamaHire\Employer_Registration::STATUS_APPROVED );
+	$assert( false !== strpos( $board_dashboard, 'llamahire_job_state=closing-soon' ), 'The dashboard links its deadline action to the matching closing-soon job view' );
 	$assert( false !== strpos( $board_dashboard, 'job_id=' . $employer_job_ids[0] ) && false !== strpos( $board_dashboard, '>1</strong>' ) && false !== strpos( $board_dashboard, '>application</span>' ), 'Active listings show one linked all-status application total per job' );
 	$assert( false !== strpos( $board_dashboard, 'View all listings' ) && false !== strpos( $board_dashboard, 'View all activity' ) && false !== strpos( $board_dashboard, 'llamahire-activity-link' ), 'Dashboard collection links name their destinations and recent activity links to its affected record' );
+	$_GET['post_status'] = 'pending';
+	$job_views = \LlamaHire\Admin::job_views( array() );
+	unset( $_GET['post_status'] );
+	$assert( false !== strpos( $job_views['llamahire_pending'], 'Awaiting review' ) && false !== strpos( $job_views['llamahire_pending'], 'class="current" aria-current="page"' ), 'The job list always identifies the awaiting-review filter, including its active state' );
+	$assert( isset( $job_views['llamahire_open'], $job_views['llamahire_closing-soon'], $job_views['llamahire_closed'], $job_views['llamahire_expired'] ) && false !== strpos( $job_views['llamahire_closing-soon'], 'Closing soon' ) && false !== strpos( $job_views['llamahire_closed'], 'Closed' ) && false !== strpos( $job_views['llamahire_expired'], 'Expired' ), 'The job list exposes distinct live, closing-soon, manually closed, and expired listing views' );
+	ob_start();
+	\LlamaHire\Admin::job_column( 'llamahire_status', $employer_job_ids[1] );
+	$pending_job_column = ob_get_clean();
+	$assert( false !== strpos( $pending_job_column, 'Approve and publish' ) && false !== strpos( $pending_job_column, 'Request changes' ) && false !== strpos( $pending_job_column, 'Decline' ), 'Pending job rows expose explicit moderation outcomes instead of relying on the generic editor publish control' );
 	wp_set_current_user( $employer_user_ids[0] );
 	$_GET['job_id'] = $employer_job_ids[0];
 	$employer_form = do_shortcode( '[llamahire_submit_job]' );
 	unset( $_GET['job_id'] );
 	$employer_jobs = do_shortcode( '[llamahire_my_jobs]' );
 	$assert( false !== strpos( $employer_form, 'Employer one job' ) && false !== strpos( $employer_form, 'Submit for review' ) && false !== strpos( $employer_jobs, 'Employer one job' ) && false === strpos( $employer_jobs, 'Employer two job' ), 'Employer portal supports editing and lists only the signed-in author’s jobs' );
+	$assert( false !== strpos( $employer_jobs, '1 application' ) && false !== strpos( $employer_jobs, 'employer_view=applications' ), 'Internal-application jobs link to the ownership-scoped frontend candidate workspace' );
+	$_GET['employer_view'] = 'applications';
+	$employer_applications = do_shortcode( '[llamahire_my_jobs]' );
+	unset( $_GET['employer_view'] );
+	$assert( false !== strpos( $employer_applications, 'Employer one candidate' ) && false === strpos( $employer_applications, 'Employer two candidate' ) && false !== strpos( $employer_applications, 'Back to My Jobs' ), 'The frontend Applications workspace lists only candidates belonging to the signed-in employer' );
+	$_GET['employer_view']  = 'applications';
+	$_GET['application_id'] = $employer_application_ids[1];
+	$other_employer_application = do_shortcode( '[llamahire_my_jobs]' );
+	unset( $_GET['employer_view'], $_GET['application_id'] );
+	$assert( false === strpos( $other_employer_application, 'id="llamahire-employer-application-title"' ) && false === strpos( $other_employer_application, 'Employer two candidate' ), 'Changing the frontend application ID cannot reveal another employer’s candidate detail' );
+	$employer_user = get_userdata( $employer_user_ids[0] );
+	$assert( \LlamaHire\Employer_Portal::is_frontend_employer( $employer_user ) && ! \LlamaHire\Employer_Portal::show_admin_bar( true ) && \LlamaHire\Employer_Portal::my_jobs_url() === \LlamaHire\Employer_Portal::login_redirect( admin_url(), admin_url(), $employer_user ), 'Employer accounts are identified as frontend-only, hide the admin bar, and sign in to My Jobs' );
+	$_GET['my_jobs_search'] = 'Employer one';
+	$_GET['my_jobs_status'] = 'published';
+	$filtered_employer_jobs = do_shortcode( '[llamahire_my_jobs]' );
+	unset( $_GET['my_jobs_search'], $_GET['my_jobs_status'] );
+	$assert( false !== strpos( $filtered_employer_jobs, 'name="my_jobs_search" value="Employer one"' ), 'My Jobs preserves the owned-listing search query' );
+	$assert( false !== strpos( $filtered_employer_jobs, 'value="published"' ) && false !== strpos( $filtered_employer_jobs, "selected='selected'>Published</option>" ), 'My Jobs preserves the selected lifecycle filter' );
+	$assert( false !== strpos( $filtered_employer_jobs, 'Showing 1–1 of 1 jobs' ), 'My Jobs reports the matching owned-listing range' );
+	$my_jobs_query_args = new ReflectionMethod( \LlamaHire\Employer_Portal::class, 'my_jobs_query_args' );
+	$my_jobs_query_args->setAccessible( true );
+	$dashboard_query = $my_jobs_query_args->invoke( null, array( 'search' => '', 'status' => 'all', 'page' => 3 ) );
+	$assert( 25 === $dashboard_query['posts_per_page'] && 3 === $dashboard_query['paged'] && $employer_user_ids[0] === $dashboard_query['author'], 'My Jobs uses bounded server-side pagination scoped to the signed-in employer' );
+	$assert( false !== strpos( $employer_form, 'name="job_excerpt"' ) && false !== strpos( $employer_form, 'name="address_locality"' ) && false !== strpos( $employer_form, 'name="applicant_countries"' ) && false !== strpos( $employer_form, 'name="salary_min"' ) && false !== strpos( $employer_form, 'name="deadline"' ), 'Employer submissions expose the complete public job and schema field model' );
+	$assert( false !== strpos( $employer_form, 'Location type' ) && false !== strpos( $employer_form, 'data-llamahire-physical-location' ) && false !== strpos( $employer_form, 'data-llamahire-remote-location' ) && false === strpos( $employer_form, 'name="location"' ), 'Employer location entry adapts to physical or remote work without exposing the legacy duplicate display-location field' );
+	$assert( 'Legacy Place' === \LlamaHire\Jobs::query_location( array( 'workplace' => 'onsite', 'location' => 'Legacy Place' ) ) && 'Hamilton Ontario CA' === \LlamaHire\Jobs::query_location( array( 'workplace' => 'hybrid', 'location' => 'Old label', 'address_locality' => 'Hamilton', 'address_region' => 'Ontario', 'address_country' => 'CA' ) ) && 'CA, US' === \LlamaHire\Jobs::query_location( array( 'workplace' => 'remote', 'address_locality' => 'Old office', 'applicant_countries' => 'CA, US' ) ), 'Location search uses structured fields for current listings while retaining a legacy fallback' );
+	$assert( false !== strpos( $employer_form, 'value="draft" formnovalidate' ) && false !== strpos( $employer_form, 'value="preview"' ) && false !== strpos( $employer_form, 'value="submit"' ), 'Employer submissions provide distinct draft, preview, and submit-for-review intents' );
 	$new_job_form = do_shortcode( '[llamahire_submit_job]' );
-	$assert( false !== strpos( $new_job_form, 'Employer one Company' ) && false !== strpos( $employer_jobs, '>Preview</a>' ) && false !== strpos( $employer_jobs, '>Delete</summary>' ), 'New submissions prefill the employer’s latest company details and My Jobs provides preview and confirmed deletion controls' );
+	$assert( false !== strpos( $new_job_form, 'Employer one Company' ) && false !== strpos( $employer_jobs, '>Published</strong>' ) && false !== strpos( $employer_jobs, '>Preview</a>' ) && false !== strpos( $employer_jobs, '>Delete</summary>' ), 'New submissions prefill the employer’s latest company details and My Jobs provides explicit status, preview, and confirmed deletion controls' );
+	$lifecycle_expiry = current_datetime()->modify( '+3 days' )->format( 'Y-m-d' );
+	\LlamaHire\Jobs::set_meta( $employer_job_ids[0], array( 'deadline' => current_datetime()->modify( '+30 days' )->format( 'Y-m-d' ), 'listing_expires' => $lifecycle_expiry, 'featured' => '1', 'job_identifier' => 'EMPLOYER-ONE' ) );
+	$assert( \LlamaHire\Jobs::listing_expires_soon( $employer_job_ids[0] ), 'A published listing whose expiration is the next closing event is renewable during the seven-day window' );
+	$expiring_mail = array();
+	$capture_expiring_mail = static function ( $return, $attributes ) use ( &$expiring_mail ) {
+		$expiring_mail[] = $attributes;
+		return true;
+	};
+	add_filter( 'pre_wp_mail', $capture_expiring_mail, 10, 2 );
+	$first_expiring_run = \LlamaHire\Employer_Notifications::send_expiring_notices();
+	$second_expiring_run = \LlamaHire\Employer_Notifications::send_expiring_notices();
+	remove_filter( 'pre_wp_mail', $capture_expiring_mail );
+	$employer_jobs = do_shortcode( '[llamahire_my_jobs]' );
+	$assert( 1 <= $first_expiring_run && 0 === $second_expiring_run && 1 === count( array_filter( $expiring_mail, static function ( $mail ) use ( $employer_one ) { return $employer_one->user_email === $mail['to']; } ) ), 'The daily lifecycle task sends one employer reminder per saved expiration date and does not repeat it' );
+	$assert( false !== strpos( $employer_jobs, 'Listing expires' ) && false !== strpos( $employer_jobs, 'value="renew_job"' ) && false !== strpos( $employer_jobs, '>Renew</button>' ) && false !== strpos( $employer_jobs, 'value="duplicate_job"' ), 'My Jobs explains the effective expiration and offers renewal plus duplication for an eligible published listing' );
+	$lifecycle_duplicate_id = \LlamaHire\Jobs::duplicate_as_draft( $employer_job_ids[0], $employer_user_ids[0] );
+	$assert( ! is_wp_error( $lifecycle_duplicate_id ), 'Employer duplication can create a fresh draft' );
+	$duplicate_meta = \LlamaHire\Jobs::get_meta( $lifecycle_duplicate_id );
+	$assert( 'draft' === get_post_status( $lifecycle_duplicate_id ) && $employer_user_ids[0] === (int) get_post_field( 'post_author', $lifecycle_duplicate_id ) && '' === $duplicate_meta['deadline'] && '' === $duplicate_meta['listing_expires'] && '0' === $duplicate_meta['featured'] && '' === $duplicate_meta['job_identifier'], 'Employer duplication preserves ownership and content while clearing dates, expiration, featured state, and the external reference' );
+	\LlamaHire\Jobs::set_meta( $employer_job_ids[0], array( 'listing_expires' => current_datetime()->modify( '-1 day' )->format( 'Y-m-d' ) ) );
+	$expired_employer_jobs = do_shortcode( '[llamahire_my_jobs]' );
+	$assert( false !== strpos( $expired_employer_jobs, '>Expired</strong>' ) && false !== strpos( $expired_employer_jobs, 'value="relist_job"' ) && false === strpos( $expired_employer_jobs, 'value="renew_job"' ), 'Expired listings switch from renewal to moderation-backed relisting in My Jobs' );
 	wp_set_current_user( $board_manager_id );
 	$assert( \LlamaHire\Ownership::user_can_access_application( $employer_application_ids[0], \LlamaHire\Capabilities::VIEW_APPLICATIONS ) && \LlamaHire\Ownership::user_can_access_application( $employer_application_ids[1], \LlamaHire\Capabilities::VIEW_APPLICATIONS ), 'Board managers retain authorized board-wide candidate access' );
 	update_option( \LlamaHire\Settings::OPTION, $sanitized_settings, false );
@@ -638,7 +988,7 @@ try {
 	$empty_privacy_export = call_user_func( $exporters['llamahire-applications']['callback'], 'nobody@example.test', 1 );
 	$assert( $empty_privacy_export['done'] && array() === $empty_privacy_export['data'], 'Personal-data export completes cleanly when no application matches' );
 	$privacy_erasure = call_user_func( $erasers['llamahire-applications']['callback'], 'PRIVACY-CANDIDATE@EXAMPLE.TEST', 1 );
-	$assert( $privacy_erasure['items_removed'] && ! $privacy_erasure['items_retained'] && $privacy_erasure['done'] && ! file_exists( $privacy_resume_path ) && ! $repository->find( $privacy_application_id ), 'WordPress personal-data erasure removes the matching application and private resume together' );
+	$assert( $privacy_erasure['items_removed'] && ! $privacy_erasure['items_retained'] && $privacy_erasure['done'] && ! file_exists( $privacy_resume_path ) && ! $repository->find( $privacy_application_id ) && array() === \LlamaHire\Application_Notes::for_application( $privacy_application_id ), 'WordPress personal-data erasure removes the matching application, note history, and private resume together' );
 	$privacy_application_id = 0;
 	$privacy_resume_path = '';
 
@@ -712,6 +1062,23 @@ try {
 	$assert( \LlamaHire\Migrations::run() && '999' === (string) get_option( \LlamaHire\Migrations::OPTION ), 'Older code never downgrades a newer database schema' );
 	update_option( \LlamaHire\Migrations::OPTION, LLAMAHIRE_SCHEMA_VERSION, false );
 
+	$uninstall_department = wp_insert_term( 'Uninstall Department Smoke', 'llamahire_department', array( 'slug' => 'uninstall-department-smoke' ) );
+	$uninstall_job_type   = wp_insert_term( 'Uninstall Job Type Smoke', \LlamaHire\Jobs::TYPE_TAXONOMY, array( 'slug' => 'uninstall-job-type-smoke' ) );
+	$assert( ! is_wp_error( $uninstall_department ) && ! is_wp_error( $uninstall_job_type ), 'Uninstall taxonomy fixtures can be created' );
+	unregister_taxonomy( 'llamahire_department' );
+	unregister_taxonomy( \LlamaHire\Jobs::TYPE_TAXONOMY );
+	$delete_job_terms = new ReflectionMethod( \LlamaHire\Uninstaller::class, 'delete_job_terms' );
+	$delete_job_terms->setAccessible( true );
+	$delete_job_terms->invoke( null );
+	$remaining_uninstall_terms = (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->term_taxonomy} WHERE taxonomy IN (%s, %s)",
+			'llamahire_department',
+			\LlamaHire\Jobs::TYPE_TAXONOMY
+		)
+	); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Uninstall regression verifies plugin-owned taxonomy rows after the runtime taxonomy registry is unavailable.
+	$assert( 0 === $remaining_uninstall_terms && ! taxonomy_exists( 'llamahire_department' ) && ! taxonomy_exists( \LlamaHire\Jobs::TYPE_TAXONOMY ), 'Full uninstall removes taxonomy data even though the plugin runtime is inactive' );
+
 	WP_CLI::success( count( $checks ) . ' LlamaHire smoke checks passed.' );
 } finally {
 	if ( $retention_application_id ) {
@@ -726,8 +1093,17 @@ try {
 	if ( $privacy_resume_path && file_exists( $privacy_resume_path ) ) {
 		wp_delete_file( $privacy_resume_path );
 	}
+	if ( $uninstall_local_path && file_exists( $uninstall_local_path ) ) {
+		wp_delete_file( $uninstall_local_path );
+	}
+	if ( $uninstall_attachment_id ) {
+		wp_delete_attachment( $uninstall_attachment_id, true );
+	}
 	if ( $application_id ) {
 		\LlamaHire\Plugin::instance()->services()->get( \LlamaHire\Service_IDs::APPLICATION_REPOSITORY )->delete( $application_id );
+	}
+	if ( $bulk_application_id && ! is_wp_error( $bulk_application_id ) ) {
+		\LlamaHire\Plugin::instance()->services()->get( \LlamaHire\Service_IDs::APPLICATION_REPOSITORY )->delete( $bulk_application_id );
 	}
 	if ( $job_id ) {
 		wp_delete_post( $job_id, true );
@@ -741,6 +1117,9 @@ try {
 	if ( $department_term_id ) {
 		wp_delete_term( $department_term_id, 'llamahire_department' );
 	}
+	foreach ( $job_type_term_ids as $job_type_term_id ) {
+		wp_delete_term( $job_type_term_id, \LlamaHire\Jobs::TYPE_TAXONOMY );
+	}
 	if ( $privacy_page_id ) {
 		wp_delete_post( $privacy_page_id, true );
 	}
@@ -750,10 +1129,16 @@ try {
 	foreach ( $employer_job_ids as $employer_job_id ) {
 		wp_delete_post( $employer_job_id, true );
 	}
+	if ( $lifecycle_duplicate_id && ! is_wp_error( $lifecycle_duplicate_id ) ) {
+		wp_delete_post( $lifecycle_duplicate_id, true );
+	}
 	foreach ( $employer_user_ids as $employer_user_id ) {
 		wp_delete_user( $employer_user_id );
 	}
-	foreach ( array_filter( array_merge( array( $job_id, $sitemap_job_id, $filter_job_id ), $employer_job_ids ) ) as $audit_job_id ) {
+	if ( $registration_user_id && ! is_wp_error( $registration_user_id ) ) {
+		wp_delete_user( $registration_user_id );
+	}
+	foreach ( array_filter( array_merge( array( $job_id, $sitemap_job_id, $filter_job_id, $lifecycle_duplicate_id ), $employer_job_ids ) ) as $audit_job_id ) {
 		$wpdb->delete( \LlamaHire\Audit_Log::table(), array( 'job_id' => $audit_job_id ), array( '%d' ) );
 	}
 	wp_set_current_user( $original_current_user_id );

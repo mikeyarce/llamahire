@@ -8,7 +8,9 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 global $wpdb;
 
 $table = \LlamaHire\Applications::table();
-$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT id, resume_path FROM {$table} WHERE email = %s", 'browser-test@example.test' ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+$fixture_emails = array( 'browser-test@example.test', 'critical-browser@example.test', 'bulk-workflow@example.test', 'employer-portal-browser@example.test' );
+$email_placeholders = implode( ', ', array_fill( 0, count( $fixture_emails ), '%s' ) );
+$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT id, resume_path FROM {$table} WHERE email IN ({$email_placeholders})", $fixture_emails ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- The placeholders are generated from the fixed fixture email list.
 $store = \LlamaHire\Plugin::instance()->services()->get( \LlamaHire\Service_IDs::RESUME_STORAGE );
 $repo  = \LlamaHire\Plugin::instance()->services()->get( \LlamaHire\Service_IDs::APPLICATION_REPOSITORY );
 foreach ( $rows as $row ) {
@@ -54,10 +56,16 @@ if ( $department_term_id ) {
 	wp_delete_term( $department_term_id, 'llamahire_department' );
 }
 delete_option( 'llamahire_e2e_department_term_id' );
+$job_type_term_id = absint( get_option( 'llamahire_e2e_job_type_term_id' ) );
+foreach ( array_unique( array_merge( $job_type_term_id ? array( $job_type_term_id ) : array(), array_map( 'absint', (array) get_option( 'llamahire_e2e_job_type_term_ids', array() ) ) ) ) as $owned_term_id ) {
+	wp_delete_term( $owned_term_id, \LlamaHire\Jobs::TYPE_TAXONOMY );
+}
+delete_option( 'llamahire_e2e_job_type_term_id' );
+delete_option( 'llamahire_e2e_job_type_term_ids' );
 $settings = \LlamaHire\Settings::get();
-foreach ( array( 'submit_job_page_id', 'my_jobs_page_id' ) as $portal_page_key ) {
+foreach ( array( 'submit_job_page_id', 'my_jobs_page_id', 'employer_registration_page_id' ) as $portal_page_key ) {
 	$portal_page = \LlamaHire\Settings::public_page( $settings[ $portal_page_key ] );
-	if ( $portal_page && in_array( $portal_page->post_title, array( 'Submit a Job', 'My Jobs' ), true ) ) {
+	if ( $portal_page && in_array( $portal_page->post_title, array( 'Submit a Job', 'My Jobs', 'Employer Registration' ), true ) ) {
 		wp_delete_post( $portal_page->ID, true );
 	}
 	$settings[ $portal_page_key ] = 0;

@@ -19,6 +19,7 @@ $registry = get_option( "llamahire_fixture_registry" );
 global $wpdb;
 $table = \LlamaHire\Applications::table();
 $statuses = $wpdb->get_col( "SELECT DISTINCT status FROM {$table} WHERE id IN (" . implode( ",", array_map( "absint", wp_list_pluck( $registry["applications"], "id" ) ) ) . ")" );
+sort( $statuses );
 $resume_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE resume_path <> \"\" AND id IN (" . implode( ",", array_map( "absint", wp_list_pluck( $registry["applications"], "id" ) ) ) . ")" );
 $job_states = array( "draft" => false, "expired" => false, "closed" => false, "exact_salary" => false, "no_salary" => false );
 foreach ( $registry["jobs"] as $job_id ) {
@@ -30,7 +31,7 @@ foreach ( $registry["jobs"] as $job_id ) {
 	$job_states["no_salary"] = $job_states["no_salary"] || ( "" === $meta["salary_min"] && "" === $meta["salary_max"] );
 }
 if ( 7 !== count( $registry["jobs"] ) || 16 !== count( $registry["applications"] ) || 5 !== count( $registry["terms"] ) || 2 !== count( $registry["pages"] ) || 1 !== count( $registry["attachments"] ) ) { WP_CLI::error( "Fixture registry counts are incorrect." ); }
-if ( 4 !== count( $statuses ) || 4 !== $resume_count ) { WP_CLI::error( "Application statuses or resumes are incomplete." ); }
+if ( array( "hired", "interviewing", "new", "offer", "rejected", "reviewing" ) !== $statuses || 4 !== $resume_count ) { WP_CLI::error( "Application statuses or resumes are incomplete." ); }
 if ( in_array( false, $job_states, true ) ) { WP_CLI::error( "Edge-case job states are incomplete." ); }
 foreach ( $registry["jobs"] as $job_id ) { if ( "llamahire-fixtures-v1" !== get_post_meta( $job_id, "_llamahire_fixture_owner", true ) ) { WP_CLI::error( "A generated job is missing its ownership marker." ); } }
 WP_CLI::success( "Fixture generation assertions passed." );

@@ -2,6 +2,9 @@
 namespace LlamaHire\Tools;
 
 use LlamaHire\Applications;
+use LlamaHire\Audit_Log;
+use LlamaHire\Capabilities;
+use LlamaHire\Employer_Registration;
 use LlamaHire\Jobs;
 use LlamaHire\Plugin;
 use LlamaHire\Service_IDs;
@@ -16,6 +19,7 @@ defined( 'WP_CLI' ) && WP_CLI || exit;
  */
 final class Fixtures_Command {
 	const OPTION = 'llamahire_fixture_registry';
+	const EMPLOYER_OPTION = 'llamahire_employer_fixture_registry';
 	const OWNER  = 'llamahire-fixtures-v1';
 	const META   = '_llamahire_fixture_owner';
 
@@ -73,6 +77,7 @@ final class Fixtures_Command {
 			'created_at'   => current_time( 'mysql', true ),
 			'jobs'         => array(),
 			'terms'        => array(),
+			'job_types'    => array(),
 			'pages'        => array(),
 			'attachments'  => array(),
 			'applications' => array(),
@@ -90,6 +95,21 @@ final class Fixtures_Command {
 		try {
 			$attachment = $this->create_logo( $seed, $scenario );
 			$registry['attachments'][] = $attachment;
+			$this->save_registry( $registry );
+
+			foreach ( array( 'full_time' => 'Full time', 'part_time' => 'Part time', 'contractor' => 'Contractor', 'temporary' => 'Temporary', 'intern' => 'Intern', 'volunteer' => 'Volunteer', 'per_diem' => 'Per diem', 'other' => 'Other' ) as $slug => $name ) {
+				$existing = get_term_by( 'slug', $slug, Jobs::TYPE_TAXONOMY );
+				if ( $existing instanceof \WP_Term ) {
+					continue;
+				}
+				$term = wp_insert_term( $name, Jobs::TYPE_TAXONOMY, array( 'slug' => $slug ) );
+				if ( is_wp_error( $term ) ) {
+					throw new \RuntimeException( $term->get_error_message() );
+				}
+				$term_id = (int) $term['term_id'];
+				update_term_meta( $term_id, self::META, self::OWNER );
+				$registry['job_types'][] = $term_id;
+			}
 			$this->save_registry( $registry );
 
 			$department_names = array( 'Engineering', 'Design', 'Marketing', 'Customer Success', 'Operations' );
@@ -209,6 +229,231 @@ final class Fixtures_Command {
 		\WP_CLI\Utils\format_items( $assoc_args['format'] ?? 'table', $rows, array( 'property', 'value' ) );
 	}
 
+	/**
+	 * Create a reusable local employer account and lifecycle jobs.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--username=<username>]
+	 * : Account login. Default: llamahire-employer.
+	 *
+	 * [--password=<password>]
+	 * : Account password. Default: llamahire-demo.
+	 *
+	 * [--force]
+	 * : Replace the currently registered employer fixture.
+	 *
+	 * [--cleanup]
+	 * : Remove the registered employer fixture and restore its settings.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp llamahire fixtures employer
+	 *     wp llamahire fixtures employer --force
+	 *     wp llamahire fixtures employer --cleanup
+	 *
+	 * @subcommand employer
+	 */
+	public function employer( $args, $assoc_args ) {
+		$this->require_safe_environment();
+		if ( \WP_CLI\Utils\get_flag_value( $assoc_args, 'cleanup', false ) ) {
+			$counts = $this->remove_employer_fixture();
+			\WP_CLI::success( sprintf( 'Removed the employer test account, %1$d jobs, and %2$d pages.', $counts['jobs'], $counts['pages'] ) );
+			return;
+		}
+
+		if ( get_option( self::EMPLOYER_OPTION, false ) ) {
+			if ( ! \WP_CLI\Utils\get_flag_value( $assoc_args, 'force', false ) ) {
+				\WP_CLI::error( 'An employer fixture is already registered. Pass --force to replace it or --cleanup to remove it.' );
+			}
+			$this->remove_employer_fixture();
+		}
+
+		$username = sanitize_user( $assoc_args['username'] ?? 'llamahire-employer', true );
+		$password = (string) ( $assoc_args['password'] ?? 'llamahire-demo' );
+		if ( ! $username || strlen( $password ) < 8 ) {
+			\WP_CLI::error( 'Choose a valid username and a password containing at least eight characters.' );
+		}
+		if ( username_exists( $username ) ) {
+			\WP_CLI::error( 'That username already belongs to an account not owned by this fixture.' );
+		}
+
+		$registry = array(
+			'version'    => 1,
+			'owner'      => self::OWNER,
+			'created_at' => current_time( 'mysql', true ),
+			'user_id'    => 0,
+			'jobs'       => array(),
+			'pages'      => array(),
+			'options'    => array(
+				'settings_exists' => false !== get_option( Settings::OPTION, false ),
+				'settings'        => get_option( Settings::OPTION, false ),
+			),
+		);
+		update_option( self::EMPLOYER_OPTION, $registry, false );
+
+		try {
+			Capabilities::install();
+			$user_id = wp_insert_user(
+				array(
+					'user_login'   => $username,
+					'user_pass'    => $password,
+					'user_email'   => $username . '@example.test',
+					'display_name' => 'Demo Employer',
+					'role'         => Capabilities::EMPLOYER_ROLE,
+				)
+			);
+			if ( is_wp_error( $user_id ) ) {
+				throw new \RuntimeException( $user_id->get_error_message() );
+			}
+			$registry['user_id'] = (int) $user_id;
+			update_user_meta( $user_id, self::META, self::OWNER );
+			update_user_meta( $user_id, Employer_Registration::STATUS_META, Employer_Registration::STATUS_APPROVED );
+			update_user_meta( $user_id, Employer_Registration::COMPANY_META, 'Demo Employer Co.' );
+			$this->save_employer_registry( $registry );
+
+			$settings = Settings::get();
+			$page_specs = array(
+				'submit_job_page_id' => array( 'Submit a Job', 'submit-a-job', '[llamahire_submit_job]' ),
+				'my_jobs_page_id' => array( 'My Jobs', 'my-jobs', '[llamahire_my_jobs]' ),
+				'employer_registration_page_id' => array( 'Employer registration', 'employer-registration', '[llamahire_employer_registration]' ),
+			);
+			foreach ( $page_specs as $setting_key => $page_spec ) {
+				if ( Settings::public_page( $settings[ $setting_key ] ?? 0 ) ) {
+					continue;
+				}
+				$page_id = $this->create_employer_page( $page_spec[0], $page_spec[1], $page_spec[2] );
+				$registry['pages'][] = $page_id;
+				$settings[ $setting_key ] = $page_id;
+				$this->save_employer_registry( $registry );
+			}
+			$policy_page = Settings::public_page( $settings['employer_policy_page_id'] ?? 0 );
+			if ( ! $policy_page ) {
+				$policy_id = $this->create_employer_page( 'Listing rules', 'listing-rules', '<!-- wp:heading --><h2 class="wp-block-heading">Accurate, useful listings</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Employers must provide accurate company and role details, use a real application destination, and keep listings current. Misleading, discriminatory, duplicate, or unlawful listings may be removed.</p><!-- /wp:paragraph -->' );
+				$registry['pages'][] = $policy_id;
+				$settings['employer_policy_page_id'] = $policy_id;
+				$this->save_employer_registry( $registry );
+			}
+			$settings['site_mode'] = Settings::SITE_MODE_JOB_BOARD;
+			$settings['employer_policy_text'] = 'I agree to follow this job board’s {listing_policy} and provide accurate employer and job information.';
+			update_option( Settings::OPTION, Settings::sanitize( $settings ) );
+
+			foreach ( array(
+				array( 'Demo draft listing', 'draft', '' ),
+				array( 'Demo listing expiring soon', 'publish', wp_date( 'Y-m-d', current_time( 'timestamp' ) + ( 3 * DAY_IN_SECONDS ) ) ),
+				array( 'Demo expired listing', 'publish', wp_date( 'Y-m-d', current_time( 'timestamp' ) - DAY_IN_SECONDS ) ),
+			) as $job_spec ) {
+				$registry['jobs'][] = $this->create_employer_job( $user_id, $job_spec[0], $job_spec[1], $job_spec[2] );
+				$this->save_employer_registry( $registry );
+			}
+		} catch ( \Throwable $error ) {
+			\WP_CLI::warning( 'Employer fixture creation stopped with a recoverable registry in place.' );
+			\WP_CLI::error( $error->getMessage() );
+		}
+
+		\WP_CLI::success( 'Created an approved employer test account and three lifecycle jobs.' );
+		\WP_CLI::log( 'Username: ' . $username );
+		\WP_CLI::log( 'Password: ' . $password );
+		\WP_CLI::log( 'My Jobs: ' . get_permalink( Settings::get()['my_jobs_page_id'] ) );
+		\WP_CLI::log( 'Registration: ' . get_permalink( Settings::get()['employer_registration_page_id'] ) );
+	}
+
+	private function create_employer_page( $title, $slug, $content ) {
+		$page_id = wp_insert_post(
+			array(
+				'post_type'    => 'page',
+				'post_status'  => 'publish',
+				'post_title'   => $title,
+				'post_name'    => wp_unique_post_slug( $slug, 0, 'publish', 'page', 0 ),
+				'post_content' => $content,
+			),
+			true
+		);
+		if ( is_wp_error( $page_id ) ) {
+			throw new \RuntimeException( $page_id->get_error_message() );
+		}
+		update_post_meta( $page_id, self::META, self::OWNER );
+		return (int) $page_id;
+	}
+
+	private function create_employer_job( $user_id, $title, $status, $listing_expires ) {
+		$job_id = wp_insert_post(
+			array(
+				'post_type'    => Jobs::POST_TYPE,
+				'post_status'  => $status,
+				'post_author'  => absint( $user_id ),
+				'post_title'   => $title,
+				'post_excerpt' => 'A reusable local listing for testing the employer workflow.',
+				'post_content' => '<!-- wp:heading --><h2 class="wp-block-heading">About the role</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Use this listing to test editing, previewing, renewing, relisting, and duplicating jobs.</p><!-- /wp:paragraph -->',
+			),
+			true
+		);
+		if ( is_wp_error( $job_id ) ) {
+			throw new \RuntimeException( $job_id->get_error_message() );
+		}
+		update_post_meta( $job_id, self::META, self::OWNER );
+		Jobs::set_meta(
+			$job_id,
+			array(
+				'location'          => 'Vancouver, British Columbia',
+				'employment_type'   => 'full_time',
+				'workplace'         => 'hybrid',
+				'deadline'          => wp_date( 'Y-m-d', current_time( 'timestamp' ) + ( 30 * DAY_IN_SECONDS ) ),
+				'listing_expires'   => $listing_expires,
+				'address_locality'  => 'Vancouver',
+				'address_region'    => 'British Columbia',
+				'address_country'   => 'CA',
+				'organization_name' => 'Demo Employer Co.',
+				'organization_url'  => home_url( '/' ),
+				'application_method'=> 'internal',
+				'application_target'=> 'demo-employer@example.test',
+			)
+		);
+		return (int) $job_id;
+	}
+
+	private function remove_employer_fixture() {
+		$registry = get_option( self::EMPLOYER_OPTION, false );
+		if ( ! is_array( $registry ) || self::OWNER !== ( $registry['owner'] ?? '' ) ) {
+			\WP_CLI::error( 'No registered employer fixture was found.' );
+		}
+		$counts = array( 'jobs' => 0, 'pages' => 0 );
+		global $wpdb;
+		foreach ( (array) ( $registry['jobs'] ?? array() ) as $job_id ) {
+			if ( self::OWNER !== get_post_meta( $job_id, self::META, true ) ) {
+				continue;
+			}
+			$wpdb->delete( Audit_Log::table(), array( 'job_id' => absint( $job_id ) ), array( '%d' ) );
+			if ( wp_delete_post( $job_id, true ) ) {
+				$counts['jobs']++;
+			}
+		}
+		foreach ( (array) ( $registry['pages'] ?? array() ) as $page_id ) {
+			if ( self::OWNER === get_post_meta( $page_id, self::META, true ) && wp_delete_post( $page_id, true ) ) {
+				$counts['pages']++;
+			}
+		}
+		$user_id = absint( $registry['user_id'] ?? 0 );
+		if ( $user_id && self::OWNER === get_user_meta( $user_id, self::META, true ) ) {
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+			$administrators = get_users( array( 'role' => 'administrator', 'fields' => 'ids', 'number' => 1 ) );
+			$reassign_id = absint( reset( $administrators ) );
+			wp_delete_user( $user_id, $reassign_id ?: null );
+		}
+		$options = (array) ( $registry['options'] ?? array() );
+		if ( ! empty( $options['settings_exists'] ) ) {
+			update_option( Settings::OPTION, $options['settings'], false );
+		} else {
+			delete_option( Settings::OPTION );
+		}
+		delete_option( self::EMPLOYER_OPTION );
+		return $counts;
+	}
+
+	private function save_employer_registry( array $registry ) {
+		update_option( self::EMPLOYER_OPTION, $registry, false );
+	}
+
 	private function scenarios() {
 		return array(
 			'demo'                  => array( 'jobs' => 16, 'applications' => 64 ),
@@ -227,7 +472,7 @@ final class Fixtures_Command {
 			? array( 'Senior Product Designer', 'Backend Platform Engineer', 'Customer Success Lead', 'Content Strategist', 'People Operations Partner', 'Data Analyst', 'Frontend Engineer', 'Growth Marketing Manager', 'Product Manager', 'Security Engineer', 'Technical Writer', 'Finance Operations Analyst', 'Developer Experience Engineer', 'Design Systems Lead', 'Community Programs Manager', 'Support Engineer' )
 			: array( 'Senior Product Designer', 'Backend Engineer', 'Customer Success Lead', 'Content Strategist', 'People Operations Partner', 'Data Analyst', 'Frontend Engineer', 'Growth Marketer' );
 		$workplaces = array( 'onsite', 'hybrid', 'remote' );
-		$employment = array( 'FULL_TIME', 'PART_TIME', 'CONTRACTOR', 'TEMPORARY', 'INTERN', 'VOLUNTEER', 'PER_DIEM', 'OTHER' );
+		$employment = array( 'full_time', 'part_time', 'contractor', 'temporary', 'intern', 'volunteer', 'per_diem', 'other' );
 		$workplace = 'remote' === $scenario ? 'remote' : $workplaces[ $index % count( $workplaces ) ];
 		$status = ( 'edge-cases' === $scenario && 0 === $index % 5 ) || ( 'demo' === $scenario && 11 === $index ) ? 'draft' : 'publish';
 		$title  = $titles[ $index % count( $titles ) ];
@@ -291,6 +536,7 @@ final class Fixtures_Command {
 		);
 		set_post_thumbnail( $job_id, $attachment );
 		wp_set_object_terms( $job_id, array( $terms[ $index % count( $terms ) ] ), 'llamahire_department' );
+		wp_set_object_terms( $job_id, array( $employment[ $index % count( $employment ) ] ), Jobs::TYPE_TAXONOMY );
 		return (int) $job_id;
 	}
 
@@ -413,16 +659,15 @@ final class Fixtures_Command {
 		if ( empty( $health['available'] ) ) {
 			throw new \RuntimeException( 'Private resume storage is unavailable.' );
 		}
-		$outside = trailingslashit( dirname( untrailingslashit( wp_normalize_path( ABSPATH ) ) ) ) . '.llamahire-private';
-		if ( is_dir( $outside ) && is_writable( $outside ) ) {
-			$directory = $outside;
-		} else {
-			$uploads = wp_upload_dir();
-			$directory = trailingslashit( $uploads['basedir'] ) . 'llamahire-private';
+		$directory_method = new \ReflectionMethod( get_class( $storage ), 'directory' );
+		$directory_method->setAccessible( true );
+		$directory = $directory_method->invoke( $storage, true );
+		if ( is_wp_error( $directory ) ) {
+			throw new \RuntimeException( 'Private resume storage is unavailable.' );
 		}
 		$name = 'fixture-resume-' . $seed . '-' . ( $index + 1 ) . '.pdf';
 		$path = trailingslashit( $directory ) . wp_unique_filename( $directory, $name );
-		$pdf = "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n";
+		$pdf = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n";
 		if ( false === file_put_contents( $path, $pdf, LOCK_EX ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions
 			throw new \RuntimeException( 'Could not create the fixture resume.' );
 		}
@@ -467,6 +712,14 @@ final class Fixtures_Command {
 		foreach ( (array) $registry['terms'] as $term_id ) {
 			if ( self::OWNER === get_term_meta( $term_id, self::META, true ) ) {
 				$result = wp_delete_term( $term_id, 'llamahire_department' );
+				if ( ! is_wp_error( $result ) && $result ) {
+					$counts['terms']++;
+				}
+			}
+		}
+		foreach ( (array) ( $registry['job_types'] ?? array() ) as $term_id ) {
+			if ( self::OWNER === get_term_meta( $term_id, self::META, true ) ) {
+				$result = wp_delete_term( $term_id, Jobs::TYPE_TAXONOMY );
 				if ( ! is_wp_error( $result ) && $result ) {
 					$counts['terms']++;
 				}

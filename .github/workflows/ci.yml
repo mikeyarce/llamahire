@@ -190,6 +190,28 @@ jobs:
           path: playwright-report/
           retention-days: 14
 
+  multisite-uninstall:
+    name: Multisite full uninstall
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Start disposable multisite network
+        env:
+          WP_ENV_PHP_VERSION: '8.3'
+        run: npm run env:multisite:start
+      - name: Verify network-wide full uninstall
+        run: npm run test:uninstall:multisite
+      - name: Stop WordPress
+        if: always()
+        continue-on-error: true
+        run: npm run env:multisite:stop
+
   fixtures:
     name: WP-CLI fixture lifecycle
     runs-on: ubuntu-latest
