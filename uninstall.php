@@ -12,6 +12,7 @@ require_once __DIR__ . '/includes/class-capabilities.php';
 $llamahire_remove_data = defined( 'LLAMAHIRE_REMOVE_DATA' ) && true === LLAMAHIRE_REMOVE_DATA;
 
 if ( $llamahire_remove_data ) {
+	require_once __DIR__ . '/includes/class-rate-limiter.php';
 	require_once __DIR__ . '/includes/contracts/interface-resume-storage.php';
 	require_once __DIR__ . '/includes/services/class-resume-storage.php';
 	require_once __DIR__ . '/includes/services/class-vip-acl-resume-storage.php';
@@ -21,6 +22,8 @@ if ( $llamahire_remove_data ) {
 $llamahire_uninstall_current_site = static function () use ( $llamahire_remove_data ) {
 	wp_clear_scheduled_hook( 'llamahire_cleanup_expired_applications' );
 	wp_clear_scheduled_hook( 'llamahire_send_expiring_listing_notices' );
+	wp_clear_scheduled_hook( 'llamahire_geocode_job' );
+	wp_clear_scheduled_hook( 'llamahire_continue_migrations' );
 
 	if ( $llamahire_remove_data ) {
 		\LlamaHire\Uninstaller::remove_data();

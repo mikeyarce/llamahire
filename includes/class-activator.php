@@ -5,6 +5,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Activator {
 	public static function activate( $network_wide = false ) {
+		Jobs::register_taxonomies();
 		if ( is_multisite() && $network_wide ) {
 			self::for_each_site(
 				static function () {
@@ -22,6 +23,7 @@ final class Activator {
 				static function () {
 					wp_clear_scheduled_hook( Applications::RETENTION_HOOK );
 					wp_clear_scheduled_hook( Employer_Notifications::EXPIRING_HOOK );
+					wp_clear_scheduled_hook( Migrations::CONTINUE_HOOK );
 					delete_option( 'rewrite_rules' );
 				}
 			);
@@ -29,6 +31,7 @@ final class Activator {
 		}
 		wp_clear_scheduled_hook( Applications::RETENTION_HOOK );
 		wp_clear_scheduled_hook( Employer_Notifications::EXPIRING_HOOK );
+		wp_clear_scheduled_hook( Migrations::CONTINUE_HOOK );
 		delete_option( 'rewrite_rules' );
 	}
 

@@ -66,6 +66,25 @@ final class Jobs {
 			)
 		);
 
+		self::register_taxonomies();
+
+		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'enqueue_editor' ) );
+		add_action( 'wp_after_insert_post', array( __CLASS__, 'ensure_identifier' ), 10, 4 );
+		add_action( 'added_post_meta', array( __CLASS__, 'sync_query_meta' ), 10, 4 );
+		add_action( 'updated_post_meta', array( __CLASS__, 'sync_query_meta' ), 10, 4 );
+		add_action( 'set_object_terms', array( __CLASS__, 'sync_type_meta' ), 10, 6 );
+		add_filter( 'post_row_actions', array( __CLASS__, 'row_actions' ), 10, 2 );
+		add_action( 'admin_action_llamahire_duplicate_job', array( __CLASS__, 'duplicate' ) );
+		add_filter( 'display_post_states', array( __CLASS__, 'post_states' ), 10, 2 );
+	}
+
+	/**
+	 * Register taxonomies needed by both runtime and activation migrations.
+	 *
+	 * @internal
+	 * @return void
+	 */
+	public static function register_taxonomies() {
 		$department_labels = self::department_labels();
 		register_taxonomy(
 			self::DEPARTMENT_TAXONOMY,
@@ -103,15 +122,6 @@ final class Jobs {
 				'rewrite'           => array( 'slug' => 'job-type' ),
 			)
 		);
-
-		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'enqueue_editor' ) );
-		add_action( 'wp_after_insert_post', array( __CLASS__, 'ensure_identifier' ), 10, 4 );
-		add_action( 'added_post_meta', array( __CLASS__, 'sync_query_meta' ), 10, 4 );
-		add_action( 'updated_post_meta', array( __CLASS__, 'sync_query_meta' ), 10, 4 );
-		add_action( 'set_object_terms', array( __CLASS__, 'sync_type_meta' ), 10, 6 );
-		add_filter( 'post_row_actions', array( __CLASS__, 'row_actions' ), 10, 2 );
-		add_action( 'admin_action_llamahire_duplicate_job', array( __CLASS__, 'duplicate' ) );
-		add_filter( 'display_post_states', array( __CLASS__, 'post_states' ), 10, 2 );
 	}
 
 	private static function rest_properties() {

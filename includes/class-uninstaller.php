@@ -213,15 +213,21 @@ final class Uninstaller {
 	 * Remove plugin options and transient rate counters.
 	 */
 	private static function delete_options() {
-		foreach ( array( 'llamahire_db_version', 'llamahire_schema_version', 'llamahire_capabilities_version', 'llamahire_organization', 'llamahire_setup', 'llamahire_settings', 'llamahire_email_diagnostics' ) as $option ) {
+		foreach ( array( 'llamahire_db_version', 'llamahire_schema_version', 'llamahire_capabilities_version', 'llamahire_migration_lock', 'llamahire_organization', 'llamahire_setup', 'llamahire_settings', 'llamahire_email_diagnostics' ) as $option ) {
 			delete_option( $option );
 		}
 
 		global $wpdb;
-		$like = $wpdb->esc_like( '_transient_llamahire_rate_' ) . '%';
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Explicit uninstall cleanup for bounded plugin-owned transient keys.
-		$timeout_like = $wpdb->esc_like( '_transient_timeout_llamahire_rate_' ) . '%';
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $timeout_like ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Explicit uninstall cleanup for bounded plugin-owned transient timeout keys.
+		$cursor_like = $wpdb->esc_like( 'llamahire_migration_cursor_' ) . '%';
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $cursor_like ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Explicit uninstall cleanup for plugin-owned migration cursors.
+		$lock_like = $wpdb->esc_like( Rate_Limiter::LOCK_PREFIX ) . '%';
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $lock_like ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Explicit uninstall cleanup for plugin-owned short-lived rate-limit locks.
+		foreach ( array( 'llamahire_rate_', 'llamahire_reg_', 'llamahire_geocode_' ) as $transient_prefix ) {
+			$like = $wpdb->esc_like( '_transient_' . $transient_prefix ) . '%';
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Explicit uninstall cleanup for bounded plugin-owned transient keys.
+			$timeout_like = $wpdb->esc_like( '_transient_timeout_' . $transient_prefix ) . '%';
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $timeout_like ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Explicit uninstall cleanup for bounded plugin-owned transient timeout keys.
+		}
 	}
 
 	private function __construct() {}

@@ -255,7 +255,7 @@ Pro-specific operations require Pro-owned capabilities. Pro may require a Free c
 
 ## Schema and capability versions
 
-`LLAMAHIRE_SCHEMA_VERSION` and `LLAMAHIRE_CAPABILITIES_VERSION` are internal maintenance versions, separate from both the plugin and public API versions. Free applies idempotent, forward-only schema migrations during activation and ordinary requests, so upgrades do not depend on deactivation/reactivation.
+`LLAMAHIRE_SCHEMA_VERSION` and `LLAMAHIRE_CAPABILITIES_VERSION` are internal maintenance versions, separate from both the plugin and public API versions. Free applies idempotent, forward-only schema migrations during activation and ordinary requests, so upgrades do not depend on deactivation/reactivation. Activation registers migration-required taxonomies before running data conversion. Data backfills use bounded keyset batches with persisted cursors and scheduled continuation; a failed record leaves its cursor and schema version unchanged so the complete conversion can retry safely, and the schema version advances only after every batch completes.
 
 Pro must maintain its own schema/capability versions and migration runner for Pro-owned data. It must never update Free’s version options or duplicate Free migrations.
 
