@@ -316,6 +316,7 @@ final class Fixtures_Command {
 			$page_specs = array(
 				'submit_job_page_id' => array( 'Submit a Job', 'submit-a-job', '[llamahire_submit_job]' ),
 				'my_jobs_page_id' => array( 'My Jobs', 'my-jobs', '[llamahire_my_jobs]' ),
+				'employer_account_page_id' => array( 'Account', 'employer-account', '[llamahire_employer_account]' ),
 				'employer_registration_page_id' => array( 'Employer registration', 'employer-registration', '[llamahire_employer_registration]' ),
 			);
 			foreach ( $page_specs as $setting_key => $page_spec ) {
@@ -355,6 +356,7 @@ final class Fixtures_Command {
 		\WP_CLI::log( 'Username: ' . $username );
 		\WP_CLI::log( 'Password: ' . $password );
 		\WP_CLI::log( 'My Jobs: ' . get_permalink( Settings::get()['my_jobs_page_id'] ) );
+		\WP_CLI::log( 'Account: ' . get_permalink( Settings::get()['employer_account_page_id'] ) );
 		\WP_CLI::log( 'Registration: ' . get_permalink( Settings::get()['employer_registration_page_id'] ) );
 	}
 

@@ -36,6 +36,8 @@ $employer_job_ids = array();
 $employer_application_ids = array();
 $registration_user_id = 0;
 $lifecycle_duplicate_id = 0;
+$activation_migration_job_id = 0;
+$activation_migration_term_id = 0;
 $uninstall_local_path = '';
 $uninstall_attachment_id = 0;
 $original_settings = get_option( \LlamaHire\Settings::OPTION, false );
@@ -81,7 +83,7 @@ try {
 	$employer      = get_role( \LlamaHire\Capabilities::EMPLOYER_ROLE );
 	$assert( $administrator && $administrator->has_cap( \LlamaHire\Capabilities::VIEW_APPLICATIONS ) && $administrator->has_cap( \LlamaHire\Capabilities::RETRY_NOTIFICATIONS ) && $administrator->has_cap( \LlamaHire\Capabilities::ERASE_APPLICATIONS ) && $administrator->has_cap( 'publish_llamahire_jobs' ), 'Administrators receive candidate and job capabilities' );
 	$assert( ! $subscriber || ( ! $subscriber->has_cap( \LlamaHire\Capabilities::VIEW_APPLICATIONS ) && ! $subscriber->has_cap( 'edit_llamahire_jobs' ) ), 'Subscribers receive no hiring capabilities by default' );
-	$assert( $employer && $employer->has_cap( 'edit_llamahire_jobs' ) && $employer->has_cap( \LlamaHire\Capabilities::VIEW_APPLICATIONS ) && ! $employer->has_cap( 'edit_others_llamahire_jobs' ) && ! $employer->has_cap( 'publish_llamahire_jobs' ) && ! $employer->has_cap( \LlamaHire\Capabilities::ERASE_APPLICATIONS ), 'Employers manage their pending jobs and candidates without board-wide publication, ownership, or erasure powers' );
+	$assert( $employer && $employer->has_cap( 'edit_llamahire_jobs' ) && $employer->has_cap( \LlamaHire\Capabilities::VIEW_APPLICATIONS ) && ! $employer->has_cap( 'edit_others_llamahire_jobs' ) && ! $employer->has_cap( 'edit_published_llamahire_jobs' ) && ! $employer->has_cap( 'delete_published_llamahire_jobs' ) && ! $employer->has_cap( 'publish_llamahire_jobs' ) && ! $employer->has_cap( \LlamaHire\Capabilities::ERASE_APPLICATIONS ), 'Employers use the moderated frontend workflow without core published-job, board-wide ownership, publication, or erasure powers' );
 	$hiring_manager = get_role( \LlamaHire\Capabilities::HIRING_MANAGER_ROLE );
 	$assert( $hiring_manager && $hiring_manager->has_cap( 'edit_others_llamahire_jobs' ) && $hiring_manager->has_cap( 'publish_llamahire_jobs' ) && $hiring_manager->has_cap( \LlamaHire\Capabilities::MANAGE_APPLICATIONS ) && $hiring_manager->has_cap( \LlamaHire\Capabilities::EXPORT_APPLICATIONS ) && $hiring_manager->has_cap( \LlamaHire\Capabilities::DOWNLOAD_RESUMES ) && ! $hiring_manager->has_cap( \LlamaHire\Capabilities::ERASE_APPLICATIONS ) && ! $hiring_manager->has_cap( 'manage_options' ), 'Hiring Managers operate site-wide jobs and candidate workflows without site settings or permanent erasure access' );
 
@@ -92,6 +94,8 @@ try {
 	$department_type = get_taxonomy( 'llamahire_department' );
 	$employment_type_taxonomy = get_taxonomy( \LlamaHire\Jobs::TYPE_TAXONOMY );
 	$assert( 'edit_llamahire_jobs' === $job_type->cap->edit_posts && 'edit_llamahire_job' === $job_type->cap->edit_post, 'Job post type maps dedicated capabilities' );
+	$empty_job = new WP_Post( (object) array( 'ID' => 0, 'post_type' => \LlamaHire\Jobs::POST_TYPE ) );
+	$assert( empty( $job_type->template ) && 'Add job title' === apply_filters( 'enter_title_here', 'Add title', $empty_job ), 'New jobs start with an empty block canvas and a job-specific title prompt' );
 	$assert( 'manage_llamahire_departments' === $department_type->cap->manage_terms, 'Department taxonomy maps dedicated capabilities' );
 	$assert( 'manage_llamahire_job_types' === $employment_type_taxonomy->cap->manage_terms && $employer->has_cap( 'assign_llamahire_job_types' ) && ! $employer->has_cap( 'manage_llamahire_job_types' ), 'Job types are operator-managed while employers can assign existing types' );
 	$registered_job_meta = get_registered_meta_keys( 'post', 'llamahire_job' );
@@ -99,7 +103,13 @@ try {
 	$privacy_page_id = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'LlamaHire Smoke Privacy', 'post_content' => 'Privacy fixture.' ) );
 	$assert( ! is_wp_error( $privacy_page_id ) && $privacy_page_id > 0, 'A published candidate privacy page can be selected' );
 	$sanitized_settings = \LlamaHire\Settings::sanitize( array( 'site_mode' => 'company', 'name' => 'Example Employer', 'website' => 'https://employer.example.test/', 'default_locality' => ' Vancouver ', 'default_region' => ' bc ', 'default_country' => 'ca', 'default_currency' => 'cad', 'notification_email' => 'hiring@example.test', 'email_sender_name' => ' Example Hiring ', 'email_sender_email' => 'jobs@example.test', 'employer_email_subject' => 'Applicant {candidate_name}: {job_title}', 'employer_email_body' => "{candidate_name} applied.\n\nOpen {applications_url}", 'candidate_email_subject' => 'Application received: {job_title}', 'candidate_email_body' => "Hello {candidate_name},\n\nThank you from {site_name}.\n{site_url}", 'privacy_text' => ' Candidate data is used only for hiring. ', 'privacy_page_id' => $privacy_page_id, 'application_phone' => 'required', 'application_resume' => 'required', 'application_letter' => 'hidden' ) );
-	$assert( 'Vancouver' === $sanitized_settings['default_locality'] && 'bc' === $sanitized_settings['default_region'] && 'CA' === $sanitized_settings['default_country'] && 'CAD' === $sanitized_settings['default_currency'] && 'hiring@example.test' === $sanitized_settings['notification_email'] && 'Candidate data is used only for hiring.' === $sanitized_settings['privacy_text'] && $privacy_page_id === $sanitized_settings['privacy_page_id'] && 365 === $sanitized_settings['retention_days'], 'Setup defaults normalize organization, privacy, retention, and hiring inbox values' );
+	$assert( 'Vancouver' === $sanitized_settings['default_locality'] && 'bc' === $sanitized_settings['default_region'] && 'CA' === $sanitized_settings['default_country'] && 'CAD' === $sanitized_settings['default_currency'] && '' === $sanitized_settings['google_geocoding_api_key'] && 'hiring@example.test' === $sanitized_settings['notification_email'] && 'Candidate data is used only for hiring.' === $sanitized_settings['privacy_text'] && $privacy_page_id === $sanitized_settings['privacy_page_id'] && 365 === $sanitized_settings['retention_days'], 'Setup defaults normalize organization, geocoding, privacy, retention, and hiring inbox values' );
+	$geocoding_settings = \LlamaHire\Settings::sanitize( array( 'google_geocoding_api_key' => ' test-geocoding-key ' ) );
+	$assert( 'test-geocoding-key' === $geocoding_settings['google_geocoding_api_key'], 'Google geocoding credentials are normalized without enabling the optional service by default' );
+	$preserve_setup_settings = new ReflectionMethod( \LlamaHire\Setup::class, 'preserve_unmanaged_settings' );
+	$preserve_setup_settings->setAccessible( true );
+	$preserved_setup_input = $preserve_setup_settings->invoke( null, array( 'name' => 'Updated setup name' ), array_merge( $sanitized_settings, array( 'google_geocoding_api_key' => 'preserved-geocoding-key' ) ) );
+	$assert( 'preserved-geocoding-key' === $preserved_setup_input['google_geocoding_api_key'] && 'Updated setup name' === $preserved_setup_input['name'], 'Saving setup preserves the separately managed geocoding credential while accepting setup-owned fields' );
 	$assert( 'job_board' === \LlamaHire\Settings::sanitize_site_mode( 'job_board' ) && 'company' === \LlamaHire\Settings::sanitize_site_mode( 'marketplace' ), 'Site purpose accepts the documented job-board mode and fails unknown values to company mode' );
 	$assert( isset( \LlamaHire\Settings::country_options()['CA'] ) && isset( \LlamaHire\Settings::currency_options()['CAD'] ), 'Country and currency selectors include normalized ISO options' );
 	$job_board_settings = \LlamaHire\Settings::sanitize( array( 'site_mode' => 'job_board', 'name' => 'Hamilton Job Board', 'website' => 'https://unrelated.example.test/', 'employer_approval' => 'automatic', 'employer_policy_text' => 'Only accurate listings are allowed.', 'active_listing_limit' => 7, 'listing_duration_days' => 60 ) );
@@ -122,6 +132,8 @@ try {
 	$assert( 'legacy@example.test' === \LlamaHire\Settings::get()['notification_email'], 'Legacy hiring inbox remains available until canonical settings are saved' );
 	update_option( \LlamaHire\Settings::OPTION, $sanitized_settings, false );
 	$assert( 'hiring@example.test' === \LlamaHire\Settings::get()['notification_email'] && 'company' === \LlamaHire\Settings::site_mode(), 'Canonical organization settings own the hiring inbox and default to company mode' );
+	$editor_organization = \LlamaHire\Jobs::editor_organization();
+	$assert( array( 'name', 'website', 'site_mode' ) === array_keys( $editor_organization ) && ! isset( $editor_organization['google_geocoding_api_key'], $editor_organization['anti_spam_secret_key'] ), 'Job-editor configuration exposes only the non-sensitive organization fields it consumes' );
 	delete_option( \LlamaHire\Setup::OPTION );
 	$assert( 'skipped' === \LlamaHire\Setup::state()['status'], 'Existing installations without setup state are not forced into first-run onboarding' );
 	\LlamaHire\Setup::mark_pending();
@@ -182,10 +194,52 @@ try {
 	$assert( in_array( 'submission_key', $index_names, true ), 'Submission keys have a unique database index' );
 	$assert( in_array( 'candidate_key', $index_names, true ), 'Canonical job and candidate identities have a unique database index' );
 	$assert( in_array( 'notification_created', $index_names, true ), 'Notification filters have a composite status and received-date index' );
-	update_option( \LlamaHire\Migrations::OPTION, '10', false );
-	$assert( \LlamaHire\Migrations::run() && LLAMAHIRE_SCHEMA_VERSION === (string) get_option( \LlamaHire\Migrations::OPTION ), 'Schema version 10 upgrades through the application-note history migration' );
 	$notes_table = \LlamaHire\Application_Notes::table();
+	$migration_application_ids = array();
+	$migration_fixture_prefix  = strtolower( wp_generate_password( 8, false, false ) );
+	for ( $migration_index = 0; $migration_index <= \LlamaHire\Migrations::BATCH_SIZE; $migration_index++ ) {
+		$wpdb->insert(
+			$table,
+			array(
+				'job_id'    => 0,
+				'name'      => 'Migration Fixture',
+				'email'     => $migration_fixture_prefix . '-' . $migration_index . '@example.test',
+				'notes'     => 'Legacy migration note ' . $migration_index,
+				'created_at'=> current_time( 'mysql', true ),
+				'updated_at'=> current_time( 'mysql', true ),
+			),
+			array( '%d', '%s', '%s', '%s', '%s', '%s' )
+		);
+		$migration_application_ids[] = (int) $wpdb->insert_id;
+	}
+	update_option( \LlamaHire\Migrations::OPTION, '10', false );
+	$migration_first_batch = \LlamaHire\Migrations::run();
+	$assert( ! $migration_first_batch && '11' === (string) get_option( \LlamaHire\Migrations::OPTION ) && get_option( \LlamaHire\Migrations::CURSOR_PREFIX . '12' ) && wp_next_scheduled( \LlamaHire\Migrations::CONTINUE_HOOK ), 'Application-note migration stops after one bounded batch and schedules a resumable continuation' );
+	$migration_passes = 0;
+	do {
+		$migration_complete = \LlamaHire\Migrations::run();
+		++$migration_passes;
+	} while ( ! $migration_complete && $migration_passes < 5 );
+	$placeholders = implode( ', ', array_fill( 0, count( $migration_application_ids ), '%d' ) );
+	$migrated_note_count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notes_table} WHERE application_id IN ({$placeholders}) AND is_legacy = 1", $migration_application_ids ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- Placeholders are generated from a bounded integer fixture list and all values are prepared.
+	$assert( $migration_complete && count( $migration_application_ids ) === $migrated_note_count && LLAMAHIRE_SCHEMA_VERSION === (string) get_option( \LlamaHire\Migrations::OPTION ) && false === get_option( \LlamaHire\Migrations::CURSOR_PREFIX . '12', false ), 'Resumed migration preserves every legacy note and advances the schema only after all batches complete' );
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$notes_table} WHERE application_id IN ({$placeholders})", $migration_application_ids ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- Placeholders are generated from a bounded integer fixture list and all values are prepared.
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE id IN ({$placeholders})", $migration_application_ids ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- Placeholders are generated from a bounded integer fixture list and all values are prepared.
 	$assert( $notes_table === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $notes_table ) ), 'Private application notes table exists' );
+	$activation_migration_job_id = wp_insert_post( array( 'post_type' => \LlamaHire\Jobs::POST_TYPE, 'post_status' => 'draft', 'post_title' => 'Activation migration fixture' ) );
+	$assert( $activation_migration_job_id > 0, 'Activation migration fixture can be created' );
+	unregister_taxonomy( \LlamaHire\Jobs::TYPE_TAXONOMY );
+	\LlamaHire\Jobs::set_meta( $activation_migration_job_id, array( 'employment_type' => 'activation_contract' ) );
+	update_option( \LlamaHire\Migrations::OPTION, '9', false );
+	$assert( ! \LlamaHire\Migrations::run() && '9' === (string) get_option( \LlamaHire\Migrations::OPTION ) && false === get_option( \LlamaHire\Migrations::CURSOR_PREFIX . '10', false ), 'A failed job-type conversion leaves its schema version and cursor unchanged for a safe retry' );
+	\LlamaHire\Activator::activate();
+	$activation_migration_term    = get_term_by( 'slug', 'activation_contract', \LlamaHire\Jobs::TYPE_TAXONOMY );
+	$activation_migration_term_id = $activation_migration_term instanceof WP_Term ? (int) $activation_migration_term->term_id : 0;
+	$assert( taxonomy_exists( \LlamaHire\Jobs::TYPE_TAXONOMY ) && LLAMAHIRE_SCHEMA_VERSION === (string) get_option( \LlamaHire\Migrations::OPTION ) && $activation_migration_term_id && has_term( $activation_migration_term_id, \LlamaHire\Jobs::TYPE_TAXONOMY, $activation_migration_job_id ), 'Activation registers job taxonomies before migrations and retries the complete employment-type conversion' );
+	wp_delete_post( $activation_migration_job_id, true );
+	wp_delete_term( $activation_migration_term_id, \LlamaHire\Jobs::TYPE_TAXONOMY );
+	$activation_migration_job_id = 0;
+	$activation_migration_term_id = 0;
 
 	$job_id = wp_insert_post(
 		array(
@@ -224,6 +278,8 @@ try {
 			'closed'          => '0',
 			'organization_name' => 'LlamaHire Test Employer',
 			'organization_url'  => 'https://example.test/',
+			'application_method' => 'internal',
+			'application_target' => 'private-hiring@example.test',
 		)
 	);
 	$department_term = wp_insert_term( 'Engineering', 'llamahire_department', array( 'slug' => 'engineering' ) );
@@ -340,6 +396,47 @@ try {
 	$application_form = do_blocks( '<!-- wp:llamahire/application-form {"jobId":' . (int) $job_id . '} /-->' );
 	$assert( false !== strpos( $application_form, 'Candidate data is used only for hiring.' ) && false !== strpos( $application_form, get_permalink( $privacy_page_id ) ), 'Application forms show configured privacy text and the selected policy link' );
 	$assert( ! empty( $job_meta['job_identifier'] ) && 'CA' === $job_meta['address_country'], 'Job model preserves a stable identifier and structured address' );
+	$geocode_requests = 0;
+	update_option( \LlamaHire\Settings::OPTION, array_merge( $sanitized_settings, array( 'google_geocoding_api_key' => 'test-geocoding-key' ) ), false );
+	$geocode_mock = static function ( $preempt, $args, $url ) use ( &$geocode_requests ) {
+		if ( 0 !== strpos( $url, \LlamaHire\Geocoding::ENDPOINT ) ) {
+			return $preempt;
+		}
+		++$geocode_requests;
+		return array(
+			'headers'  => array(),
+			'body'     => wp_json_encode( array( 'status' => 'OK', 'results' => array( array( 'geometry' => array( 'location' => array( 'lat' => 49.288711, 'lng' => -123.120703 ) ) ) ) ) ),
+			'response' => array( 'code' => 200, 'message' => 'OK' ),
+			'cookies'  => array(),
+			'filename' => null,
+		);
+	};
+	add_filter( 'pre_http_request', $geocode_mock, 10, 3 );
+	\LlamaHire\Jobs::set_meta( $job_id, array( 'postal_code' => 'V6E 4B2' ) );
+	\LlamaHire\Jobs::set_meta( $job_id, array( 'salary_min' => 91000 ) );
+	\LlamaHire\Jobs::set_meta( $job_id, array( 'salary_min' => 90000 ) );
+	$geocode_hash = get_post_meta( $job_id, \LlamaHire\Geocoding::META_HASH, true );
+	delete_transient( \LlamaHire\Geocoding::CACHE_PREFIX . substr( $geocode_hash, 0, 32 ) );
+	$assert( 0 === $geocode_requests && 'queued' === get_post_meta( $job_id, \LlamaHire\Geocoding::META_STATUS, true ) && wp_next_scheduled( \LlamaHire\Geocoding::HOOK, array( $job_id, $geocode_hash, 1 ) ), 'Saving a changed physical address queues geocoding without blocking the save or duplicating work on unrelated updates' );
+	\LlamaHire\Geocoding::process( $job_id, $geocode_hash, 1 );
+	remove_filter( 'pre_http_request', $geocode_mock, 10 );
+	$coordinates = \LlamaHire\Geocoding::coordinates( $job_id );
+	$assert( 1 === $geocode_requests && 49.288711 === ( $coordinates['latitude'] ?? null ) && -123.120703 === ( $coordinates['longitude'] ?? null ) && 'success' === get_post_meta( $job_id, \LlamaHire\Geocoding::META_STATUS, true ) && false !== get_transient( \LlamaHire\Geocoding::CACHE_PREFIX . substr( $geocode_hash, 0, 32 ) ), 'The queued lookup stores validated coordinates and a shared address-hash cache' );
+	$geocode_cache_key = \LlamaHire\Geocoding::CACHE_PREFIX . substr( $geocode_hash, 0, 32 );
+	$stale_geocode_cache = get_transient( $geocode_cache_key );
+	$change_address_during_cache_read = static function ( $preempt ) use ( $job_id, $stale_geocode_cache ) {
+		\LlamaHire\Jobs::set_meta( $job_id, array( 'postal_code' => 'V6E 4B9' ) );
+		return $stale_geocode_cache;
+	};
+	add_filter( 'pre_transient_' . $geocode_cache_key, $change_address_during_cache_read );
+	\LlamaHire\Geocoding::process( $job_id, $geocode_hash, 1 );
+	remove_filter( 'pre_transient_' . $geocode_cache_key, $change_address_during_cache_read );
+	$new_geocode_hash = get_post_meta( $job_id, \LlamaHire\Geocoding::META_HASH, true );
+	$assert( $new_geocode_hash !== $geocode_hash && array() === \LlamaHire\Geocoding::coordinates( $job_id ) && 'queued' === get_post_meta( $job_id, \LlamaHire\Geocoding::META_STATUS, true ), 'A cached lookup cannot stale-write coordinates after the job address changes concurrently' );
+	set_transient( \LlamaHire\Geocoding::CACHE_PREFIX . substr( $new_geocode_hash, 0, 32 ), $stale_geocode_cache, DAY_IN_SECONDS );
+	\LlamaHire\Geocoding::process( $job_id, $new_geocode_hash, 1 );
+	$coordinates = \LlamaHire\Geocoding::coordinates( $job_id );
+	$assert( 49.288711 === ( $coordinates['latitude'] ?? null ) && -123.120703 === ( $coordinates['longitude'] ?? null ), 'Address-bound cached coordinates remain available after the current hash is validated' );
 	$schema = $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id );
 	$posts_sitemap = wp_sitemaps_get_server()->registry->get_provider( 'posts' );
 	$job_sitemap_urls = $posts_sitemap->get_url_list( 1, \LlamaHire\Jobs::POST_TYPE );
@@ -347,11 +444,17 @@ try {
 	$assert( $job_sitemap_entry && get_post_modified_time( DATE_W3C, true, $job_id ) === $job_sitemap_entry['lastmod'], 'Published jobs appear in the XML sitemap with an accurate modification time' );
 	$assert( 'JobPosting' === ( $schema['@type'] ?? '' ) && 'FULL_TIME' === ( $schema['employmentType'] ?? '' ) && 90000.0 === ( $schema['baseSalary']['value']['minValue'] ?? null ) && 'YEAR' === ( $schema['baseSalary']['value']['unitText'] ?? '' ), 'Schema builder exposes a supported job type plus the employer-provided salary range and pay unit' );
 	$assert( 'CA' === ( $schema['jobLocation']['address']['addressCountry'] ?? '' ) && 'Vancouver' === ( $schema['jobLocation']['address']['addressLocality'] ?? '' ), 'Schema builder emits a complete physical location' );
+	$assert( 49.288711 === ( $schema['jobLocation']['geo']['latitude'] ?? null ) && -123.120703 === ( $schema['jobLocation']['geo']['longitude'] ?? null ), 'Schema builder adds validated derived coordinates to the same physical job location' );
 	$assert( 'LlamaHire Test Employer' === ( $schema['hiringOrganization']['name'] ?? '' ) && $job_meta['job_identifier'] === ( $schema['identifier']['value'] ?? '' ), 'Schema builder emits the hiring organization and stable identifier' );
 	$assert( false === isset( $schema['jobLocationType'] ), 'Hybrid jobs are not incorrectly marked as fully remote' );
 	$assert( false !== strpos( $schema['validThrough'] ?? '', $job_meta['deadline'] ), 'Schema expiry uses the visible application deadline' );
 	$admin_ids = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
 	$original_user_id = get_current_user_id();
+	wp_set_current_user( 0 );
+	$public_rest_response = rest_do_request( new WP_REST_Request( 'GET', '/wp/v2/llamahire_job/' . $job_id ) );
+	$public_rest_data     = $public_rest_response->get_data();
+	$public_rest_meta     = $public_rest_data['meta'][ \LlamaHire\Jobs::META_KEY ] ?? array();
+	$assert( 200 === $public_rest_response->get_status() && '' === ( $public_rest_meta['application_target'] ?? null ), 'Public job REST responses redact the private internal-application recipient' );
 	wp_set_current_user( (int) $admin_ids[0] );
 	$rest_meta = \LlamaHire\Jobs::get_meta( $job_id );
 	$rest_meta['workplace'] = 'remote';
@@ -359,13 +462,33 @@ try {
 	$rest_request = new WP_REST_Request( 'POST', '/wp/v2/llamahire_job/' . $job_id );
 	$rest_request->set_param( 'meta', array( \LlamaHire\Jobs::META_KEY => $rest_meta ) );
 	$rest_response = rest_do_request( $rest_request );
+	$rest_response_data = $rest_response->get_data();
 	wp_set_current_user( $original_user_id );
 	$rest_saved = \LlamaHire\Jobs::get_meta( $job_id );
-	$assert( 200 === $rest_response->get_status() && 'remote' === $rest_saved['workplace'] && 'remote' === get_post_meta( $job_id, \LlamaHire\Jobs::META_WORKPLACE, true ) && 'full_time' === get_post_meta( $job_id, \LlamaHire\Jobs::META_EMPLOYMENT, true ) && 'US, CA' === get_post_meta( $job_id, \LlamaHire\Jobs::META_LOCATION, true ), 'Block editor REST saves persist and synchronize query metadata' );
+	$assert( 200 === $rest_response->get_status() && 'private-hiring@example.test' === ( $rest_response_data['meta'][ \LlamaHire\Jobs::META_KEY ]['application_target'] ?? '' ) && 'private-hiring@example.test' === $rest_saved['application_target'] && 'remote' === $rest_saved['workplace'] && 'remote' === get_post_meta( $job_id, \LlamaHire\Jobs::META_WORKPLACE, true ) && 'full_time' === get_post_meta( $job_id, \LlamaHire\Jobs::META_EMPLOYMENT, true ) && 'US, CA' === get_post_meta( $job_id, \LlamaHire\Jobs::META_LOCATION, true ), 'Authorized block-editor REST saves retain private routing while synchronizing query metadata' );
+	$assert( array() === \LlamaHire\Geocoding::coordinates( $job_id ) && 'not_applicable' === get_post_meta( $job_id, \LlamaHire\Geocoding::META_STATUS, true ), 'Switching a job to fully remote removes stale physical coordinates without contacting the provider' );
 	$remote_schema = $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id );
 	$assert( 'TELECOMMUTE' === ( $remote_schema['jobLocationType'] ?? '' ) && 2 === count( $remote_schema['applicantLocationRequirements'] ?? array() ), 'Fully remote schema includes eligible applicant countries' );
 	$assert( false === isset( $remote_schema['jobLocation'] ), 'Fully remote schema does not claim a physical reporting location' );
+	update_option( \LlamaHire\Settings::OPTION, $sanitized_settings, false );
 	\LlamaHire\Jobs::set_meta( $job_id, array( 'workplace' => 'hybrid' ) );
+	update_option( \LlamaHire\Settings::OPTION, array_merge( $sanitized_settings, array( 'google_geocoding_api_key' => 'test-geocoding-key' ) ), false );
+	$geocode_error_requests = 0;
+	$geocode_error_mock = static function ( $preempt, $args, $url ) use ( &$geocode_error_requests ) {
+		if ( 0 !== strpos( $url, \LlamaHire\Geocoding::ENDPOINT ) ) {
+			return $preempt;
+		}
+		++$geocode_error_requests;
+		return new WP_Error( 'llamahire_geocoding_fixture', 'Provider unavailable.' );
+	};
+	add_filter( 'pre_http_request', $geocode_error_mock, 10, 3 );
+	\LlamaHire\Jobs::set_meta( $job_id, array( 'postal_code' => 'V6E 4B3' ) );
+	$failed_geocode_hash = get_post_meta( $job_id, \LlamaHire\Geocoding::META_HASH, true );
+	\LlamaHire\Geocoding::process( $job_id, $failed_geocode_hash, \LlamaHire\Geocoding::MAX_ATTEMPTS );
+	\LlamaHire\Jobs::set_meta( $job_id, array( 'salary_min' => 90500 ) );
+	remove_filter( 'pre_http_request', $geocode_error_mock, 10 );
+	$assert( 1 === $geocode_error_requests && 'V6E 4B3' === \LlamaHire\Jobs::get_meta( $job_id )['postal_code'] && array() === \LlamaHire\Geocoding::coordinates( $job_id ) && 'error' === get_post_meta( $job_id, \LlamaHire\Geocoding::META_STATUS, true ) && $failed_geocode_hash === get_post_meta( $job_id, \LlamaHire\Geocoding::META_HASH, true ) && \LlamaHire\Geocoding::MAX_ATTEMPTS === (int) get_post_meta( $job_id, \LlamaHire\Geocoding::META_ATTEMPTS, true ), 'A terminal geocoding failure persists its address hash and attempt state so unrelated saves do not repeat the provider request or retain stale coordinates' );
+	update_option( \LlamaHire\Settings::OPTION, $sanitized_settings, false );
 	$assert( false !== strpos( \LlamaHire\Jobs::salary_label( \LlamaHire\Jobs::get_meta( $job_id ) ), '/ year' ), 'Visible salary includes the same pay unit as schema' );
 	\LlamaHire\Jobs::set_meta( $job_id, array( 'salary_min' => 95000, 'salary_max' => 95000 ) );
 	$exact_salary_schema = $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER )->build( $job_id );
@@ -540,6 +663,13 @@ try {
 	$job_limit    = static function () { return 0; };
 	add_filter( 'llamahire_submission_rate_limit', $client_limit );
 	add_filter( 'llamahire_job_submission_rate_limit', $job_limit );
+	$rate_identity = hash_hmac( 'sha256', 'smoke-test-client', wp_salt( 'nonce' ) );
+	$rate_key      = 'llamahire_rate_' . md5( get_current_blog_id() . '|' . $job_id . '|client|' . $rate_identity );
+	$rate_lock     = \LlamaHire\Rate_Limiter::LOCK_PREFIX . md5( $rate_key );
+	add_option( $rate_lock, time() . ':concurrent-fixture', '', false );
+	$assert( ! \LlamaHire\Applications::consume_submission_limit( $job_id, 'smoke-test-client' ), 'A concurrent submission holding the same counter lock fails closed instead of sharing an allowance' );
+	delete_option( $rate_lock );
+	delete_transient( $rate_key );
 	$assert( \LlamaHire\Applications::consume_submission_limit( $job_id, 'smoke-test-client' ) && ! \LlamaHire\Applications::consume_submission_limit( $job_id, 'smoke-test-client' ), 'Repeated client submissions are rate limited' );
 	remove_filter( 'llamahire_submission_rate_limit', $client_limit );
 	remove_filter( 'llamahire_job_submission_rate_limit', $job_limit );
@@ -648,6 +778,7 @@ try {
 	$query = $services->get( \LlamaHire\Service_IDs::APPLICATION_QUERY );
 	$results = $query->search( array( 'job_id' => $job_id, 'status' => 'interviewing', 'per_page' => 1 ) );
 	$assert( 1 === $results['total'] && 1 === count( $results['items'] ), 'Application query filters and paginates results' );
+	$assert( array() === array_intersect( array( 'phone', 'cover_letter', 'resume_name', 'has_resume', 'notes', 'notification_attempts', 'employer_notified_at', 'candidate_notified_at', 'notification_error_code' ), array_keys( get_object_vars( $results['items'][0] ) ) ), 'Application list projections omit private detail and large candidate fields' );
 	$bounded_application_args = \LlamaHire\REST_API::application_query_arguments( array( 'job_ids' => array_merge( range( 1, 150 ), array( 1 ) ), 'statuses' => array( 'new', 'new', 'invalid' ), 'notification_statuses' => array( 'failed', 'failed', 'invalid' ) ) );
 	$bounded_activity_args = \LlamaHire\REST_API::activity_query_arguments( array( 'job_ids' => array_merge( range( 1, 150 ), array( 1 ) ), 'actor_ids' => array_merge( range( 1, 150 ), array( 1 ) ), 'event_types' => array( 'job_submitted', 'job_submitted', 'invalid' ) ) );
 	$assert( 100 === count( $bounded_application_args['job_ids'] ) && array( 'new' ) === $bounded_application_args['statuses'] && array( 'failed' ) === $bounded_application_args['notification_statuses'] && 100 === count( $bounded_activity_args['job_ids'] ) && 100 === count( $bounded_activity_args['actor_ids'] ) && array( 'job_submitted' ) === $bounded_activity_args['event_types'], 'REST list filters are deduplicated, allow-listed, and bounded before query construction' );
@@ -770,6 +901,7 @@ try {
 		$anti_spam_config,
 		array(
 			'site_mode'               => \LlamaHire\Settings::SITE_MODE_JOB_BOARD,
+			'employer_account_page_id' => $privacy_page_id,
 			'employer_policy_text'    => 'I agree to follow the {listing_policy}.',
 			'employer_policy_page_id' => $privacy_page_id,
 		)
@@ -861,11 +993,19 @@ try {
 	$pending_job_column = ob_get_clean();
 	$assert( false !== strpos( $pending_job_column, 'Approve and publish' ) && false !== strpos( $pending_job_column, 'Request changes' ) && false !== strpos( $pending_job_column, 'Decline' ), 'Pending job rows expose explicit moderation outcomes instead of relying on the generic editor publish control' );
 	wp_set_current_user( $employer_user_ids[0] );
+	$published_title = get_the_title( $employer_job_ids[0] );
+	$published_rest_request = new WP_REST_Request( 'POST', '/wp/v2/llamahire_job/' . $employer_job_ids[0] );
+	$published_rest_request->set_param( 'title', 'Employer REST moderation bypass' );
+	$published_rest_response = rest_do_request( $published_rest_request );
+	$assert( 403 === $published_rest_response->get_status() && $published_title === get_the_title( $employer_job_ids[0] ) && ! current_user_can( 'edit_post', $employer_job_ids[0] ) && \LlamaHire\Ownership::user_can_manage_job( $employer_job_ids[0] ), 'Employers retain ownership-scoped portal access while core REST rejects direct edits to published jobs' );
+	update_user_meta( $employer_user_ids[0], \LlamaHire\Employer_Registration::COMPANY_META, 'Account Company Override' );
 	$_GET['job_id'] = $employer_job_ids[0];
 	$employer_form = do_shortcode( '[llamahire_submit_job]' );
 	unset( $_GET['job_id'] );
 	$employer_jobs = do_shortcode( '[llamahire_my_jobs]' );
+	$employer_account = do_shortcode( '[llamahire_employer_account]' );
 	$assert( false !== strpos( $employer_form, 'Employer one job' ) && false !== strpos( $employer_form, 'Submit for review' ) && false !== strpos( $employer_jobs, 'Employer one job' ) && false === strpos( $employer_jobs, 'Employer two job' ), 'Employer portal supports editing and lists only the signed-in author’s jobs' );
+	$assert( false !== strpos( $employer_jobs, '>Account</a>' ) && false !== strpos( $employer_account, 'name="contact_name"' ) && false !== strpos( $employer_account, 'Account Company Override' ) && false !== strpos( $employer_account, '>Change password</a>' ) && false !== strpos( $employer_account, '>Sign out</a>' ), 'Employers can reach a frontend account form, password recovery, and sign-out controls from My Jobs' );
 	$assert( false !== strpos( $employer_jobs, '1 application' ) && false !== strpos( $employer_jobs, 'employer_view=applications' ), 'Internal-application jobs link to the ownership-scoped frontend candidate workspace' );
 	$_GET['employer_view'] = 'applications';
 	$employer_applications = do_shortcode( '[llamahire_my_jobs]' );
@@ -894,7 +1034,7 @@ try {
 	$assert( 'Legacy Place' === \LlamaHire\Jobs::query_location( array( 'workplace' => 'onsite', 'location' => 'Legacy Place' ) ) && 'Hamilton Ontario CA' === \LlamaHire\Jobs::query_location( array( 'workplace' => 'hybrid', 'location' => 'Old label', 'address_locality' => 'Hamilton', 'address_region' => 'Ontario', 'address_country' => 'CA' ) ) && 'CA, US' === \LlamaHire\Jobs::query_location( array( 'workplace' => 'remote', 'address_locality' => 'Old office', 'applicant_countries' => 'CA, US' ) ), 'Location search uses structured fields for current listings while retaining a legacy fallback' );
 	$assert( false !== strpos( $employer_form, 'value="draft" formnovalidate' ) && false !== strpos( $employer_form, 'value="preview"' ) && false !== strpos( $employer_form, 'value="submit"' ), 'Employer submissions provide distinct draft, preview, and submit-for-review intents' );
 	$new_job_form = do_shortcode( '[llamahire_submit_job]' );
-	$assert( false !== strpos( $new_job_form, 'Employer one Company' ) && false !== strpos( $employer_jobs, '>Published</strong>' ) && false !== strpos( $employer_jobs, '>Preview</a>' ) && false !== strpos( $employer_jobs, '>Delete</summary>' ), 'New submissions prefill the employer’s latest company details and My Jobs provides explicit status, preview, and confirmed deletion controls' );
+	$assert( false !== strpos( $new_job_form, 'name="organization_name" required value="Account Company Override"' ) && false === strpos( $new_job_form, 'name="organization_name" required value="Employer one Company"' ) && false !== strpos( $employer_jobs, '>Published</strong>' ) && false !== strpos( $employer_jobs, '>Preview</a>' ) && false !== strpos( $employer_jobs, '>Delete</summary>' ), 'New submissions use the Account company ahead of an older listing while retaining My Jobs status, preview, and confirmed deletion controls' );
 	$lifecycle_expiry = current_datetime()->modify( '+3 days' )->format( 'Y-m-d' );
 	\LlamaHire\Jobs::set_meta( $employer_job_ids[0], array( 'deadline' => current_datetime()->modify( '+30 days' )->format( 'Y-m-d' ), 'listing_expires' => $lifecycle_expiry, 'featured' => '1', 'job_identifier' => 'EMPLOYER-ONE' ) );
 	$assert( \LlamaHire\Jobs::listing_expires_soon( $employer_job_ids[0] ), 'A published listing whose expiration is the next closing event is renewable during the seven-day window' );
@@ -1081,6 +1221,17 @@ try {
 
 	WP_CLI::success( count( $checks ) . ' LlamaHire smoke checks passed.' );
 } finally {
+	if ( $activation_migration_job_id || $activation_migration_term_id ) {
+		if ( ! taxonomy_exists( \LlamaHire\Jobs::TYPE_TAXONOMY ) ) {
+			\LlamaHire\Jobs::register_taxonomies();
+		}
+		if ( $activation_migration_job_id ) {
+			wp_delete_post( $activation_migration_job_id, true );
+		}
+		if ( $activation_migration_term_id ) {
+			wp_delete_term( $activation_migration_term_id, \LlamaHire\Jobs::TYPE_TAXONOMY );
+		}
+	}
 	if ( $retention_application_id ) {
 		\LlamaHire\Plugin::instance()->services()->get( \LlamaHire\Service_IDs::CANDIDATE_DATA )->erase( $retention_application_id );
 	}

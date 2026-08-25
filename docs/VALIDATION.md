@@ -16,16 +16,17 @@ Run from the WordPress root:
 wp eval-file wp-content/plugins/llamahire/tests/smoke.php
 ```
 
-The disposable test creates and removes its own records. All 171 checks pass, covering:
+The disposable test creates and removes its own records. All 301 checks pass, covering:
 
 - Job post type, department taxonomy, blocks, publication, availability, directory, and form rendering.
 - Applications table creation, repository persistence, retrieval, status changes, and private notes.
 - Public API version, lifecycle timing, contract conformance, service availability, and registry immutability.
 - Editor REST registration and organization-default normalization.
-- Block-editor REST persistence and synchronization of queryable job metadata.
-- JobPosting generation for physical, hybrid, and fully remote jobs.
+- Public REST redaction of private internal-application recipients plus authorized block-editor persistence and synchronization of queryable job metadata.
+- JobPosting generation for physical, hybrid, and fully remote jobs, including optional derived coordinates.
 - Structured addresses, eligible remote countries, organization overrides, stable identifiers, salary ranges, and pay units.
 - Protection against incorrectly marking hybrid jobs as fully remote.
+- Optional queued Google geocoding on physical address changes, address-hash caching, atomic address-bound coordinate writes during concurrent edits, bounded retry/backoff, reuse on unrelated saves, stale-coordinate removal, remote-job exclusion, and non-blocking provider failures.
 - Visible salary/pay-period parity with structured data.
 - Deadline/expiry parity, exact salary, omitted salary, incomplete location, closed job, and expired job schema behavior.
 - Declared schema and capability maintenance versions.
@@ -35,6 +36,7 @@ The disposable test creates and removes its own records. All 171 checks pass, co
 - Preservation of application data during migration replay.
 - Retirement of the legacy database-version option.
 - Protection against older plugin code downgrading a newer database schema.
+- Activation-time taxonomy registration, failed-record cursor preservation, and complete retry of employment-type conversion.
 - Application-query and resume-storage contract conformance.
 - Paginated application filtering and bounded export iteration.
 - Private resume-path redaction from public application records.
@@ -44,6 +46,7 @@ The disposable test creates and removes its own records. All 171 checks pass, co
 - Reversible company/job-board site-mode sanitization, company-mode compatibility defaults, and job-board candidate privacy guidance naming both the board operator and listing employer.
 - A unique, browser-generated submission key and database-enforced idempotent application creation.
 - A legacy-safe canonical job/email identity, case-insensitive preserve-original policy, concurrent-request uniqueness, and an extension filter that can allow future resubmissions.
+- Serialized submission counters that fail closed when concurrent requests contend for the same allowance.
 - Failed, partial, and successful notification attempts without exposing mail error messages or candidate content.
 - Missing-channel retries that preserve a previously successful delivery.
 - Configurable sender identity and plain-text employer/candidate templates with safe placeholder rendering.
@@ -106,7 +109,7 @@ The authenticated recruiter workflow was also exercised against disposable appli
 - CSV export included the tested applications and neutralized a formula-like cover-letter value.
 - The disposable applications, jobs, and resume files were removed afterward.
 
-These workflows are now encoded in a repeatable `wp-env` and Playwright integration harness. The latest local environment passes all 171 smoke checks; the latest complete browser run passed all seven tests. The browser suite covers first-run site-purpose selection with live mode-aware copy and custom privacy-text preservation, organization/privacy/retention setup, email sender/template settings and rendered previews, composed Careers-page search/filter behavior, 360px hero/featured/department pattern layouts, editor authoring, configurable candidate fields, explicit invalid-phone rejection, accessible upload progress, focused connection-error recovery, one-redirect restoration of safe non-file values, candidate application and retention disclosure, neutral duplicate messaging with original-record and notification-attempt preservation, recruiter review, secure download, resume replacement, resume deletion, and employer job submission before removing its own fixtures. The connection failure retains the locally selected file for retry; later server-validation redirects confirm safe non-file values are restored and file inputs are cleared. The focused narrow-pattern test passes on the Twenty Twenty-Four block theme and Twenty Twenty-One classic theme. CI retains failure traces, screenshots, video, and an HTML report. See [TESTING.md](TESTING.md).
+These workflows are now encoded in a repeatable `wp-env` and Playwright integration harness. The latest local environment passes all 294 smoke checks; the latest complete browser run passed all ten tests. The browser suite covers first-run site-purpose selection with live mode-aware copy and custom privacy-text preservation, organization/privacy/retention setup, email sender/template settings and rendered previews, composed Careers-page search/filter behavior, 360px hero/featured/department pattern layouts, editor authoring, configurable candidate fields, explicit invalid-phone rejection, accessible upload progress, focused connection-error recovery, in-memory recovery from server validation, candidate application and retention disclosure, neutral duplicate messaging with original-record and notification-attempt preservation, recruiter review, secure download, resume replacement, resume deletion, and employer job submission before removing its own fixtures. Connection failures retain the locally selected file for retry; server-validation errors keep safe text values in the live form, clear file inputs, and never persist candidate content in browser storage. The focused narrow-pattern test passes on the Twenty Twenty-Four block theme and Twenty Twenty-One classic theme. CI retains failure traces, screenshots, video, and an HTML report. See [TESTING.md](TESTING.md).
 
 ## Theme and template validation
 
