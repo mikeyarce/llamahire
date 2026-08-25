@@ -242,7 +242,7 @@
 				reviewValue( 'retention', 'Retention: ' + retention );
 				reviewValue( 'careers', pageValue );
 				reviewValue( 'publication', 'create' === action ? 'This page will be published when Setup is completed.' : 'Existing compatible published page.' );
-				reviewValue( 'employer-pages', isJobBoard ? 'Submit a Job and My Jobs pages will be created automatically if needed.' : '' );
+				reviewValue( 'employer-pages', isJobBoard ? 'Submit a Job, My Jobs, and Account pages will be created automatically if needed.' : '' );
 			}
 
 			function showStep( step, shouldFocus ) {

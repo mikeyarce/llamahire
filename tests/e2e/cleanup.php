@@ -63,9 +63,9 @@ foreach ( array_unique( array_merge( $job_type_term_id ? array( $job_type_term_i
 delete_option( 'llamahire_e2e_job_type_term_id' );
 delete_option( 'llamahire_e2e_job_type_term_ids' );
 $settings = \LlamaHire\Settings::get();
-foreach ( array( 'submit_job_page_id', 'my_jobs_page_id', 'employer_registration_page_id' ) as $portal_page_key ) {
+foreach ( array( 'submit_job_page_id', 'my_jobs_page_id', 'employer_account_page_id', 'employer_registration_page_id' ) as $portal_page_key ) {
 	$portal_page = \LlamaHire\Settings::public_page( $settings[ $portal_page_key ] );
-	if ( $portal_page && in_array( $portal_page->post_title, array( 'Submit a Job', 'My Jobs', 'Employer Registration' ), true ) ) {
+	if ( $portal_page && in_array( $portal_page->post_title, array( 'Submit a Job', 'My Jobs', 'Account', 'Employer Registration' ), true ) ) {
 		wp_delete_post( $portal_page->ID, true );
 	}
 	$settings[ $portal_page_key ] = 0;

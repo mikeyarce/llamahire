@@ -23,7 +23,7 @@ final class Plugin {
 		foreach ( array( 'interface-service-container.php', 'interface-application-repository.php', 'interface-application-query.php', 'interface-notification-service.php', 'interface-resume-storage.php', 'interface-candidate-data-lifecycle.php', 'interface-schema-builder.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/contracts/' . $file;
 		}
-		foreach ( array( 'class-service-ids.php', 'class-service-container.php', 'class-settings.php', 'class-anti-spam.php', 'class-rate-limiter.php', 'class-setup.php', 'class-migrations.php', 'class-capabilities.php', 'class-jobs.php', 'class-geocoding.php', 'class-ownership.php', 'class-audit-log.php', 'class-application-notes.php', 'class-employer-notifications.php', 'class-employer-registration.php', 'class-employer-portal.php', 'class-employer-applications.php', 'class-applications.php', 'class-privacy.php', 'class-blocks.php', 'class-job-feed.php', 'class-theme-support.php', 'class-admin-workspaces.php', 'class-admin.php', 'class-rest-api.php', 'class-seo.php' ) as $file ) {
+		foreach ( array( 'class-service-ids.php', 'class-service-container.php', 'class-settings.php', 'class-anti-spam.php', 'class-rate-limiter.php', 'class-setup.php', 'class-migrations.php', 'class-capabilities.php', 'class-jobs.php', 'class-geocoding.php', 'class-ownership.php', 'class-audit-log.php', 'class-application-notes.php', 'class-employer-notifications.php', 'class-employer-registration.php', 'class-employer-portal.php', 'class-employer-account.php', 'class-employer-applications.php', 'class-applications.php', 'class-privacy.php', 'class-blocks.php', 'class-job-feed.php', 'class-theme-support.php', 'class-admin-workspaces.php', 'class-admin.php', 'class-rest-api.php', 'class-seo.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/' . $file;
 		}
 		foreach ( array( 'class-application-repository.php', 'class-application-query.php', 'class-notification-service.php', 'class-resume-storage.php', 'class-vip-acl-resume-storage.php', 'class-candidate-data-lifecycle.php', 'class-schema-builder.php' ) as $file ) {
@@ -34,6 +34,7 @@ final class Plugin {
 	public function init() {
 		Jobs::register();
 		Geocoding::register();
+		Migrations::register();
 		Migrations::maybe_run();
 		Capabilities::maybe_install();
 		$this->register_assets();
@@ -42,6 +43,7 @@ final class Plugin {
 		Employer_Notifications::register();
 		Employer_Registration::register();
 		Employer_Portal::register();
+		Employer_Account::register();
 		Employer_Applications::register();
 		Settings::register();
 		Setup::register();

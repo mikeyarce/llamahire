@@ -594,6 +594,7 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await openSettingsSection( page, 'Pages' );
 		await expect( page.locator( '#llamahire-submit-job-page' ) ).toHaveValue( /\d+/ );
 		await expect( page.locator( '#llamahire-my-jobs-page' ) ).toHaveValue( /\d+/ );
+		await expect( page.locator( '#llamahire-employer-account-page' ) ).toHaveValue( /\d+/ );
 		await expect( page.locator( '#llamahire-employer-registration-page' ) ).toHaveValue( /\d+/ );
 
 		await page.context().clearCookies();
@@ -605,8 +606,19 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await expect( page.getByLabel( /Password/ ) ).toHaveAttribute( 'minlength', '12' );
 		await expect( page.getByRole( 'checkbox', { name: /listing rules/ } ) ).toBeVisible();
 		await logIn( page, employerUser, employerPassword );
+		await page.goto( '/employer-account/' );
+		await expect( page.getByRole( 'heading', { name: 'Employer account', level: 2 } ) ).toBeVisible();
+		await expect( page.getByLabel( 'Work email' ) ).toHaveAttribute( 'readonly', '' );
+		await expect( page.getByRole( 'link', { name: 'Change password' } ) ).toBeVisible();
+		await expect( page.getByRole( 'link', { name: 'Sign out' } ) ).toBeVisible();
+		await page.getByLabel( 'Contact name' ).fill( 'Browser Employer' );
+		await page.getByLabel( 'Company name' ).fill( 'Browser Employer Company' );
+		await page.getByRole( 'button', { name: 'Save employer details' } ).focus();
+		await page.keyboard.press( 'Enter' );
+		await expect( page.getByRole( 'status' ) ).toHaveText( 'Your employer details were updated.' );
 		await page.goto( '/submit-a-job/' );
 		await expect( page.getByRole( 'heading', { name: 'Create job listing', level: 2, exact: true } ) ).toBeVisible();
+		await expect( page.getByLabel( 'Company name' ) ).toHaveValue( 'Browser Employer Company' );
 		await page.locator( 'input[name="job_title"]' ).fill( 'Employer Browser Test Role' );
 		await page.getByRole( 'button', { name: 'Save draft' } ).evaluate( ( button ) => button.click() );
 		await expect( page ).toHaveURL( /\/my-jobs\/.*job_draft_saved=1/ );
@@ -755,7 +767,7 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await expect( page.getByText( /CAD 70,000.*90,000/ ) ).toBeVisible();
 		await expect( page.getByText( 'Your application will be shared with Browser Test Company for hiring review.', { exact: true } ) ).toBeVisible();
 		await page.goto( '/submit-a-job/' );
-		await expect( page.getByLabel( 'Company name' ) ).toHaveValue( 'Browser Test Company' );
+		await expect( page.getByLabel( 'Company name' ) ).toHaveValue( 'Browser Employer Company' );
 		await expect( page.getByLabel( 'Notification email' ) ).toHaveValue( 'employer-applications@example.test' );
 		await page.goto( '/my-jobs/' );
 		const deleteRow = page.getByRole( 'row' ).filter( { hasText: 'Employer Browser Test Role' } );

@@ -618,9 +618,11 @@ final class Employer_Portal {
 		ob_start();
 		$settings = Settings::get();
 		$submit_url = Settings::public_page( $settings['submit_job_page_id'] ) ? get_permalink( $settings['submit_job_page_id'] ) : self::current_url();
+		$account_url = Settings::public_page( $settings['employer_account_page_id'] ) ? get_permalink( $settings['employer_account_page_id'] ) : '';
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only redirect notices.
 		?>
 		<div class="llamahire-employer-portal">
+			<?php if ( $account_url ) : ?><nav class="llamahire-employer-portal__account" aria-label="<?php esc_attr_e( 'Employer account', 'llamahire' ); ?>"><a href="<?php echo esc_url( $account_url ); ?>"><?php esc_html_e( 'Account', 'llamahire' ); ?></a></nav><?php endif; ?>
 			<?php if ( ! empty( $_GET['job_submitted'] ) ) : ?>
 				<div class="llamahire-notice is-success" role="status"><?php esc_html_e( 'Your job was submitted for moderation.', 'llamahire' ); ?></div>
 			<?php elseif ( ! empty( $_GET['job_draft_saved'] ) ) : ?>
@@ -823,14 +825,18 @@ final class Employer_Portal {
 	}
 
 	private static function latest_employer_defaults() {
+		$user_id = get_current_user_id();
 		$defaults = Jobs::defaults();
-		$latest = get_posts( array( 'post_type' => Jobs::POST_TYPE, 'post_status' => array( 'pending', 'publish', 'draft' ), 'author' => get_current_user_id(), 'numberposts' => 1, 'orderby' => 'date', 'order' => 'DESC' ) );
-		if ( ! $latest ) {
-			return $defaults;
+		$latest = get_posts( array( 'post_type' => Jobs::POST_TYPE, 'post_status' => array( 'pending', 'publish', 'draft' ), 'author' => $user_id, 'numberposts' => 1, 'orderby' => 'date', 'order' => 'DESC' ) );
+		if ( $latest ) {
+			$previous = Jobs::get_meta( $latest[0]->ID );
+			foreach ( array( 'organization_name', 'organization_tagline', 'organization_url', 'organization_logo', 'organization_logo_id', 'application_method', 'application_target' ) as $key ) {
+				$defaults[ $key ] = $previous[ $key ];
+			}
 		}
-		$previous = Jobs::get_meta( $latest[0]->ID );
-		foreach ( array( 'organization_name', 'organization_tagline', 'organization_url', 'organization_logo', 'organization_logo_id', 'application_method', 'application_target' ) as $key ) {
-			$defaults[ $key ] = $previous[ $key ];
+		$account_company = sanitize_text_field( get_user_meta( $user_id, Employer_Registration::COMPANY_META, true ) );
+		if ( $account_company ) {
+			$defaults['organization_name'] = $account_company;
 		}
 		return $defaults;
 	}

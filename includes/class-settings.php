@@ -51,6 +51,7 @@ final class Settings {
 			'careers_page_id'    => 0,
 			'submit_job_page_id'  => 0,
 			'my_jobs_page_id'     => 0,
+			'employer_account_page_id' => 0,
 			'employer_registration_page_id' => 0,
 			'employer_approval'   => 'manual',
 			'employer_policy_text' => __( 'I agree to follow this job board’s {listing_policy} and provide accurate employer and job information.', 'llamahire' ),
@@ -104,6 +105,7 @@ final class Settings {
 			'careers_page_id'    => absint( $input['careers_page_id'] ?? 0 ),
 			'submit_job_page_id'  => absint( $input['submit_job_page_id'] ?? 0 ),
 			'my_jobs_page_id'     => absint( $input['my_jobs_page_id'] ?? 0 ),
+			'employer_account_page_id' => absint( $input['employer_account_page_id'] ?? 0 ),
 			'employer_registration_page_id' => absint( $input['employer_registration_page_id'] ?? 0 ),
 			'employer_approval'   => self::employer_approval( $input['employer_approval'] ?? $defaults['employer_approval'] ),
 			'employer_policy_text' => self::employer_policy_text( $input['employer_policy_text'] ?? '', $defaults['employer_policy_text'] ),
@@ -387,6 +389,7 @@ final class Settings {
 								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[employer_approval]" value="<?php echo esc_attr( $settings['employer_approval'] ); ?>">
 								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[employer_policy_text]" value="<?php echo esc_attr( $settings['employer_policy_text'] ); ?>">
 								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[employer_policy_page_id]" value="<?php echo esc_attr( $settings['employer_policy_page_id'] ); ?>">
+								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[employer_account_page_id]" value="<?php echo esc_attr( $settings['employer_account_page_id'] ); ?>">
 								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[employer_registration_page_id]" value="<?php echo esc_attr( $settings['employer_registration_page_id'] ); ?>">
 								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[active_listing_limit]" value="<?php echo esc_attr( $settings['active_listing_limit'] ); ?>">
 								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[listing_duration_days]" value="<?php echo esc_attr( $settings['listing_duration_days'] ); ?>">
@@ -472,6 +475,7 @@ final class Settings {
 								<?php if ( $is_job_board ) : ?>
 									<tr><th scope="row"><label for="llamahire-submit-job-page"><?php esc_html_e( 'Submit a Job page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-submit-job-page', self::OPTION . '[submit_job_page_id]', $settings['submit_job_page_id'], __( 'Create automatically', 'llamahire' ), '', __( 'Submit a Job page', 'llamahire' ) ); ?><p class="description"><?php esc_html_e( 'Use a page containing [llamahire_submit_job].', 'llamahire' ); ?></p></td></tr>
 									<tr><th scope="row"><label for="llamahire-my-jobs-page"><?php esc_html_e( 'My Jobs page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-my-jobs-page', self::OPTION . '[my_jobs_page_id]', $settings['my_jobs_page_id'], __( 'Create automatically', 'llamahire' ), '', __( 'My Jobs page', 'llamahire' ) ); ?><p class="description"><?php esc_html_e( 'Use a page containing [llamahire_my_jobs].', 'llamahire' ); ?></p></td></tr>
+									<tr><th scope="row"><label for="llamahire-employer-account-page"><?php esc_html_e( 'Employer Account page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-employer-account-page', self::OPTION . '[employer_account_page_id]', $settings['employer_account_page_id'], __( 'Create automatically', 'llamahire' ), '', __( 'Employer Account page', 'llamahire' ) ); ?><p class="description"><?php esc_html_e( 'Use a page containing [llamahire_employer_account].', 'llamahire' ); ?></p></td></tr>
 									<tr><th scope="row"><label for="llamahire-employer-registration-page"><?php esc_html_e( 'Employer registration page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-employer-registration-page', self::OPTION . '[employer_registration_page_id]', $settings['employer_registration_page_id'], __( 'Create automatically', 'llamahire' ), '', __( 'Employer registration page', 'llamahire' ) ); ?><p class="description"><?php esc_html_e( 'Use a page containing [llamahire_employer_registration].', 'llamahire' ); ?></p></td></tr>
 								<?php endif; ?>
 							</table>

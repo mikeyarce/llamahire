@@ -27,6 +27,9 @@ if ( ! $employer ) {
 }
 wp_set_password( 'password', $employer->ID );
 $employer->set_role( \LlamaHire\Capabilities::EMPLOYER_ROLE );
+wp_update_user( array( 'ID' => $employer->ID, 'display_name' => 'Demo Employer', 'first_name' => 'Demo Employer' ) );
+update_user_meta( $employer->ID, \LlamaHire\Employer_Registration::STATUS_META, \LlamaHire\Employer_Registration::STATUS_APPROVED );
+update_user_meta( $employer->ID, \LlamaHire\Employer_Registration::COMPANY_META, 'Demo Employer Co.' );
 update_option( 'llamahire_e2e_employer_user_id', $employer->ID, false );
 
 $employer_jobs = get_posts( array( 'post_type' => \LlamaHire\Jobs::POST_TYPE, 'post_status' => 'any', 'author' => $employer->ID, 'fields' => 'ids', 'posts_per_page' => -1 ) );
@@ -65,7 +68,7 @@ foreach ( $existing as $post_id ) {
 	wp_delete_post( $post_id, true );
 }
 
-foreach ( array( 'llamahire-e2e-careers', 'llamahire-e2e-privacy', 'llamahire-e2e-patterns', 'llamahire-e2e-department', 'submit-a-job', 'my-jobs' ) as $page_slug ) {
+foreach ( array( 'llamahire-e2e-careers', 'llamahire-e2e-privacy', 'llamahire-e2e-patterns', 'llamahire-e2e-department', 'submit-a-job', 'my-jobs', 'employer-account' ) as $page_slug ) {
 	$existing_page = get_page_by_path( $page_slug );
 	if ( $existing_page ) {
 		wp_delete_post( $existing_page->ID, true );

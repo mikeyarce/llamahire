@@ -237,7 +237,7 @@ final class Setup {
 					</fieldset>
 					<div class="llamahire-setup-callout" data-llamahire-job-board-only <?php echo $is_job_board ? '' : 'hidden'; ?>>
 						<h3><?php esc_html_e( 'Employer access pages', 'llamahire' ); ?></h3>
-						<p><?php esc_html_e( 'Completing Setup also publishes Submit a Job and My Jobs pages when compatible pages do not already exist. Employer accounts remain administrator-approved.', 'llamahire' ); ?></p>
+						<p><?php esc_html_e( 'Completing Setup also publishes Submit a Job, My Jobs, and Account pages when compatible pages do not already exist. Employer accounts remain administrator-approved.', 'llamahire' ); ?></p>
 					</div>
 					<div class="llamahire-setup-review" aria-labelledby="llamahire-setup-review-title">
 						<h3 id="llamahire-setup-review-title"><?php esc_html_e( 'Setup summary', 'llamahire' ); ?></h3>
@@ -345,7 +345,7 @@ final class Setup {
 	}
 
 	private static function preserve_unmanaged_settings( array $input, array $current ) {
-		foreach ( array( 'application_phone', 'application_resume', 'application_letter', 'google_geocoding_api_key', 'anti_spam_provider', 'anti_spam_site_key', 'anti_spam_secret_key', 'anti_spam_registration', 'anti_spam_applications', 'email_sender_name', 'email_sender_email', 'employer_email_subject', 'employer_email_body', 'candidate_email_subject', 'candidate_email_body', 'submit_job_page_id', 'my_jobs_page_id', 'employer_registration_page_id', 'employer_approval', 'employer_policy_text', 'employer_policy_page_id', 'active_listing_limit', 'listing_duration_days' ) as $key ) {
+		foreach ( array( 'application_phone', 'application_resume', 'application_letter', 'google_geocoding_api_key', 'anti_spam_provider', 'anti_spam_site_key', 'anti_spam_secret_key', 'anti_spam_registration', 'anti_spam_applications', 'email_sender_name', 'email_sender_email', 'employer_email_subject', 'employer_email_body', 'candidate_email_subject', 'candidate_email_body', 'submit_job_page_id', 'my_jobs_page_id', 'employer_account_page_id', 'employer_registration_page_id', 'employer_approval', 'employer_policy_text', 'employer_policy_page_id', 'active_listing_limit', 'listing_duration_days' ) as $key ) {
 			$input[ $key ] = $current[ $key ];
 		}
 		return $input;
