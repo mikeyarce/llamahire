@@ -23,6 +23,7 @@ final class Activator {
 				static function () {
 					wp_clear_scheduled_hook( Applications::RETENTION_HOOK );
 					wp_clear_scheduled_hook( Employer_Notifications::EXPIRING_HOOK );
+					wp_clear_scheduled_hook( Geocoding::HOOK );
 					wp_clear_scheduled_hook( Migrations::CONTINUE_HOOK );
 					delete_option( 'rewrite_rules' );
 				}
@@ -31,6 +32,7 @@ final class Activator {
 		}
 		wp_clear_scheduled_hook( Applications::RETENTION_HOOK );
 		wp_clear_scheduled_hook( Employer_Notifications::EXPIRING_HOOK );
+		wp_clear_scheduled_hook( Geocoding::HOOK );
 		wp_clear_scheduled_hook( Migrations::CONTINUE_HOOK );
 		delete_option( 'rewrite_rules' );
 	}

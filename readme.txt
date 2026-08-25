@@ -37,7 +37,15 @@ No. LlamaHire has no WooCommerce dependency.
 
 == External services ==
 
-LlamaHire does not contact an anti-spam provider by default. A site administrator may optionally configure one of the following providers for employer registration and job application forms.
+LlamaHire does not contact an external service by default. A site administrator may optionally configure the following services.
+
+= Google Geocoding API =
+
+Geocoding is disabled by default. When a site administrator adds a Google Maps Platform API key, LlamaHire queues the public street, locality, region, postal code, and country of physical and hybrid jobs for Google after that address is saved. Google returns coordinates that LlamaHire caches by address hash, stores with the job, and includes in its JobPosting structured data. Fully remote jobs are not sent. Provider requests run outside the save request, and failures use bounded retry with backoff, so an API error does not prevent or delay a job save.
+
+Service: https://developers.google.com/maps/documentation/geocoding/
+Privacy policy: https://policies.google.com/privacy
+Terms: https://cloud.google.com/maps-platform/terms
 
 = Cloudflare Turnstile =
 

@@ -298,9 +298,7 @@ final class Setup {
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Settings::sanitize() normalizes every supported field below.
 		$input    = isset( $_POST['organization'] ) ? (array) wp_unslash( $_POST['organization'] ) : array();
 		$current  = Settings::get();
-		foreach ( array( 'application_phone', 'application_resume', 'application_letter', 'anti_spam_provider', 'anti_spam_site_key', 'anti_spam_secret_key', 'anti_spam_registration', 'anti_spam_applications', 'email_sender_name', 'email_sender_email', 'employer_email_subject', 'employer_email_body', 'candidate_email_subject', 'candidate_email_body', 'submit_job_page_id', 'my_jobs_page_id', 'employer_registration_page_id', 'employer_approval', 'employer_policy_text', 'employer_policy_page_id', 'active_listing_limit', 'listing_duration_days' ) as $key ) {
-			$input[ $key ] = $current[ $key ];
-		}
+		$input    = self::preserve_unmanaged_settings( $input, $current );
 		$settings = Settings::sanitize( $input );
 		$careers_action = sanitize_key( wp_unslash( $_POST['careers_action'] ?? '' ) );
 		$careers_title  = sanitize_text_field( wp_unslash( $_POST['careers_title'] ?? '' ) );
@@ -344,6 +342,13 @@ final class Setup {
 		update_option( Settings::OPTION, $settings, false );
 		update_option( self::OPTION, array( 'version' => self::VERSION, 'status' => 'completed' ), false );
 		self::redirect( 'completed' );
+	}
+
+	private static function preserve_unmanaged_settings( array $input, array $current ) {
+		foreach ( array( 'application_phone', 'application_resume', 'application_letter', 'google_geocoding_api_key', 'anti_spam_provider', 'anti_spam_site_key', 'anti_spam_secret_key', 'anti_spam_registration', 'anti_spam_applications', 'email_sender_name', 'email_sender_email', 'employer_email_subject', 'employer_email_body', 'candidate_email_subject', 'candidate_email_body', 'submit_job_page_id', 'my_jobs_page_id', 'employer_registration_page_id', 'employer_approval', 'employer_policy_text', 'employer_policy_page_id', 'active_listing_limit', 'listing_duration_days' ) as $key ) {
+			$input[ $key ] = $current[ $key ];
+		}
+		return $input;
 	}
 
 	public static function careers_page_content() {

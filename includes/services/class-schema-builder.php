@@ -87,6 +87,14 @@ final class Schema_Builder implements Schema_Builder_Contract {
 				}
 			}
 			$data['jobLocation'] = array( '@type' => 'Place', 'address' => $address );
+			$coordinates = \LlamaHire\Geocoding::coordinates( $job_id );
+			if ( $coordinates ) {
+				$data['jobLocation']['geo'] = array(
+					'@type'     => 'GeoCoordinates',
+					'latitude'  => $coordinates['latitude'],
+					'longitude' => $coordinates['longitude'],
+				);
+			}
 		}
 		$has_salary = '' !== $meta['salary_min'] || '' !== $meta['salary_max'];
 		$valid_range = '' === $meta['salary_min'] || '' === $meta['salary_max'] || (float) $meta['salary_max'] >= (float) $meta['salary_min'];

@@ -38,6 +38,7 @@ final class Settings {
 			'default_region'   => '',
 			'default_country'  => '',
 			'default_currency' => 'USD',
+			'google_geocoding_api_key' => '',
 			'notification_email' => get_option( 'admin_email' ),
 			'email_sender_name'  => get_bloginfo( 'name' ),
 			'email_sender_email' => get_option( 'admin_email' ),
@@ -90,6 +91,7 @@ final class Settings {
 			'default_region'   => sanitize_text_field( $input['default_region'] ?? '' ),
 			'default_country'  => self::country_code( $input['default_country'] ?? '' ),
 			'default_currency' => self::currency_code( $input['default_currency'] ?? 'USD', '' ),
+			'google_geocoding_api_key' => substr( sanitize_text_field( $input['google_geocoding_api_key'] ?? '' ), 0, 255 ),
 			'notification_email' => sanitize_email( $input['notification_email'] ?? '' ),
 			'email_sender_name'  => substr( sanitize_text_field( $input['email_sender_name'] ?? $defaults['email_sender_name'] ), 0, 120 ),
 			'email_sender_email' => sanitize_email( $input['email_sender_email'] ?? $defaults['email_sender_email'] ),
@@ -407,6 +409,11 @@ final class Settings {
 								<tr><th scope="row"><label for="llamahire-org-region"><?php esc_html_e( 'Default state, province, or region', 'llamahire' ); ?></label></th><td><input class="regular-text" type="text" id="llamahire-org-region" name="<?php echo esc_attr( self::OPTION ); ?>[default_region]" value="<?php echo esc_attr( $settings['default_region'] ); ?>" placeholder="British Columbia"></td></tr>
 							<tr><th scope="row"><label for="llamahire-org-country"><?php esc_html_e( 'Default country', 'llamahire' ); ?></label></th><td><?php self::country_select( 'llamahire-org-country', self::OPTION . '[default_country]', $settings['default_country'] ); ?></td></tr>
 							<tr><th scope="row"><label for="llamahire-org-currency"><?php esc_html_e( 'Default currency', 'llamahire' ); ?></label></th><td><?php self::currency_select( 'llamahire-org-currency', self::OPTION . '[default_currency]', $settings['default_currency'] ); ?></td></tr>
+							</table>
+							<h3><?php esc_html_e( 'Geocoding', 'llamahire' ); ?></h3>
+							<p class="description"><?php esc_html_e( 'Optional. Add a Google Maps Platform key to turn physical and hybrid job addresses into coordinates when they are saved. Remote jobs are not sent to Google, and a lookup failure never prevents a job from saving.', 'llamahire' ); ?></p>
+							<table class="form-table" role="presentation">
+								<tr><th scope="row"><label for="llamahire-google-geocoding-key"><?php esc_html_e( 'Google Geocoding API key', 'llamahire' ); ?></label></th><td><input class="regular-text" type="password" id="llamahire-google-geocoding-key" name="<?php echo esc_attr( self::OPTION ); ?>[google_geocoding_api_key]" value="<?php echo esc_attr( $settings['google_geocoding_api_key'] ); ?>" autocomplete="new-password"><p class="description"><?php echo wp_kses_post( sprintf( /* translators: %s: Google API key security documentation URL. */ __( 'Enable the Geocoding API for this key and restrict it to your server and that API. <a href="%s" target="_blank" rel="noopener noreferrer">Review Google’s API key security guidance</a>. Existing jobs are geocoded the next time their address is saved.', 'llamahire' ), esc_url( 'https://developers.google.com/maps/api-security-best-practices' ) ) ); ?></p></td></tr>
 							</table>
 						</section>
 
