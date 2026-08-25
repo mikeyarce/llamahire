@@ -161,7 +161,7 @@ LlamaHire also registers with WordPress's native personal-data tools under the `
 
 ### Public submission defenses
 
-Free applies a honeypot, idempotency key, per-client limit, and per-job limit before accepting a public application upload. Raw client addresses are not stored; the transient key uses a keyed hash. The defaults are five attempts per client and 100 attempts per job per hour. Hosts and Pro may tune these controls with:
+Free applies a honeypot, idempotency key, per-client limit, and per-job limit before accepting a public application upload. Local attempt limits are consumed before an enabled anti-spam provider is contacted, so rejected provider tokens cannot amplify unmetered outbound requests. Raw client addresses are not stored; the transient key uses a keyed hash. Counter updates are serialized with short ownership-token locks, and a request that contends for an active counter lock fails closed rather than sharing an allowance. The defaults are five attempts per client and 100 attempts per job per hour. Hosts and Pro may tune these controls with:
 
 - `llamahire_submission_rate_limit` — per-client count; return `0` to disable this layer.
 - `llamahire_job_submission_rate_limit` — aggregate per-job count; return `0` to disable this layer.

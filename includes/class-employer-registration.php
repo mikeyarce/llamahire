@@ -99,11 +99,11 @@ final class Employer_Registration {
 		if ( ! $accepted ) {
 			self::redirect( 'policy' );
 		}
-		if ( is_wp_error( Anti_Spam::verify( Anti_Spam::CONTEXT_REGISTRATION ) ) ) {
-			self::redirect( 'anti_spam' );
-		}
 		if ( ! self::consume_limits( $email ) ) {
 			self::redirect( 'received' );
+		}
+		if ( is_wp_error( Anti_Spam::verify( Anti_Spam::CONTEXT_REGISTRATION ) ) ) {
+			self::redirect( 'anti_spam' );
 		}
 		$user = get_user_by( 'email', $email );
 		if ( ! $user ) {
@@ -386,13 +386,8 @@ final class Employer_Registration {
 		if ( ! $limit ) {
 			return true;
 		}
-		$key   = 'llamahire_reg_' . substr( hash_hmac( 'sha256', $scope . '|' . $identity, wp_salt( 'nonce' ) ), 0, 32 );
-		$count = absint( get_transient( $key ) );
-		if ( $count >= $limit ) {
-			return false;
-		}
-		set_transient( $key, $count + 1, HOUR_IN_SECONDS );
-		return true;
+		$key = 'llamahire_reg_' . substr( hash_hmac( 'sha256', $scope . '|' . $identity, wp_salt( 'nonce' ) ), 0, 32 );
+		return Rate_Limiter::consume( $key, $limit, HOUR_IN_SECONDS );
 	}
 
 	private static function available_login( $email ) {

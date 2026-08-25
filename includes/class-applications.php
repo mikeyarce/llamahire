@@ -86,11 +86,11 @@ final class Applications {
 		if ( $validation_error ) {
 			self::redirect( $job_id, $validation_error );
 		}
-		if ( is_wp_error( Anti_Spam::verify( Anti_Spam::CONTEXT_APPLICATION ) ) ) {
-			self::redirect( $job_id, 'anti_spam' );
-		}
 		if ( ! self::consume_submission_limit( $job_id ) ) {
 			self::redirect( $job_id, 'rate_limited' );
+		}
+		if ( is_wp_error( Anti_Spam::verify( Anti_Spam::CONTEXT_APPLICATION ) ) ) {
+			self::redirect( $job_id, 'anti_spam' );
 		}
 		$repository  = Plugin::instance()->services()->get( Service_IDs::APPLICATION_REPOSITORY );
 		$duplicate_id = $repository->find_duplicate( $job_id, $email );
@@ -309,12 +309,10 @@ final class Applications {
 			if ( 0 === $limit ) {
 				continue;
 			}
-			$key   = 'llamahire_rate_' . md5( get_current_blog_id() . '|' . $job_id . '|' . $scope . '|' . $identifiers[ $scope ] );
-			$count = absint( get_transient( $key ) );
-			if ( $count >= $limit ) {
+			$key = 'llamahire_rate_' . md5( get_current_blog_id() . '|' . $job_id . '|' . $scope . '|' . $identifiers[ $scope ] );
+			if ( ! Rate_Limiter::consume( $key, $limit, $window ) ) {
 				return false;
 			}
-			set_transient( $key, $count + 1, $window );
 		}
 		return true;
 	}
