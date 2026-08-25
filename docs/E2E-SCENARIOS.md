@@ -101,9 +101,10 @@ composition, department context, and narrow-width overflow.
 1. **Candidate submits successfully.** A visitor supplies required fields,
    accepts the privacy notice, uploads a valid PDF, submits once, and receives a
    neutral confirmation.
-2. **Validation preserves safe work.** A recoverable validation error restores
-   text fields once, focuses the error, and requires the local file to be
-   selected again.
+2. **Validation preserves safe work.** A recoverable validation error remains
+   in the live form, keeps its text fields in memory, focuses the error, and
+   requires the local file to be selected again without writing candidate data
+   to browser storage.
 3. **Upload failure can be retried.** A simulated connection failure keeps the
    selected file, restores the submit button, and announces the error.
 4. **Duplicate submission is private.** The same email and job, including case

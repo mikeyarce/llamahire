@@ -245,7 +245,11 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await expect( page.locator( '.components-notice__content' ).getByText( 'Required Google Jobs fields are complete.' ) ).toBeVisible();
 		await openEditorPanel( page, 'Role and hiring status' );
 		await expect( page.locator( '.components-notice__content' ).filter( { hasText: 'Published — accepting applications until its application deadline or listing expiration.' } ) ).toBeVisible();
-		await expect( page.getByRole( 'link', { name: 'Preview job', exact: true } ) ).toHaveAttribute( 'target', '_blank' );
+		const previewJob = page.getByRole( 'link', { name: 'Preview job', exact: true } );
+		await expect( previewJob ).toHaveAttribute( 'target', '_blank' );
+		await expect( page.locator( '.llamahire-role .components-notice' ) ).toHaveCSS( 'margin-bottom', '12px' );
+		await expect( previewJob ).toHaveCSS( 'margin-bottom', '16px' );
+		await expect( page.getByLabel( 'Location type', { exact: true } ) ).toHaveValue( 'hybrid' );
 
 		await openEditorPanel( page, 'Compensation' );
 		await page.getByLabel( 'Minimum salary', { exact: true } ).fill( '95000' );
@@ -342,6 +346,7 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await expect( page.locator( 'input[name="email"]' ) ).toHaveValue( candidateEmail );
 		await expect( page.locator( 'textarea[name="cover_letter"]' ) ).toHaveValue( '=CI formula safety check' );
 		await expect( page.locator( 'input[name="resume"]' ) ).toHaveValue( '' );
+		expect( await page.evaluate( () => Object.keys( window.sessionStorage ).filter( ( key ) => key.indexOf( 'llamahire-application:' ) === 0 ) ) ).toEqual( [] );
 		await page.unroute( '**/wp-admin/admin-post.php' );
 
 		await page.locator( 'input[name="phone"]' ).fill( '555-0199' );

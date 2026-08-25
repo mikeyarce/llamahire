@@ -125,20 +125,20 @@
 					) :
 					el( Notice, { status: 'success', isDismissible: false }, __( 'Required Google Jobs fields are complete.', 'llamahire' ) )
 			),
-			el( PluginDocumentSettingPanel, { name: 'llamahire-role', title: __( 'Role and hiring status', 'llamahire' ) },
+			el( PluginDocumentSettingPanel, { name: 'llamahire-role', title: __( 'Role and hiring status', 'llamahire' ), className: 'llamahire-role' },
 				el( Notice, { status: 'info', isDismissible: false },
 					el( 'strong', {}, editor.status === 'publish' ? __( 'Published', 'llamahire' ) : __( 'Not published', 'llamahire' ) ),
 					' — ',
 					editor.status !== 'publish' ? __( 'applications will not open until this job is published.', 'llamahire' ) : ( data.closed === '1' ? __( 'closed to new applications.', 'llamahire' ) : __( 'accepting applications until its application deadline or listing expiration.', 'llamahire' ) )
 				),
-				editor.previewLink ? el( Button, { variant: 'secondary', href: editor.previewLink, target: '_blank', rel: 'noopener noreferrer' }, __( 'Preview job', 'llamahire' ) ) : null,
+				editor.previewLink ? el( Button, { className: 'llamahire-preview-job', variant: 'secondary', href: editor.previewLink, target: '_blank', rel: 'noopener noreferrer' }, __( 'Preview job', 'llamahire' ) ) : null,
 				el( SelectControl, {
 					label: __( 'Employment type', 'llamahire' ), value: data.employment_type,
 					options: employmentTypeOptions,
 					onChange: function ( value ) { set( 'employment_type', value ); }
 				} ),
 				el( SelectControl, {
-					label: __( 'Location', 'llamahire' ), value: data.workplace,
+					label: __( 'Location type', 'llamahire' ), value: data.workplace,
 					options: [ option( __( 'On-site', 'llamahire' ), 'onsite' ), option( __( 'Hybrid', 'llamahire' ), 'hybrid' ), option( __( 'Fully remote', 'llamahire' ), 'remote' ) ],
 					onChange: function ( value ) { set( 'workplace', value ); }
 				} ),

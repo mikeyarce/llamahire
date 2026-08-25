@@ -34,14 +34,6 @@ final class Jobs {
 				'rewrite'      => array( 'slug' => 'jobs' ),
 				'menu_icon'    => 'dashicons-businessperson',
 				'supports'     => array( 'title', 'editor', 'excerpt', 'thumbnail', 'revisions', 'custom-fields' ),
-				'template'     => array(
-					array( 'core/heading', array( 'level' => 2, 'content' => 'About the role' ) ),
-					array( 'core/paragraph' ),
-					array( 'core/heading', array( 'level' => 2, 'content' => 'What you’ll do' ) ),
-					array( 'core/list' ),
-					array( 'core/heading', array( 'level' => 2, 'content' => 'What you’ll bring' ) ),
-					array( 'core/list' ),
-				),
 			)
 		);
 
@@ -57,7 +49,8 @@ final class Jobs {
 					return current_user_can( 'edit_post', $post_id );
 				},
 				'show_in_rest'      => array(
-					'schema' => array(
+					'prepare_callback' => array( __CLASS__, 'prepare_meta_for_rest' ),
+					'schema'           => array(
 						'type'                 => 'object',
 						'additionalProperties' => false,
 						'properties'           => self::rest_properties(),
@@ -69,6 +62,7 @@ final class Jobs {
 		self::register_taxonomies();
 
 		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'enqueue_editor' ) );
+		add_filter( 'enter_title_here', array( __CLASS__, 'title_placeholder' ), 10, 2 );
 		add_action( 'wp_after_insert_post', array( __CLASS__, 'ensure_identifier' ), 10, 4 );
 		add_action( 'added_post_meta', array( __CLASS__, 'sync_query_meta' ), 10, 4 );
 		add_action( 'updated_post_meta', array( __CLASS__, 'sync_query_meta' ), 10, 4 );
@@ -124,6 +118,30 @@ final class Jobs {
 		);
 	}
 
+	/**
+	 * Hide private application routing from public REST responses.
+	 *
+	 * The meta authorization callback controls writes. REST considers registered
+	 * meta readable, so response preparation must independently remove the target
+	 * unless the requester can edit this specific job.
+	 *
+	 * @param mixed            $value   Stored job metadata.
+	 * @param \WP_REST_Request $request Current REST request.
+	 * @return mixed Prepared metadata.
+	 */
+	public static function prepare_meta_for_rest( $value, $request ) {
+		$post_id = $request instanceof \WP_REST_Request ? absint( $request['id'] ?? 0 ) : 0;
+		if ( is_array( $value ) && 'internal' === ( $value['application_method'] ?? 'internal' ) && ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) ) {
+			$value['application_target'] = '';
+		}
+
+		return $value;
+	}
+
+	public static function title_placeholder( $placeholder, $post ) {
+		return $post instanceof \WP_Post && self::POST_TYPE === $post->post_type ? __( 'Add job title', 'llamahire' ) : $placeholder;
+	}
+
 	private static function rest_properties() {
 		$strings = array( 'location', 'employment_type', 'workplace', 'salary_currency', 'salary_unit', 'deadline', 'listing_expires', 'featured', 'closed', 'address_street', 'address_locality', 'address_region', 'postal_code', 'address_country', 'applicant_countries', 'job_identifier', 'organization_name', 'organization_tagline', 'organization_url', 'organization_logo', 'application_method', 'application_target' );
 		$schema  = array();
@@ -155,10 +173,25 @@ final class Jobs {
 			'llamahireJobEditor',
 			array(
 				'defaults'     => self::defaults(),
-				'organization' => Settings::get(),
+				'organization' => self::editor_organization(),
 				'employmentTypes' => self::employment_types(),
 				'duplicateNotice' => absint( $_GET['llamahire_duplicated'] ?? 0 ) ? __( 'Job duplicated as a new draft. Review its details before publishing.', 'llamahire' ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action.
 			)
+		);
+	}
+
+	/**
+	 * Return the non-sensitive organization fields consumed by the editor.
+	 *
+	 * @return array{name:string,website:string,site_mode:string}
+	 */
+	public static function editor_organization() {
+		$settings = Settings::get();
+
+		return array(
+			'name'      => (string) $settings['name'],
+			'website'   => (string) $settings['website'],
+			'site_mode' => (string) $settings['site_mode'],
 		);
 	}
 

@@ -3,51 +3,17 @@
 
 	var recoverableResults = [ 'required', 'invalid_phone', 'invalid_fields', 'resume_size', 'resume_type', 'resume_storage', 'rate_limited', 'error' ];
 
-	function storageKey( container ) {
-		return 'llamahire-application:' + window.location.pathname + ':' + container.dataset.llamahireApplication;
-	}
-
-	function clear( key ) {
-		try {
-			window.sessionStorage.removeItem( key );
-		} catch ( error ) {
-			// Storage can be unavailable in privacy modes; the form still works without restoration.
-		}
-	}
-
-	function preserveValues( form, key ) {
-		var values = { expires: Date.now() + 10 * 60 * 1000 };
-		[ 'name', 'email', 'phone', 'cover_letter' ].forEach( function ( name ) {
-			var field = form.elements.namedItem( name );
-			if ( field ) {
-				values[ name ] = field.value;
-			}
-		} );
-		try {
-			window.sessionStorage.setItem( key, JSON.stringify( values ) );
-		} catch ( error ) {
-			// Storage can be unavailable in privacy modes; submission must remain functional.
-		}
-	}
-
-	function enhanceSubmission( form, key ) {
+	function enhanceSubmission( form ) {
 		if ( ! window.FormData || ! window.XMLHttpRequest ) {
-			form.addEventListener( 'submit', function () {
-				preserveValues( form, key );
-			} );
 			return;
 		}
 
 		var supportProbe = new window.XMLHttpRequest();
 		if ( ! supportProbe.upload ) {
-			form.addEventListener( 'submit', function () {
-				preserveValues( form, key );
-			} );
 			return;
 		}
 
 		form.addEventListener( 'submit', function ( event ) {
-			preserveValues( form, key );
 			if ( form.dataset.submitting ) {
 				event.preventDefault();
 				return;
@@ -101,7 +67,7 @@
 				}
 			} );
 
-			function recover() {
+			function recover( message, clearFile ) {
 				delete form.dataset.submitting;
 				form.removeAttribute( 'aria-busy' );
 				if ( submit ) {
@@ -110,12 +76,24 @@
 				}
 				progressWrapper.hidden = true;
 				status.setAttribute( 'role', 'alert' );
-				status.textContent = status.dataset.error;
+				status.textContent = 'string' === typeof message && message ? message : status.dataset.error;
 				status.focus();
+				if ( clearFile && resume ) {
+					resume.value = '';
+					resume.dispatchEvent( new window.Event( 'change' ) );
+				}
 			}
 
 			xhr.addEventListener( 'load', function () {
 				if ( xhr.status >= 200 && xhr.status < 400 && xhr.responseURL ) {
+					var responseUrl = new window.URL( xhr.responseURL, window.location.href );
+					var result = responseUrl.searchParams.get( 'application' ) || '';
+					if ( recoverableResults.indexOf( result ) !== -1 ) {
+						var responseDocument = new window.DOMParser().parseFromString( xhr.responseText, 'text/html' );
+						var notice = responseDocument.querySelector( '[data-llamahire-application] .llamahire-notice' );
+						recover( notice ? notice.textContent.trim() : '', true );
+						return;
+					}
 					window.location.assign( xhr.responseURL.split( '#' )[0] + '#llamahire-application' );
 					return;
 				}
@@ -128,28 +106,7 @@
 	}
 
 	document.querySelectorAll( '[data-llamahire-application]' ).forEach( function ( container ) {
-		var key = storageKey( container );
 		var form = container.querySelector( '[data-llamahire-application-form]' );
-		var result = container.dataset.applicationResult || '';
-
-		if ( form && recoverableResults.indexOf( result ) !== -1 ) {
-			try {
-				var saved = JSON.parse( window.sessionStorage.getItem( key ) || '{}' );
-				if ( saved.expires > Date.now() ) {
-					[ 'name', 'email', 'phone', 'cover_letter' ].forEach( function ( name ) {
-						var field = form.elements.namedItem( name );
-						if ( field && typeof saved[ name ] === 'string' ) {
-							field.value = saved[ name ];
-						}
-					} );
-				}
-			} catch ( error ) {
-				// Ignore malformed or unavailable session storage.
-			}
-			clear( key );
-		} else if ( result || form ) {
-			clear( key );
-		}
 
 		if ( ! form ) {
 			return;
@@ -157,12 +114,15 @@
 		var resume = form.elements.namedItem( 'resume' );
 		var resumePrompt = form.querySelector( '[data-resume-prompt]' );
 		if ( resume && resumePrompt ) {
+			var resumePromptText = resumePrompt.textContent;
 			resume.addEventListener( 'change', function () {
 				if ( resume.files && resume.files.length ) {
 					resumePrompt.textContent = resume.files[0].name;
+				} else {
+					resumePrompt.textContent = resumePromptText;
 				}
 			} );
 		}
-		enhanceSubmission( form, key );
+		enhanceSubmission( form );
 	} );
 }() );

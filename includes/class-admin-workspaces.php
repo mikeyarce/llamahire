@@ -248,7 +248,7 @@ final class Admin_Workspaces {
 		<article class="llamahire-candidate-card<?php echo (int) $selected_id === (int) $candidate->id ? ' is-selected' : ''; ?>" draggable="true" data-candidate-id="<?php echo esc_attr( $candidate->id ); ?>" data-candidate-status="<?php echo esc_attr( $candidate->status ); ?>">
 			<a class="llamahire-candidate-main" href="<?php echo esc_url( $url ); ?>"><strong><?php echo esc_html( $candidate->name ); ?></strong><small><?php echo esc_html( $candidate->job_title ); ?></small><small><?php echo esc_html( $applied_label ); ?></small><small><span class="dashicons dashicons-clock"></span><?php echo esc_html( $stage_time_label ); ?></small></a>
 			<span class="llamahire-card-menu dashicons dashicons-move" title="<?php esc_attr_e( 'Drag candidate', 'llamahire' ); ?>" aria-hidden="true"></span>
-			<footer><span class="llamahire-avatar"><?php echo esc_html( self::initials( $candidate->name ) ); ?></span><?php if ( ! empty( $candidate->has_notes ) || $candidate->notes ) : ?><span class="screen-reader-text"><?php esc_html_e( 'Has a private note', 'llamahire' ); ?></span><?php endif; ?></footer>
+			<footer><span class="llamahire-avatar"><?php echo esc_html( self::initials( $candidate->name ) ); ?></span><?php if ( ! empty( $candidate->has_notes ) ) : ?><span class="screen-reader-text"><?php esc_html_e( 'Has a private note', 'llamahire' ); ?></span><?php endif; ?></footer>
 		</article>
 		<?php
 	}

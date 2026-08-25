@@ -46,13 +46,18 @@ final class Privacy {
 				'per_page' => self::PAGE_SIZE,
 			)
 		);
-		$data = array();
+		$data       = array();
+		$repository = Plugin::instance()->services()->get( Service_IDs::APPLICATION_REPOSITORY );
 		foreach ( $result['items'] as $application ) {
+			$detail = $repository->find( $application->id );
+			if ( ! $detail ) {
+				continue;
+			}
 			$data[] = array(
 				'group_id'    => self::GROUP_ID,
 				'group_label' => __( 'Job applications', 'llamahire' ),
 				'item_id'     => 'llamahire-application-' . absint( $application->id ),
-				'data'        => self::export_fields( $application ),
+				'data'        => self::export_fields( $detail ),
 			);
 		}
 
@@ -97,7 +102,7 @@ final class Privacy {
 		$fields = array(
 			array( 'name' => __( 'Application ID', 'llamahire' ), 'value' => (string) absint( $application->id ) ),
 			// translators: %d is the numeric WordPress job post ID.
-			array( 'name' => __( 'Job', 'llamahire' ), 'value' => $application->job_title ?: sprintf( __( 'Deleted job #%d', 'llamahire' ), absint( $application->job_id ) ) ),
+			array( 'name' => __( 'Job', 'llamahire' ), 'value' => get_the_title( $application->job_id ) ?: sprintf( __( 'Deleted job #%d', 'llamahire' ), absint( $application->job_id ) ) ),
 			array( 'name' => __( 'Candidate name', 'llamahire' ), 'value' => $application->name ),
 			array( 'name' => __( 'Candidate email', 'llamahire' ), 'value' => $application->email ),
 			array( 'name' => __( 'Application status', 'llamahire' ), 'value' => ucfirst( $application->status ) ),
