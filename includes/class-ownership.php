@@ -28,7 +28,14 @@ final class Ownership {
 		if ( user_can( $user_id, 'edit_others_llamahire_jobs' ) ) {
 			return user_can( $user_id, 'edit_post', $job->ID );
 		}
-		return (int) $job->post_author === $user_id && user_can( $user_id, 'edit_post', $job->ID );
+		if ( (int) $job->post_author !== $user_id ) {
+			return false;
+		}
+		$user = get_userdata( $user_id );
+		if ( $user && in_array( Capabilities::EMPLOYER_ROLE, (array) $user->roles, true ) ) {
+			return user_can( $user_id, 'edit_llamahire_jobs' );
+		}
+		return user_can( $user_id, 'edit_post', $job->ID );
 	}
 
 	public static function user_can_access_application( $application_id, $capability, $user_id = 0 ) {

@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 define( 'LLAMAHIRE_VERSION', '0.1.0' );
 define( 'LLAMAHIRE_API_VERSION', '1.0.0-alpha.12' );
 define( 'LLAMAHIRE_SCHEMA_VERSION', '12' );
-define( 'LLAMAHIRE_CAPABILITIES_VERSION', '6' );
+define( 'LLAMAHIRE_CAPABILITIES_VERSION', '7' );
 define( 'LLAMAHIRE_FILE', __FILE__ );
 define( 'LLAMAHIRE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'LLAMAHIRE_URL', plugin_dir_url( __FILE__ ) );

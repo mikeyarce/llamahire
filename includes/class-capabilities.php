@@ -42,9 +42,9 @@ final class Capabilities {
 			add_role( self::EMPLOYER_ROLE, __( 'Employer', 'llamahire' ), array_fill_keys( $employer_capabilities, true ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.custom_role_add_role -- Portable fallback when the VIP role API is not installed.
 			add_role( self::HIRING_MANAGER_ROLE, __( 'Hiring Manager', 'llamahire' ), array_fill_keys( $hiring_manager_capabilities, true ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.custom_role_add_role -- Portable fallback when the VIP role API is not installed.
 			self::add_capabilities( 'administrator', $administrator_capabilities );
-			self::add_capabilities( self::EMPLOYER_ROLE, $employer_capabilities );
 			self::add_capabilities( self::HIRING_MANAGER_ROLE, $hiring_manager_capabilities );
 		}
+		self::replace_owned_capabilities( self::EMPLOYER_ROLE, $employer_capabilities );
 		update_option( self::OPTION, LLAMAHIRE_CAPABILITIES_VERSION, false );
 	}
 
@@ -116,9 +116,7 @@ final class Capabilities {
 		return array(
 			'read',
 			'edit_llamahire_jobs',
-			'edit_published_llamahire_jobs',
 			'delete_llamahire_jobs',
-			'delete_published_llamahire_jobs',
 			'assign_llamahire_departments',
 			'assign_llamahire_job_types',
 			self::VIEW_APPLICATIONS,
@@ -174,6 +172,27 @@ final class Capabilities {
 		foreach ( $capabilities as $capability ) {
 			$role->add_cap( $capability );
 		}
+	}
+
+	/**
+	 * Replace only the capabilities owned by LlamaHire on a restricted role.
+	 *
+	 * This removes grants from earlier capability versions without disturbing
+	 * unrelated capabilities supplied by WordPress or another plugin.
+	 *
+	 * @param string   $role_name    Role identifier.
+	 * @param string[] $capabilities Current grants.
+	 * @return void
+	 */
+	private static function replace_owned_capabilities( $role_name, array $capabilities ) {
+		$role = get_role( $role_name );
+		if ( ! $role ) {
+			return;
+		}
+		foreach ( self::all() as $capability ) {
+			$role->remove_cap( $capability );
+		}
+		self::add_capabilities( $role_name, $capabilities );
 	}
 
 	private function __construct() {}
