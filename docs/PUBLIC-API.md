@@ -112,6 +112,18 @@ The bounded query service provides paginated `search()`, grouped `counts()`, bou
 
 WordPress's public job REST responses include candidate-facing structured job metadata. For jobs using LlamaHire's internal application form, the private notification recipient in `application_target` is redacted unless the requester can edit that specific job. Authorized editor responses retain the value, and public external application URLs or email addresses remain available because those are intentionally candidate-facing routes.
 
+### Applications CSV export
+
+The recruiter inbox export (`admin-post.php?action=llamahire_export`, requiring `llamahire_export_applications` and a valid nonce) is a stable contract for spreadsheets and downstream integrations:
+
+- Columns are fixed and ordered: `ID`, `Job`, `Name`, `Email`, `Phone`, `Cover letter`, `Status`, `Received`. New columns require a documented contract change, not a silent addition.
+- `ID` is the numeric application record number. `Job` is the current job post title, or a `Deleted job #N` placeholder after the job is removed. `Status` is the raw workflow key such as `new`, `reviewing`, `interviewing`, `offer`, `hired`, or `rejected`.
+- `Received` is stored submission time in UTC as `Y-m-d H:i:s`. Administration screens display localized equivalents; the file always contains UTC so exports remain comparable across server time zones.
+- The file is UTF-8 with a leading byte-order mark for spreadsheet compatibility, comma-separated, `"`-quoted, and uses `\n` row endings.
+- Cell values that would evaluate as a formula in common spreadsheet applications—those whose first non-whitespace character, ignoring a leading UTF-8 BOM or other control characters, is `=`, `+`, `-`, or `@`—are prefixed with a single `'`.
+- The export honors every active inbox filter (search, candidate, email, job, status, email status, and received date) plus the requester's ownership scope, streams rows in bounded batches of 500 in descending record order, and never includes resume files or storage tokens, private notes, notification diagnostics, or audit events.
+- Attachments are named `llamahire-applications-YYYY-MM-DD.csv` using the current UTC date.
+
 ### Resume storage
 
 The resume service owns validation, opaque storage tokens, deletion, availability checks, authorized streaming, and storage health. Extensions may call `has_resume()` after checking application-view permission, but must use `stream()` only after checking `Capabilities::DOWNLOAD_RESUMES` and a request nonce.

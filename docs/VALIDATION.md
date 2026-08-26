@@ -16,7 +16,7 @@ Run from the WordPress root:
 wp eval-file wp-content/plugins/llamahire/tests/smoke.php
 ```
 
-The disposable test creates and removes its own records. All 301 checks pass, covering:
+The disposable test creates and removes its own records. All 306 checks pass, covering:
 
 - Job post type, department taxonomy, blocks, publication, availability, directory, and form rendering.
 - Applications table creation, repository persistence, retrieval, status changes, and private notes.
@@ -39,6 +39,8 @@ The disposable test creates and removes its own records. All 301 checks pass, co
 - Activation-time taxonomy registration, failed-record cursor preservation, and complete retry of employment-type conversion.
 - Application-query and resume-storage contract conformance.
 - Paginated application filtering and bounded export iteration.
+- The fixed CSV export column contract, byte-order-mark formula neutralization, and the documented encoding, UTC timestamp, and streaming semantics.
+- Numeric parity between dashboard open-job and closing-soon counts and their filtered job-list views in board-wide and author scopes, plus the pre-filtered email-attention destination.
 - Private resume-path redaction from public application records.
 - Writable private-storage health.
 - Configurable retention presets, daily cleanup scheduling, candidate-facing retention disclosure, bounded expired-record cleanup, resume-only deletion, and complete manual erasure.

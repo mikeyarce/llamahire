@@ -4,6 +4,8 @@ namespace LlamaHire;
 defined( 'ABSPATH' ) || exit;
 
 final class Admin {
+	const EXPORT_COLUMNS = array( 'ID', 'Job', 'Name', 'Email', 'Phone', 'Cover letter', 'Status', 'Received' );
+
 	private static $job_application_counts;
 
 	public static function register() {
@@ -499,7 +501,9 @@ final class Admin {
 	public static function export() {
 		check_admin_referer( 'llamahire_export' ); if ( ! current_user_can( Capabilities::EXPORT_APPLICATIONS ) ) { wp_die( esc_html__( 'You cannot export applications.', 'llamahire' ) ); }
 		header( 'Content-Type: text/csv; charset=utf-8' ); header( 'Content-Disposition: attachment; filename=llamahire-applications-' . gmdate( 'Y-m-d' ) . '.csv' );
-		$out = fopen( 'php://output', 'w' ); fputcsv( $out, array( 'ID', 'Job', 'Name', 'Email', 'Phone', 'Cover letter', 'Status', 'Received' ), ',', '"', '\\' ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_fputcsv -- Streams an authorized CSV response directly; no VIP filesystem path is accessed.
+		// The byte-order mark lets spreadsheet applications detect UTF-8 without altering parsed values.
+		echo "\xEF\xBB\xBF";
+		$out = fopen( 'php://output', 'w' ); fputcsv( $out, self::EXPORT_COLUMNS, ',', '"', '\\' ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_fputcsv -- Streams an authorized CSV response directly; no VIP filesystem path is accessed.
 		$rows = Plugin::instance()->services()->get( Service_IDs::APPLICATION_QUERY )->export_rows(
 			array_merge(
 				REST_API::application_query_arguments( $_GET ),

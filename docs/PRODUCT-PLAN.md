@@ -39,8 +39,8 @@ Current version: 0.1.0 foundation
 
 Latest local evidence:
 
-- 176 WP-CLI smoke checks passed.
-- All seven Playwright hiring-workflow tests passed, including the filtered recruiter inbox and filter-preserving CSV export.
+- 306 WP-CLI smoke checks passed.
+- All ten Playwright hiring-workflow tests passed, including the filtered recruiter inbox and filter-preserving CSV export.
 - The fixture lifecycle test passed, every named scenario generated successfully, and the full `large` scenario created 60 jobs plus 1,000 applications in about nine seconds and removed them safely in about three seconds.
 - Release-equivalent Plugin Check completed with no errors. Remaining warnings are reviewed custom-table, read-only request, standard content-filter, and bounded-query cases.
 - PHP syntax checks and `git diff --check` passed.
@@ -372,8 +372,8 @@ Work:
 - Completed: improve candidate detail hierarchy, responsive behavior, and keyboard flow. Inline review entry now receives candidate-specific programmatic focus, collapse returns to the exact opening trigger, WordPress modals preserve focus return, and the focused review remains usable without horizontal page overflow at 390px.
 - Completed first pass: job-level application counts and direct navigation.
 - Completed: persist safe per-user Applications view preferences through WordPress preferences, including layout, visible field order, density, and page size, while keeping search, filters, sorting, and pagination in shareable URL state. The native Reset view action clears both layers so every control in the panel returns to its default.
-- Define CSV columns, encoding, date/time semantics, and formula-injection protection as a stable contract.
-- Keep the dashboard focused on current operational state; verify accurate open-job counts and direct links to the corresponding filtered workspaces.
+- Completed: define the CSV export contract—fixed column set and order, UTF-8 with byte-order mark, UTC `Received` timestamps, formula-injection neutralization, filter preservation, and bounded streaming—as documented in [PUBLIC-API.md](PUBLIC-API.md) and locked by smoke coverage.
+- Completed: keep the dashboard focused on current operational state; dashboard open-job and closing-soon counts share their filtered job-list queries, and smoke coverage verifies numeric parity plus correctly pre-filtered attention destinations for board-wide and author scopes.
 - Completed first role boundary: add one native Hiring Manager role for site-wide job and candidate operations without site settings or permanent candidate erasure. WordPress administrators assign it through the standard Users workflow; additional recruiter variants remain deferred until a distinct permission need emerges.
 
 Acceptance criteria:

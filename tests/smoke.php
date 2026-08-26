@@ -676,6 +676,8 @@ try {
 	$csv_method = new ReflectionMethod( \LlamaHire\Admin::class, 'safe_csv_value' );
 	$csv_method->setAccessible( true );
 	$assert( "' =SUM(A1:A2)" === $csv_method->invoke( null, ' =SUM(A1:A2)' ) && "'\n@SUM(A1:A2)" === $csv_method->invoke( null, "\n@SUM(A1:A2)" ), 'CSV export neutralizes formulas after leading whitespace' );
+	$assert( array( 'ID', 'Job', 'Name', 'Email', 'Phone', 'Cover letter', 'Status', 'Received' ) === \LlamaHire\Admin::EXPORT_COLUMNS, 'The CSV export contract fixes the column set and their order' );
+	$assert( "'\xEF\xBB\xBF=SUM(A1:A2)" === $csv_method->invoke( null, "\xEF\xBB\xBF=SUM(A1:A2)" ), 'CSV export neutralizes formulas after a leading byte-order mark' );
 	$signature_method = new ReflectionMethod( get_class( $services->get( \LlamaHire\Service_IDs::RESUME_STORAGE ) ), 'validate_signature' );
 	$signature_method->setAccessible( true );
 	$invalid_resume = wp_tempnam( 'llamahire-invalid-resume.pdf' );
@@ -983,6 +985,18 @@ try {
 	$assert( false !== strpos( $board_dashboard, 'llamahire_job_state=closing-soon' ), 'The dashboard links its deadline action to the matching closing-soon job view' );
 	$assert( false !== strpos( $board_dashboard, 'job_id=' . $employer_job_ids[0] ) && false !== strpos( $board_dashboard, '>1</strong>' ) && false !== strpos( $board_dashboard, '>application</span>' ), 'Active listings show one linked all-status application total per job' );
 	$assert( false !== strpos( $board_dashboard, 'View all listings' ) && false !== strpos( $board_dashboard, 'View all activity' ) && false !== strpos( $board_dashboard, 'llamahire-activity-link' ), 'Dashboard collection links name their destinations and recent activity links to its affected record' );
+	$assert( false !== strpos( $board_dashboard, 'notification_statuses=pending,partial,failed' ), 'The email-attention card links to the inbox pre-filtered to pending, partial, and failed notifications' );
+	$job_state_count = new ReflectionMethod( \LlamaHire\Admin::class, 'job_state_count' );
+	$job_state_count->setAccessible( true );
+	$expiring_job_count = new ReflectionMethod( \LlamaHire\Admin_Workspaces::class, 'expiring_job_count' );
+	$expiring_job_count->setAccessible( true );
+	foreach ( array( 0, $employer_user_ids[0] ) as $parity_scope ) {
+		$assert(
+			\LlamaHire\Jobs::open_count( $parity_scope ) === $job_state_count->invoke( null, 'open', $parity_scope )
+			&& $expiring_job_count->invoke( null, $parity_scope ) === $job_state_count->invoke( null, 'closing-soon', $parity_scope ),
+			'Dashboard open-job and closing-soon counts match their filtered job-list views for board-wide and author scopes'
+		);
+	}
 	$_GET['post_status'] = 'pending';
 	$job_views = \LlamaHire\Admin::job_views( array() );
 	unset( $_GET['post_status'] );
