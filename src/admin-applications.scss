@@ -264,7 +264,8 @@
 	align-items: center;
 	border-bottom: 1px solid #dcdcde;
 	display: flex;
-	justify-content: flex-start;
+	gap: 16px;
+	justify-content: space-between;
 	min-height: 48px;
 }
 

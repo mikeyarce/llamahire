@@ -626,10 +626,6 @@
 	margin-bottom: 20px;
 }
 
-.llamahire-hiring .llamahire-page-header h1 {
-	font-size: 24px;
-}
-
 .llamahire-hiring-filters {
 	background: transparent;
 	border: 0;
@@ -709,6 +705,23 @@
 
 .llamahire-pipeline-layout {
 	display: block;
+}
+
+.llamahire-hiring-empty {
+	align-items: center;
+	background: #fff;
+	border: 1px solid var(--lh-border);
+	border-radius: 2px;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	min-height: 280px;
+}
+
+.llamahire-hiring-empty h2 {
+	font-size: 18px;
+	margin: 8px 0 16px;
 }
 
 .llamahire-pipeline {
@@ -1183,6 +1196,10 @@
 	}
 
 	.llamahire-hiring-filters .llamahire-candidate-search {
+		flex-basis: auto;
+	}
+
+	.llamahire-hiring-filters .llamahire-job-filter {
 		flex-basis: auto;
 	}
 

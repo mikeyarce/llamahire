@@ -242,7 +242,14 @@ test.describe.serial( 'complete hiring workflow', () => {
 		}
 
 		await openEditorPanel( page, 'Google Jobs readiness' );
-		await expect( page.locator( '.components-notice__content' ).getByText( 'Required Google Jobs fields are complete.' ) ).toBeVisible();
+		const readiness = page.locator( '.llamahire-readiness .components-notice__content' );
+		await expect( readiness.getByText( 'Ready to generate Google job data after publishing' ) ).toBeVisible();
+		await expect( readiness.locator( '.llamahire-readiness__complete li' ) ).toHaveText( [
+			'Job title and description',
+			'Hiring organization',
+			'Job location',
+			'Posting date added automatically',
+		] );
 		await openEditorPanel( page, 'Role and hiring status' );
 		await expect( page.locator( '.components-notice__content' ).filter( { hasText: 'Published — accepting applications until its application deadline or listing expiration.' } ) ).toBeVisible();
 		const previewJob = page.getByRole( 'link', { name: 'Preview job', exact: true } );
@@ -398,8 +405,8 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await expect( page.getByRole( 'link', { name: 'Duplicate Browser Candidate', exact: true } ) ).toHaveCount( 0 );
 		const candidateDetailUrl = await page.getByRole( 'link', { name: 'Browser Test Candidate', exact: true } ).getAttribute( 'href' );
 		await page.goto( candidateDetailUrl );
-		const candidateCard = page.locator( '.card' ).filter( { has: page.getByRole( 'heading', { name: 'Notifications', exact: true } ) } );
-		await expect( candidateCard ).toContainText( 'Attempts: 1' );
+		const emailDelivery = page.locator( '.llamahire-application-detail__email-delivery' );
+		await expect( emailDelivery ).toContainText( 'Attempts: 1' );
 
 		await page.getByLabel( 'Status', { exact: true } ).selectOption( 'reviewing' );
 		const saveStatus = page.getByRole( 'button', { name: 'Save status' } );
@@ -414,8 +421,8 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await expect( page.getByRole( 'status' ) ).toContainText( 'Private note added.' );
 		await expect( page.getByText( 'Reviewed by the browser integration suite.' ) ).toBeVisible();
 		await expect( page.getByLabel( 'Add private note', { exact: true } ) ).toHaveValue( '' );
-		const activityCard = page.locator( '.card' ).filter( { has: page.getByRole( 'heading', { name: 'Activity', exact: true } ) } );
-		await expect( activityCard ).toContainText( 'Application status changed: New → Reviewing' );
+		const activitySection = page.locator( '#llamahire-application-activity' );
+		await expect( activitySection ).toContainText( 'Application status changed: New → Reviewing' );
 		await expect( page.getByRole( 'link', { name: 'View resume' } ) ).toHaveAttribute( 'target', '_blank' );
 
 		const resumePromise = page.waitForEvent( 'download' );
@@ -425,14 +432,16 @@ test.describe.serial( 'complete hiring workflow', () => {
 		expect( resume.suggestedFilename() ).toBe( 'fixture-resume.pdf' );
 		const resumeBytes = await fs.readFile( await resume.path() );
 		expect( resumeBytes.subarray( 0, 4 ).toString() ).toBe( '%PDF' );
+		await page.getByText( 'Manage candidate data', { exact: true } ).click();
 		await page.locator( '#llamahire-replacement-resume' ).setInputFiles( path.resolve( 'tests/fixture-resume.pdf' ) );
 		await page.locator( 'button', { hasText: 'Replace resume' } ).press( 'Enter' );
 		await expect( page.getByRole( 'status' ) ).toContainText( 'The private resume was replaced.' );
 		await expect( page.getByRole( 'link', { name: 'Download resume' } ) ).toBeVisible();
+		await page.getByText( 'Manage candidate data', { exact: true } ).click();
 		const confirmResumeDeletion = page.getByLabel( 'I understand the current resume will be permanently deleted.' );
 		await confirmResumeDeletion.evaluate( ( input ) => input.click() );
 		await expect( confirmResumeDeletion ).toBeChecked();
-		await page.getByRole( 'button', { name: 'Delete resume permanently' } ).evaluate( ( button ) => button.click() );
+		await page.getByRole( 'button', { name: 'Delete resume' } ).evaluate( ( button ) => button.click() );
 		await expect( page.getByRole( 'status' ) ).toContainText( 'The private resume was permanently deleted.' );
 		await expect( page.getByRole( 'link', { name: 'Download resume' } ) ).toHaveCount( 0 );
 	} );
@@ -477,11 +486,13 @@ test.describe.serial( 'complete hiring workflow', () => {
 		const candidateResultRow = page.getByRole( 'row' ).filter( { hasText: candidateEmail } );
 		await expect( candidateResultRow ).toBeVisible();
 		const candidateReviewLink = candidateResultRow.getByRole( 'link', { name: 'Browser Test Candidate', exact: true } );
+		await expect( candidateReviewLink ).toHaveAttribute( 'href', /application=\d+/ );
 		await candidateReviewLink.focus();
 		await page.keyboard.press( 'Enter' );
-		const inlineReview = page.getByRole( 'region', { name: 'Review Browser Test Candidate' } );
+		const inlineReview = page.getByRole( 'region', { name: 'Quick view for Browser Test Candidate' } );
 		await expect( inlineReview ).toBeVisible();
 		await expect( inlineReview ).toBeFocused();
+		await expect( inlineReview.getByRole( 'link', { name: 'View full application' } ) ).toHaveAttribute( 'href', /application=\d+/ );
 		await expect( inlineReview.getByText( 'Text response' ) ).toBeVisible();
 		const coverLetterTrigger = inlineReview.getByRole( 'button', { name: 'View', exact: true } );
 		await coverLetterTrigger.focus();
@@ -514,7 +525,7 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await expect( noteHistoryDialog ).toContainText( 'Second compact review note.' );
 		expect( await noteHistoryDialog.locator( '.llamahire-history-list' ).evaluate( ( list ) => getComputedStyle( list ).overflowY ) ).toBe( 'visible' );
 		await noteHistoryDialog.getByRole( 'button', { name: 'Close' } ).evaluate( ( button ) => button.click() );
-		await inlineReview.getByRole( 'button', { name: 'Collapse review' } ).focus();
+		await inlineReview.getByRole( 'button', { name: 'Close quick view' } ).focus();
 		await page.keyboard.press( 'Enter' );
 		await expect( inlineReview ).toHaveCount( 0 );
 		await expect( candidateReviewLink ).toBeFocused();

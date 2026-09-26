@@ -195,6 +195,7 @@ final class Admin_Workspaces {
 		foreach ( $result['items'] as $candidate ) {
 			$columns[ $candidate->status ][] = $candidate;
 		}
+		$has_filters = ! $show_all || '' !== $search;
 		$selected_id = absint( $_GET['application'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only selection; ownership is checked immediately below.
 		$selected = $selected_id && Ownership::user_can_access_application( $selected_id, Capabilities::VIEW_APPLICATIONS )
 			? Plugin::instance()->services()->get( Service_IDs::APPLICATION_REPOSITORY )->find( $selected_id )
@@ -214,18 +215,26 @@ final class Admin_Workspaces {
 			<div class="llamahire-drag-help"><span class="dashicons dashicons-move"></span><?php esc_html_e( 'Drag candidates between stages.', 'llamahire' ); ?></div>
 			<div class="llamahire-hiring-toast" role="status" aria-live="polite" hidden></div>
 			<div class="llamahire-pipeline-layout">
-				<div class="llamahire-pipeline" data-hiring-pipeline aria-label="<?php esc_attr_e( 'Candidate pipeline', 'llamahire' ); ?>">
-					<?php foreach ( Applications::pipeline_statuses() as $status => $label ) : ?>
-						<section class="llamahire-stage llamahire-stage--<?php echo esc_attr( $status ); ?>" data-stage="<?php echo esc_attr( $status ); ?>">
-							<header><h2><?php echo esc_html( $label ); ?></h2><span data-stage-count><?php echo esc_html( count( $columns[ $status ] ) ); ?></span></header>
-							<div class="llamahire-stage-cards" data-stage-cards>
-								<?php if ( $columns[ $status ] ) : foreach ( $columns[ $status ] as $candidate ) : self::candidate_card( $candidate, $job_argument, $search, $selected ? (int) $selected->id : 0 ); endforeach; else : ?>
-									<div class="llamahire-stage-empty" data-stage-empty><span class="dashicons <?php echo 'hired' === $status ? 'dashicons-yes' : 'dashicons-admin-users'; ?>"></span><strong><?php esc_html_e( 'No candidates', 'llamahire' ); ?></strong><p><?php echo esc_html( self::empty_stage_copy( $status ) ); ?></p></div>
-								<?php endif; ?>
-							</div>
-						</section>
-					<?php endforeach; ?>
-				</div>
+				<?php if ( $has_filters && ! $result['items'] ) : ?>
+					<div class="llamahire-empty llamahire-hiring-empty">
+						<span class="dashicons dashicons-search" aria-hidden="true"></span>
+						<h2><?php esc_html_e( 'No candidates match these filters.', 'llamahire' ); ?></h2>
+						<a class="button" href="<?php echo esc_url( self::hiring_url() ); ?>"><?php esc_html_e( 'Clear filters', 'llamahire' ); ?></a>
+					</div>
+				<?php else : ?>
+					<div class="llamahire-pipeline" data-hiring-pipeline aria-label="<?php esc_attr_e( 'Candidate pipeline', 'llamahire' ); ?>">
+						<?php foreach ( Applications::pipeline_statuses() as $status => $label ) : ?>
+							<section class="llamahire-stage llamahire-stage--<?php echo esc_attr( $status ); ?>" data-stage="<?php echo esc_attr( $status ); ?>">
+								<header><h2><?php echo esc_html( $label ); ?></h2><span data-stage-count><?php echo esc_html( count( $columns[ $status ] ) ); ?></span></header>
+								<div class="llamahire-stage-cards" data-stage-cards>
+									<?php if ( $columns[ $status ] ) : foreach ( $columns[ $status ] as $candidate ) : self::candidate_card( $candidate, $job_argument, $search, $selected ? (int) $selected->id : 0 ); endforeach; else : ?>
+										<div class="llamahire-stage-empty" data-stage-empty><span class="dashicons <?php echo 'hired' === $status ? 'dashicons-yes' : 'dashicons-admin-users'; ?>"></span><strong><?php esc_html_e( 'No candidates', 'llamahire' ); ?></strong><p><?php echo esc_html( self::empty_stage_copy( $status ) ); ?></p></div>
+									<?php endif; ?>
+								</div>
+							</section>
+						<?php endforeach; ?>
+					</div>
+				<?php endif; ?>
 				<?php if ( $selected ) : self::candidate_drawer( $selected, $job_argument, $search ); endif; ?>
 			</div>
 		</div>

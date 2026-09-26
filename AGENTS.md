@@ -75,6 +75,10 @@ plugin. `llamahire.php` defines versions and boots the plugin.
   `docs/VALIDATION.md`, and `docs/RELEASING.md` are the main design and
   operational references. Dated material under `docs/audits/` is evidence, not
   the primary specification.
+- `DESIGN.md` is the canonical visual-design contract for both WordPress admin
+  and theme-aware public interfaces. Read it before creating or changing UI,
+  reuse its semantic tokens and component rules, and update it when introducing
+  a genuinely reusable pattern.
 
 The Free plugin is also the platform for Pro and third-party extensions.
 Documented contracts, service IDs, hooks, capability constants, and the
@@ -119,6 +123,10 @@ changing an extension boundary.
 - When changing the bundled applications UI, run `npm run build` and include
   the resulting `build/` files. Most files under `assets/` are not generated
   and should be edited directly.
+- When changing `DESIGN.md`, run `npm run design:lint`. Treat the document as
+  the agent-facing design contract and runtime CSS as its executable
+  implementation; keep both aligned without forcing public UI to override the
+  active theme.
 - Do not edit generated dependencies in `node_modules/` or `vendor/`, packaged
   output in `dist/`, or transient Playwright output.
 

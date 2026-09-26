@@ -33,6 +33,12 @@ Run the production build:
 npm run build
 ```
 
+Validate the root visual design contract:
+
+```sh
+npm run design:lint
+```
+
 Check both production and development dependency trees:
 
 ```sh
@@ -117,6 +123,18 @@ For a presentation-ready WordPress Studio site, run this single command from the
 studio wp llamahire fixtures generate --scenario=demo --force
 ```
 
+For a complete current-state QA workspace, use the state matrix:
+
+```sh
+npm run fixtures:matrix
+# Or, against the Studio site:
+studio wp llamahire fixtures generate --scenario=state-matrix --force
+```
+
+The state matrix creates descriptive records for every supported application workflow stage (`new`, `reviewing`, `interviewing`, `offer`, `hired`, and `rejected`), every notification outcome (`pending`, `sent`, `partial`, and `failed`), candidates with and without each optional material, zero/one/multiple private notes, and protected PDF plus DOCX resumes when ZIP support is available. It also creates a Hiring Manager, employers awaiting email verification and operator approval, two approved employers with separate ownership scopes, and jobs covering draft, pending moderation, open, closing soon, listing expiration soon, deadline-expired, listing-expired, manually closed, featured, exact-salary, no-salary, minimal-facts, all five pay units, on-site, hybrid, remote, internal application, external URL, and external email states. The shared password for the generated state-matrix users is `llamahire-matrix`; usernames include the stable seed suffix and are printed by the command and visible through `wp user list`.
+
+This is a meaningful product-state matrix rather than every mechanically possible database combination. Invalid or contradictory combinations belong in automated validation tests and are not inserted into a manual QA site as if they were supported records.
+
 To create a repeatable approved Employer account, its public pages, a linked listing-rules page, and draft/expiring/expired jobs for portal testing, run:
 
 ```sh
@@ -127,7 +145,7 @@ The defaults are `llamahire-employer` / `llamahire-demo`. Override them with `--
 
 The `demo` scenario creates a Northstar Labs careers homepage, polished job content, clean department names, a Media Library brand image, fictional candidates, every application and notification state, resumes, and representative draft, expired, closed, exact-salary, and no-salary roles. `--force` replaces only a previously registered LlamaHire fixture dataset; unrelated site content is preserved.
 
-Available scenarios are `demo`, `small`, `large`, `remote`, `expired`, `closed`, `notification-failures`, and `edge-cases`. Use `--seed=<name>` for stable content, `--jobs=<count>` or `--applications=<count>` for a bounded override, and `--force` to replace only the currently registered fixture dataset.
+Available scenarios are `demo`, `small`, `large`, `remote`, `expired`, `closed`, `notification-failures`, `edge-cases`, and `state-matrix`. Use `--seed=<name>` for stable content, `--jobs=<count>` or `--applications=<count>` for a bounded override, and `--force` to replace only the currently registered fixture dataset. Do not override the state-matrix counts when complete coverage is required.
 
 Each generated site includes organization settings, privacy and Careers pages, a Media Library logo/featured image, departments, complete structured job fields, application statuses and private notes, notification outcomes, and safe sample PDF resumes. A private registry plus per-record ownership markers ensures cleanup removes only LlamaHire-owned fixtures and restores the prior setup/settings options. Smoke coverage verifies that full-uninstall helpers retain unhandled custom tokens, remove supported storage tokens, preserve legacy DOC delivery metadata, and delete taxonomy rows even when the plugin's runtime registrations are inactive. It also exercises public job-REST recipient redaction, concurrent rate-counter contention, address changes during cached geocoding, activation-time taxonomy migration retries, the fixed CSV export column contract including byte-order-mark formula neutralization, dashboard email-attention link destinations, and numeric parity between dashboard open/closing-soon counts and their filtered job-list views in board-wide and author scopes.
 

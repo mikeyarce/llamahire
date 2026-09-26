@@ -1,0 +1,335 @@
+.llamahire-application-detail {
+	max-width: 1240px;
+}
+
+.llamahire-application-detail__back {
+	margin: 18px 0 14px;
+}
+
+.llamahire-application-detail__header {
+	margin-bottom: 18px;
+}
+
+.llamahire-application-detail__header h1 {
+	font-size: 28px;
+	line-height: 1.2;
+	margin: 0 0 6px;
+	padding: 0;
+}
+
+.llamahire-application-detail__header p {
+	color: #50575e;
+	font-size: 14px;
+	margin: 0;
+}
+
+.llamahire-application-detail__layout {
+	align-items: start;
+	display: grid;
+	gap: 20px;
+	grid-template-columns: minmax(0, 2.25fr) minmax(280px, 1fr);
+}
+
+.llamahire-application-detail .card {
+	box-sizing: border-box;
+	margin: 0;
+	max-width: none;
+}
+
+.llamahire-application-detail__main,
+.llamahire-application-detail__sidebar {
+	padding: 0;
+}
+
+.llamahire-application-detail__section,
+.llamahire-application-detail__sidebar-section {
+	padding: 22px 24px;
+}
+
+.llamahire-application-detail__section + .llamahire-application-detail__section,
+.llamahire-application-detail__sidebar-section + .llamahire-application-detail__sidebar-section {
+	border-top: 1px solid #dcdcde;
+}
+
+.llamahire-application-detail h2 {
+	font-size: 18px;
+	line-height: 1.3;
+	margin: 0 0 18px;
+}
+
+.llamahire-application-detail h3 {
+	font-size: 15px;
+	line-height: 1.4;
+	margin: 22px 0 10px;
+}
+
+.llamahire-application-detail__resume {
+	align-items: center;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	display: flex;
+	gap: 16px;
+	justify-content: space-between;
+	padding: 14px 16px;
+}
+
+.llamahire-application-detail__resume strong,
+.llamahire-application-detail__resume span {
+	display: block;
+}
+
+.llamahire-application-detail__resume span,
+.llamahire-application-detail small,
+.llamahire-application-detail__sidebar-section li span {
+	color: #646970;
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+.llamahire-application-detail__resume-actions {
+	display: flex;
+	flex: 0 0 auto;
+	gap: 8px;
+}
+
+.llamahire-application-detail__cover-letter {
+	font-size: 14px;
+	line-height: 1.65;
+	margin: 0;
+	max-width: 68ch;
+	white-space: pre-wrap;
+}
+
+.llamahire-application-detail__notes textarea,
+.llamahire-application-detail__sidebar select {
+	box-sizing: border-box;
+	margin-top: 6px;
+	width: 100%;
+}
+
+.llamahire-application-detail__form-actions {
+	display: flex;
+	justify-content: flex-end;
+	margin: 8px 0 16px;
+}
+
+.llamahire-application-detail__latest-note {
+	background: #f6f7f7;
+	padding: 12px 14px;
+}
+
+.llamahire-application-detail__latest-note p {
+	margin: 0 0 4px;
+	white-space: pre-wrap;
+}
+
+.llamahire-application-detail__history {
+	margin-top: 12px;
+}
+
+.llamahire-application-detail__history summary,
+.llamahire-application-detail__candidate-data > summary {
+	color: #2271b1;
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.llamahire-application-detail__history ol,
+.llamahire-application-detail__sidebar-section ol {
+	display: grid;
+	gap: 14px;
+	margin: 12px 0 0;
+	padding-left: 20px;
+}
+
+.llamahire-application-detail__history li p,
+.llamahire-application-detail__sidebar-section li strong,
+.llamahire-application-detail__sidebar-section li span {
+	display: block;
+}
+
+.llamahire-application-detail__history li p {
+	margin: 0 0 3px;
+	white-space: pre-wrap;
+}
+
+.llamahire-application-detail__sidebar dl {
+	margin: 0;
+}
+
+.llamahire-application-detail__sidebar dt {
+	font-weight: 600;
+	margin-top: 14px;
+}
+
+.llamahire-application-detail__sidebar dt:first-child {
+	margin-top: 0;
+}
+
+.llamahire-application-detail__sidebar dd {
+	margin: 3px 0 0;
+	overflow-wrap: anywhere;
+}
+
+.llamahire-application-detail__sidebar form > p {
+	margin-top: 0;
+}
+
+.llamahire-application-detail__sidebar form > .button {
+	width: 100%;
+}
+
+.llamahire-application-detail__email-delivery {
+	border-top: 1px solid #dcdcde;
+	margin-top: 18px;
+	padding-top: 18px;
+}
+
+.llamahire-application-detail__email-delivery h3 {
+	margin-top: 0;
+}
+
+.llamahire-application-detail__email-delivery .button {
+	width: 100%;
+}
+
+.llamahire-application-detail__candidate-data {
+	margin-top: 16px !important;
+}
+
+.llamahire-application-detail__candidate-data > summary {
+	font-size: 14px;
+	font-weight: 600;
+	padding: 16px 20px;
+	text-decoration: none;
+}
+
+.llamahire-application-detail__candidate-data-content {
+	border-top: 1px solid #dcdcde;
+	padding: 0 24px;
+}
+
+.llamahire-application-detail__data-action {
+	align-items: start;
+	display: grid;
+	gap: 24px;
+	grid-template-columns: minmax(0, 1fr) auto;
+	margin: 0;
+	padding: 24px 8px;
+}
+
+.llamahire-application-detail__data-action + .llamahire-application-detail__data-action {
+	border-top: 1px solid #dcdcde;
+}
+
+.llamahire-application-detail__data-action h3 {
+	font-size: 16px;
+	margin: 0 0 6px;
+}
+
+.llamahire-application-detail__data-action p {
+	color: #50575e;
+	margin: 0 0 14px;
+	max-width: 74ch;
+}
+
+.llamahire-application-detail__data-action input[type="file"] {
+	display: block;
+	margin: 0 0 4px;
+	max-width: 100%;
+}
+
+.llamahire-application-detail__data-action small {
+	display: block;
+}
+
+.llamahire-application-detail__data-action > .button {
+	margin-top: 2px;
+	min-width: 170px;
+	text-align: center;
+}
+
+.llamahire-application-detail__data-action--destructive h3 {
+	color: #b32d2e;
+}
+
+.llamahire-application-detail__data-action--destructive label {
+	display: inline-flex;
+	gap: 8px;
+	line-height: 1.5;
+}
+
+.llamahire-application-detail__data-action--destructive label input {
+	flex: 0 0 auto;
+	margin-top: 2px;
+}
+
+.llamahire-application-detail__data-action--destructive .button-link-delete {
+	background: #fff5f5;
+	border-color: #d63638;
+	color: #b32d2e;
+	text-decoration: none;
+}
+
+.llamahire-application-detail__data-action--destructive:has(input:required:not(:checked)) .button-link-delete {
+	opacity: 0.55;
+}
+
+.llamahire-application-detail__data-action--destructive .button-link-delete:hover,
+.llamahire-application-detail__data-action--destructive .button-link-delete:focus {
+	background: #fcf0f1;
+	border-color: #8a2424;
+	color: #8a2424;
+}
+
+@media (max-width: 960px) {
+	.llamahire-application-detail__layout {
+		grid-template-columns: minmax(0, 1.7fr) minmax(240px, 1fr);
+	}
+}
+
+@media (max-width: 782px) {
+	.llamahire-application-detail {
+		margin-right: 12px;
+	}
+
+	.llamahire-application-detail__layout {
+		grid-template-columns: 1fr;
+	}
+
+	.llamahire-application-detail__section,
+	.llamahire-application-detail__sidebar-section {
+		padding: 20px;
+	}
+
+	.llamahire-application-detail__resume {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.llamahire-application-detail__resume-actions .button {
+		flex: 1;
+		text-align: center;
+	}
+
+	.llamahire-application-detail__candidate-data-content {
+		padding: 0 20px;
+	}
+
+	.llamahire-application-detail__data-action {
+		gap: 16px;
+		grid-template-columns: 1fr;
+		padding: 20px 0;
+	}
+
+	.llamahire-application-detail__data-action > .button {
+		justify-self: start;
+		margin-top: 0;
+	}
+}
+
+@media (max-width: 480px) {
+	.llamahire-application-detail__resume-actions {
+		flex-direction: column;
+	}
+}

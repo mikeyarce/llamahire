@@ -105,6 +105,7 @@ final class Jobs {
 				'labels'            => array( 'name' => __( 'Job Types', 'llamahire' ), 'singular_name' => __( 'Job Type', 'llamahire' ) ),
 				'public'            => true,
 				'hierarchical'      => false,
+				'meta_box_cb'       => false,
 				'show_in_rest'      => true,
 				'show_admin_column' => true,
 				'capabilities'      => array(

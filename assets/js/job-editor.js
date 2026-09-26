@@ -49,6 +49,13 @@
 			}
 		}, [] );
 
+		useEffect( function () {
+			var editPostActions = wp.data.dispatch( 'core/edit-post' );
+			if ( editPostActions && editPostActions.removeEditorPanel ) {
+				editPostActions.removeEditorPanel( 'taxonomy-panel-llamahire_job_type' );
+			}
+		}, [] );
+
 		if ( ! editor.title.trim() ) {
 			issues.push( __( 'Add a concise job title.', 'llamahire' ) );
 		}
@@ -123,7 +130,15 @@
 						el( 'strong', {}, __( 'Complete these for Google Jobs eligibility:', 'llamahire' ) ),
 						el( 'ul', {}, issues.map( function ( issue ) { return el( 'li', { key: issue }, issue ); } ) )
 					) :
-					el( Notice, { status: 'success', isDismissible: false }, __( 'Required Google Jobs fields are complete.', 'llamahire' ) )
+					el( Notice, { status: 'success', isDismissible: false },
+						el( 'strong', {}, __( 'Ready to generate Google job data after publishing', 'llamahire' ) ),
+						el( 'ul', { className: 'llamahire-readiness__complete' },
+							el( 'li', {}, __( 'Job title and description', 'llamahire' ) ),
+							el( 'li', {}, __( 'Hiring organization', 'llamahire' ) ),
+							el( 'li', {}, data.workplace === 'remote' ? __( 'Remote applicant eligibility', 'llamahire' ) : __( 'Job location', 'llamahire' ) ),
+							el( 'li', {}, __( 'Posting date added automatically', 'llamahire' ) )
+						)
+					)
 			),
 			el( PluginDocumentSettingPanel, { name: 'llamahire-role', title: __( 'Role and hiring status', 'llamahire' ), className: 'llamahire-role' },
 				el( Notice, { status: 'info', isDismissible: false },

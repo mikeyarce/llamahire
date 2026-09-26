@@ -538,15 +538,16 @@ function ApplicationReview( { item, onClose, onUpdated } ) {
 			className="llamahire-inline-review"
 			aria-label={ sprintf(
 				/* translators: %s: Candidate name. */
-				__( 'Review %s', 'llamahire' ),
+				__( 'Quick view for %s', 'llamahire' ),
 				item.candidate
 			) }
 			tabIndex="-1"
 		>
 			<div className="llamahire-inline-review__header">
 				<Button variant="link" onClick={ onClose }>
-					{ __( 'Collapse review', 'llamahire' ) }
+					{ __( 'Close quick view', 'llamahire' ) }
 				</Button>
+				<a href={ item.detail_url }>{ __( 'View full application', 'llamahire' ) }</a>
 			</div>
 			{ isLoading && (
 				<div className="llamahire-inline-review__loading" role="status">
@@ -919,8 +920,8 @@ function ApplicationsTable( {
 											data-llamahire-review-trigger={ id }
 											label={
 												isExpanded
-													? __( 'Collapse application review', 'llamahire' )
-													: __( 'Review application', 'llamahire' )
+													? __( 'Close quick view', 'llamahire' )
+													: __( 'Quick view', 'llamahire' )
 											}
 											onClick={ ( event ) =>
 												onToggleReview( item, event.currentTarget )
@@ -1183,7 +1184,7 @@ function ApplicationsDataView() {
 	const actions = [
 		{
 			id: 'review',
-			label: __( 'Review application', 'llamahire' ),
+			label: __( 'Quick view', 'llamahire' ),
 			isPrimary: true,
 			callback: ( [ item ] ) => toggleReview( item ),
 		},

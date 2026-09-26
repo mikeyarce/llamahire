@@ -73,6 +73,9 @@ jobs:
       - name: Check PHP syntax
         run: find . -name '*.php' -not -path './node_modules/*' -not -path './vendor/*' -not -path './dist/*' -print0 | xargs -0 -n1 php -l
 
+      - name: Validate visual design contract
+        run: npm run design:lint
+
       - name: Verify translation template
         run: |
           npm run i18n:make-pot

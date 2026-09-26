@@ -65,6 +65,13 @@ Build the production assets:
 npm run build
 ```
 
+Validate the agent-facing visual design contract after changing UI patterns or
+`DESIGN.md`:
+
+```sh
+npm run design:lint
+```
+
 Regenerate the translation template after changing translatable copy:
 
 ```sh

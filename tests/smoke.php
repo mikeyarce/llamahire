@@ -98,6 +98,7 @@ try {
 	$assert( empty( $job_type->template ) && 'Add job title' === apply_filters( 'enter_title_here', 'Add title', $empty_job ), 'New jobs start with an empty block canvas and a job-specific title prompt' );
 	$assert( 'manage_llamahire_departments' === $department_type->cap->manage_terms, 'Department taxonomy maps dedicated capabilities' );
 	$assert( 'manage_llamahire_job_types' === $employment_type_taxonomy->cap->manage_terms && $employer->has_cap( 'assign_llamahire_job_types' ) && ! $employer->has_cap( 'manage_llamahire_job_types' ), 'Job types are operator-managed while employers can assign existing types' );
+	$assert( false === $employment_type_taxonomy->meta_box_cb, 'Job types use the single-value employment dropdown instead of a duplicate taxonomy meta box' );
 	$registered_job_meta = get_registered_meta_keys( 'post', 'llamahire_job' );
 	$assert( isset( $registered_job_meta[ \LlamaHire\Jobs::META_KEY ] ) && ! empty( $registered_job_meta[ \LlamaHire\Jobs::META_KEY ]['show_in_rest'] ), 'Structured job settings are registered for the block editor' );
 	$privacy_page_id = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'LlamaHire Smoke Privacy', 'post_content' => 'Privacy fixture.' ) );

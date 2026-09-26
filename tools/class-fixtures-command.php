@@ -2,6 +2,7 @@
 namespace LlamaHire\Tools;
 
 use LlamaHire\Applications;
+use LlamaHire\Application_Notes;
 use LlamaHire\Audit_Log;
 use LlamaHire\Capabilities;
 use LlamaHire\Employer_Registration;
@@ -29,7 +30,7 @@ final class Fixtures_Command {
 	 * ## OPTIONS
 	 *
 	 * [--scenario=<scenario>]
-	 * : demo, small, large, remote, expired, closed, notification-failures, or edge-cases. Default: small.
+	 * : demo, small, large, remote, expired, closed, notification-failures, edge-cases, or state-matrix. Default: small.
 	 *
 	 * [--seed=<seed>]
 	 * : Stable content seed. Default: demo.
@@ -48,6 +49,7 @@ final class Fixtures_Command {
 	 *     wp llamahire fixtures generate --scenario=small
 	 *     wp llamahire fixtures generate --scenario=demo --force
 	 *     wp llamahire fixtures generate --scenario=edge-cases --seed=bug-142 --force
+	 *     wp llamahire fixtures generate --scenario=state-matrix --force
 	 *
 	 * @subcommand generate
 	 */
@@ -56,7 +58,7 @@ final class Fixtures_Command {
 		$scenario = sanitize_key( $assoc_args['scenario'] ?? 'small' );
 		$scenarios = $this->scenarios();
 		if ( ! isset( $scenarios[ $scenario ] ) ) {
-			\WP_CLI::error( 'Unknown scenario. Use demo, small, large, remote, expired, closed, notification-failures, or edge-cases.' );
+			\WP_CLI::error( 'Unknown scenario. Use demo, small, large, remote, expired, closed, notification-failures, edge-cases, or state-matrix.' );
 		}
 		if ( get_option( self::OPTION, false ) ) {
 			if ( ! \WP_CLI\Utils\get_flag_value( $assoc_args, 'force', false ) ) {
@@ -70,7 +72,7 @@ final class Fixtures_Command {
 		$job_count = isset( $assoc_args['jobs'] ) ? min( 500, max( 1, absint( $assoc_args['jobs'] ) ) ) : $scenarios[ $scenario ]['jobs'];
 		$application_count = isset( $assoc_args['applications'] ) ? min( 10000, absint( $assoc_args['applications'] ) ) : $scenarios[ $scenario ]['applications'];
 		$registry = array(
-			'version'      => 1,
+			'version'      => 2,
 			'owner'        => self::OWNER,
 			'scenario'     => $scenario,
 			'seed'         => $seed,
@@ -81,6 +83,7 @@ final class Fixtures_Command {
 			'pages'        => array(),
 			'attachments'  => array(),
 			'applications' => array(),
+			'users'        => array(),
 			'options'      => array(
 				'settings_exists' => false !== get_option( Settings::OPTION, false ),
 				'settings'        => get_option( Settings::OPTION, false ),
@@ -132,24 +135,46 @@ final class Fixtures_Command {
 			$careers_content = 'demo' === $scenario ? $this->demo_careers_content() : Setup::careers_page_content();
 			$careers_page = $this->create_page( $careers_title, $careers_content, $seed . '-careers' );
 			$registry['pages'] = array( $privacy_page, $careers_page );
+			$state_pages = array();
+			if ( 'state-matrix' === $scenario ) {
+				foreach ( array(
+					'submit_job_page_id' => array( 'State Matrix — Submit a Job', $seed . '-submit-job', '[llamahire_submit_job]' ),
+					'my_jobs_page_id' => array( 'State Matrix — My Jobs', $seed . '-my-jobs', '[llamahire_my_jobs]' ),
+					'employer_account_page_id' => array( 'State Matrix — Employer Account', $seed . '-employer-account', '[llamahire_employer_account]' ),
+					'employer_registration_page_id' => array( 'State Matrix — Employer Registration', $seed . '-employer-registration', '[llamahire_employer_registration]' ),
+					'employer_policy_page_id' => array( 'State Matrix — Listing Rules', $seed . '-listing-rules', '<!-- wp:paragraph --><p>Fixture employers must publish accurate, lawful listings.</p><!-- /wp:paragraph -->' ),
+				) as $setting_key => $page_spec ) {
+					$page_id = $this->create_page( $page_spec[0], $page_spec[2], $page_spec[1] );
+					$registry['pages'][] = $page_id;
+					$state_pages[ $setting_key ] = $page_id;
+				}
+			}
 			$this->save_registry( $registry );
 
 			$logo_url = wp_get_attachment_url( $attachment );
 			update_option(
 				Settings::OPTION,
 				Settings::sanitize(
-					array(
-						'name'               => 'demo' === $scenario ? 'Northstar Labs' : 'LlamaHire Fixture Company',
-						'website'            => home_url( '/' ),
-						'logo'               => $logo_url,
-						'default_locality'   => 'Vancouver',
-						'default_region'     => 'British Columbia',
-						'default_country'    => 'CA',
-						'default_currency'   => 'CAD',
-						'notification_email' => 'demo' === $scenario ? 'careers@northstar.example.test' : 'hiring-fixtures@example.test',
-						'privacy_text'       => 'demo' === $scenario ? 'We use your information only to review your application and coordinate the hiring process.' : 'Fixture candidate information is used only for product testing.',
-						'privacy_page_id'    => $privacy_page,
-						'careers_page_id'    => $careers_page,
+					array_merge(
+						array(
+							'site_mode'             => 'state-matrix' === $scenario ? Settings::SITE_MODE_JOB_BOARD : Settings::SITE_MODE_COMPANY,
+							'name'                  => 'demo' === $scenario ? 'Northstar Labs' : 'LlamaHire Fixture Company',
+							'website'               => home_url( '/' ),
+							'logo'                  => $logo_url,
+							'default_locality'      => 'Vancouver',
+							'default_region'        => 'British Columbia',
+							'default_country'       => 'CA',
+							'default_currency'      => 'CAD',
+							'notification_email'    => 'demo' === $scenario ? 'careers@northstar.example.test' : 'hiring-fixtures@example.test',
+							'privacy_text'          => 'demo' === $scenario ? 'We use your information only to review your application and coordinate the hiring process.' : 'Fixture candidate information is used only for product testing.',
+							'privacy_page_id'       => $privacy_page,
+							'careers_page_id'       => $careers_page,
+							'employer_approval'     => 'manual',
+							'employer_policy_text'  => 'I agree to follow the {listing_policy} and provide accurate information.',
+							'active_listing_limit'  => 25,
+							'listing_duration_days' => 30,
+						),
+						$state_pages
 					)
 				)
 			);
@@ -159,8 +184,15 @@ final class Fixtures_Command {
 				update_option( 'page_on_front', $careers_page );
 			}
 
+			$state_users = array();
+			if ( 'state-matrix' === $scenario ) {
+				$state_users = $this->create_state_matrix_users( $seed );
+				$registry['users'] = array_values( $state_users );
+				$this->save_registry( $registry );
+			}
+
 			for ( $index = 0; $index < $job_count; $index++ ) {
-				$job_id = $this->create_job( $scenario, $seed, $index, $attachment, $registry['terms'] );
+				$job_id = $this->create_job( $scenario, $seed, $index, $attachment, $registry['terms'], $state_users );
 				$registry['jobs'][] = $job_id;
 				$this->save_registry( $registry );
 			}
@@ -175,8 +207,15 @@ final class Fixtures_Command {
 			\WP_CLI::error( $error->getMessage() );
 		}
 
-		\WP_CLI::success( sprintf( 'Created %1$d jobs, %2$d applications, %3$d departments, two pages, and one Media Library image for the %4$s scenario.', $job_count, $application_count, count( $registry['terms'] ), $scenario ) );
+		\WP_CLI::success( sprintf( 'Created %1$d jobs, %2$d applications, %3$d departments, %4$d pages, %5$d users, and one Media Library image for the %6$s scenario.', $job_count, $application_count, count( $registry['terms'] ), count( $registry['pages'] ), count( $registry['users'] ), $scenario ) );
 		\WP_CLI::log( 'Careers page: ' . get_permalink( $careers_page ) );
+		if ( 'state-matrix' === $scenario ) {
+			\WP_CLI::log( 'State-matrix user password: llamahire-matrix' );
+			foreach ( $state_users as $state => $user_id ) {
+				$user = get_userdata( $user_id );
+				\WP_CLI::log( sprintf( '%1$s: %2$s', str_replace( '_', ' ', ucfirst( $state ) ), $user ? $user->user_login : '' ) );
+			}
+		}
 	}
 
 	/**
@@ -199,7 +238,7 @@ final class Fixtures_Command {
 			\WP_CLI::confirm( 'Remove the registered LlamaHire fixture dataset?' );
 		}
 		$counts = $this->remove_registered_data();
-		\WP_CLI::success( sprintf( 'Removed %1$d jobs, %2$d applications, %3$d departments, %4$d pages, and %5$d attachments owned by LlamaHire fixtures.', $counts['jobs'], $counts['applications'], $counts['terms'], $counts['pages'], $counts['attachments'] ) );
+		\WP_CLI::success( sprintf( 'Removed %1$d jobs, %2$d applications, %3$d departments, %4$d pages, %5$d users, and %6$d attachments owned by LlamaHire fixtures.', $counts['jobs'], $counts['applications'], $counts['terms'], $counts['pages'], $counts['users'], $counts['attachments'] ) );
 	}
 
 	/**
@@ -221,6 +260,7 @@ final class Fixtures_Command {
 			array( 'property' => 'Seed', 'value' => $registry['seed'] ),
 			array( 'property' => 'Jobs', 'value' => count( $registry['jobs'] ) ),
 			array( 'property' => 'Applications', 'value' => count( $registry['applications'] ) ),
+			array( 'property' => 'Users', 'value' => count( $registry['users'] ?? array() ) ),
 			array( 'property' => 'Departments', 'value' => count( $registry['terms'] ) ),
 			array( 'property' => 'Pages', 'value' => count( $registry['pages'] ) ),
 			array( 'property' => 'Attachments', 'value' => count( $registry['attachments'] ) ),
@@ -466,25 +506,102 @@ final class Fixtures_Command {
 			'closed'                => array( 'jobs' => 8, 'applications' => 24 ),
 			'notification-failures' => array( 'jobs' => 6, 'applications' => 30 ),
 			'edge-cases'            => array( 'jobs' => 12, 'applications' => 48 ),
+			'state-matrix'          => array( 'jobs' => 15, 'applications' => 48 ),
 		);
 	}
 
-	private function create_job( $scenario, $seed, $index, $attachment, array $terms ) {
+	private function create_state_matrix_users( $seed ) {
+		Capabilities::install();
+		$suffix = substr( md5( $seed ), 0, 8 );
+		$specs = array(
+			'hiring_manager' => array( 'State Matrix Hiring Manager', 'manager', Capabilities::HIRING_MANAGER_ROLE, '' ),
+			'pending_email'   => array( 'State Matrix Unverified Employer', 'unverified', '', Employer_Registration::STATUS_EMAIL ),
+			'pending_approval' => array( 'State Matrix Awaiting Employer', 'awaiting', '', Employer_Registration::STATUS_APPROVAL ),
+			'employer_alpha'  => array( 'State Matrix Employer Alpha', 'alpha', Capabilities::EMPLOYER_ROLE, Employer_Registration::STATUS_APPROVED ),
+			'employer_beta'   => array( 'State Matrix Employer Beta', 'beta', Capabilities::EMPLOYER_ROLE, Employer_Registration::STATUS_APPROVED ),
+		);
+		$users = array();
+		foreach ( $specs as $key => $spec ) {
+			$login = sanitize_user( 'llamahire-' . $spec[1] . '-' . $suffix, true );
+			if ( username_exists( $login ) ) {
+				throw new \RuntimeException( 'A state-matrix username already exists outside the registered fixture.' );
+			}
+			$user_id = wp_insert_user(
+				array(
+					'user_login'   => $login,
+					'user_pass'    => 'llamahire-matrix',
+					'user_email'   => $spec[1] . '-' . $suffix . '@example.test',
+					'display_name' => $spec[0],
+					'first_name'   => $spec[0],
+					'role'         => $spec[2],
+				)
+			);
+			if ( is_wp_error( $user_id ) ) {
+				throw new \RuntimeException( $user_id->get_error_message() );
+			}
+			$user = get_userdata( $user_id );
+			if ( '' === $spec[2] && $user ) {
+				$user->set_role( '' );
+			}
+			update_user_meta( $user_id, self::META, self::OWNER );
+			if ( $spec[3] ) {
+				update_user_meta( $user_id, Employer_Registration::STATUS_META, $spec[3] );
+				update_user_meta( $user_id, Employer_Registration::COMPANY_META, 'State Matrix ' . ucfirst( $spec[1] ) . ' Company' );
+				update_user_meta( $user_id, Employer_Registration::POLICY_META, hash( 'sha256', Settings::get()['employer_policy_text'] . '|' . absint( Settings::get()['employer_policy_page_id'] ) ) );
+				update_user_meta( $user_id, Employer_Registration::POLICY_DATE_META, current_time( 'mysql', true ) );
+			}
+			if ( Employer_Registration::STATUS_EMAIL === $spec[3] ) {
+				$token = 'state-matrix-verification-token';
+				update_user_meta( $user_id, Employer_Registration::TOKEN_META, hash_hmac( 'sha256', $token, wp_salt( 'auth' ) ) );
+				update_user_meta( $user_id, Employer_Registration::TOKEN_EXPIRY_META, time() + DAY_IN_SECONDS );
+			}
+			$users[ $key ] = (int) $user_id;
+		}
+		return $users;
+	}
+
+	private function state_matrix_job_specs() {
+		return array(
+			array( 'Open — Internal On-site', 'publish', 'onsite', 'internal', 'open' ),
+			array( 'Open — Internal Hybrid', 'publish', 'hybrid', 'internal', 'open' ),
+			array( 'Open — Internal Remote', 'publish', 'remote', 'internal', 'open' ),
+			array( 'Closing Soon — Application Deadline', 'publish', 'onsite', 'internal', 'closing_soon' ),
+			array( 'Expiring Soon — Listing Duration', 'publish', 'hybrid', 'internal', 'expiring_soon' ),
+			array( 'Expired — Application Deadline', 'publish', 'onsite', 'internal', 'deadline_expired' ),
+			array( 'Expired — Listing Duration', 'publish', 'remote', 'internal', 'listing_expired' ),
+			array( 'Closed — Employer Action', 'publish', 'hybrid', 'internal', 'closed' ),
+			array( 'Draft — Incomplete Listing', 'draft', 'onsite', 'internal', 'draft' ),
+			array( 'Awaiting Review — Pending Moderation', 'pending', 'remote', 'internal', 'pending' ),
+			array( 'Open — External Application Website', 'publish', 'onsite', 'external_url', 'open' ),
+			array( 'Open — External Application Email', 'publish', 'hybrid', 'external_email', 'open' ),
+			array( 'Open — Featured Exact Salary', 'publish', 'remote', 'internal', 'exact_salary' ),
+			array( 'Open — No Salary Disclosed', 'publish', 'onsite', 'internal', 'no_salary' ),
+			array( 'Open — Minimal Optional Facts', 'publish', 'hybrid', 'internal', 'minimal' ),
+		);
+	}
+
+	private function create_job( $scenario, $seed, $index, $attachment, array $terms, array $state_users = array() ) {
 		$titles = 'demo' === $scenario
 			? array( 'Senior Product Designer', 'Backend Platform Engineer', 'Customer Success Lead', 'Content Strategist', 'People Operations Partner', 'Data Analyst', 'Frontend Engineer', 'Growth Marketing Manager', 'Product Manager', 'Security Engineer', 'Technical Writer', 'Finance Operations Analyst', 'Developer Experience Engineer', 'Design Systems Lead', 'Community Programs Manager', 'Support Engineer' )
 			: array( 'Senior Product Designer', 'Backend Engineer', 'Customer Success Lead', 'Content Strategist', 'People Operations Partner', 'Data Analyst', 'Frontend Engineer', 'Growth Marketer' );
 		$workplaces = array( 'onsite', 'hybrid', 'remote' );
 		$employment = array( 'full_time', 'part_time', 'contractor', 'temporary', 'intern', 'volunteer', 'per_diem', 'other' );
 		$workplace = 'remote' === $scenario ? 'remote' : $workplaces[ $index % count( $workplaces ) ];
-		$status = ( 'edge-cases' === $scenario && 0 === $index % 5 ) || ( 'demo' === $scenario && 11 === $index ) ? 'draft' : 'publish';
+		$matrix_spec = 'state-matrix' === $scenario ? $this->state_matrix_job_specs()[ $index % count( $this->state_matrix_job_specs() ) ] : array();
+		$status = $matrix_spec ? $matrix_spec[1] : ( ( 'edge-cases' === $scenario && 0 === $index % 5 ) || ( 'demo' === $scenario && 11 === $index ) ? 'draft' : 'publish' );
 		$title  = $titles[ $index % count( $titles ) ];
-		if ( 'demo' !== $scenario ) {
+		if ( $matrix_spec ) {
+			$title = 'State Matrix: ' . $matrix_spec[0];
+			$workplace = $matrix_spec[2];
+		} elseif ( 'demo' !== $scenario ) {
 			$title .= ' — Fixture ' . ( $index + 1 );
 		}
+		$author_id = $matrix_spec ? absint( $state_users[ 0 === $index % 2 ? 'employer_alpha' : 'employer_beta' ] ?? 0 ) : 0;
 		$job_id = wp_insert_post(
 			array(
 				'post_type'    => Jobs::POST_TYPE,
 				'post_status'  => $status,
+				'post_author'  => $author_id,
 				'post_title'   => $title,
 				'post_name'    => 'llamahire-fixture-' . $seed . '-' . ( $index + 1 ),
 				'post_excerpt' => 'demo' === $scenario ? 'Join Northstar Labs and help thoughtful teams do ambitious work.' : 'A deterministic ' . $scenario . ' scenario role for LlamaHire testing.',
@@ -498,6 +615,7 @@ final class Fixtures_Command {
 		update_post_meta( $job_id, self::META, self::OWNER );
 		$deadline_days = 20 + ( $index % 50 );
 		$deadline = wp_date( 'Y-m-d', current_time( 'timestamp' ) + DAY_IN_SECONDS * $deadline_days );
+		$listing_expires = '';
 		if ( 'expired' === $scenario || ( 'edge-cases' === $scenario && 1 === $index % 5 ) || ( 'demo' === $scenario && 12 === $index ) ) {
 			$deadline = wp_date( 'Y-m-d', current_time( 'timestamp' ) - DAY_IN_SECONDS * ( 1 + $index ) );
 		}
@@ -511,6 +629,32 @@ final class Fixtures_Command {
 			$salary_min = '';
 			$salary_max = '';
 		}
+		$application_method = 'internal';
+		$application_target = '';
+		if ( $matrix_spec ) {
+			$lifecycle = $matrix_spec[4];
+			$application_method = $matrix_spec[3];
+			$application_target = 'external_url' === $application_method ? 'https://apply.example.test/state-matrix' : ( 'external_email' === $application_method ? 'apply-matrix@example.test' : 'hiring-fixtures@example.test' );
+			if ( 'closing_soon' === $lifecycle ) {
+				$deadline = wp_date( 'Y-m-d', current_time( 'timestamp' ) + ( 3 * DAY_IN_SECONDS ) );
+			} elseif ( 'expiring_soon' === $lifecycle ) {
+				$listing_expires = wp_date( 'Y-m-d', current_time( 'timestamp' ) + ( 3 * DAY_IN_SECONDS ) );
+			} elseif ( 'deadline_expired' === $lifecycle ) {
+				$deadline = wp_date( 'Y-m-d', current_time( 'timestamp' ) - ( 3 * DAY_IN_SECONDS ) );
+			} elseif ( 'listing_expired' === $lifecycle ) {
+				$listing_expires = wp_date( 'Y-m-d', current_time( 'timestamp' ) - ( 3 * DAY_IN_SECONDS ) );
+			} elseif ( 'closed' === $lifecycle ) {
+				$closed = '1';
+			} elseif ( 'exact_salary' === $lifecycle ) {
+				$salary_max = $salary_min;
+			} elseif ( 'no_salary' === $lifecycle || 'minimal' === $lifecycle ) {
+				$salary_min = '';
+				$salary_max = '';
+			}
+			if ( 'minimal' === $lifecycle ) {
+				$deadline = '';
+			}
+		}
 		Jobs::set_meta(
 			$job_id,
 			array(
@@ -520,8 +664,9 @@ final class Fixtures_Command {
 				'salary_min'          => $salary_min,
 				'salary_max'          => $salary_max,
 				'salary_currency'     => 0 === $index % 2 ? 'CAD' : 'USD',
-				'salary_unit'         => 0 === $index % 4 ? 'HOUR' : 'YEAR',
+				'salary_unit'         => 'state-matrix' === $scenario ? array( 'HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR' )[ $index % 5 ] : ( 0 === $index % 4 ? 'HOUR' : 'YEAR' ),
 				'deadline'            => $deadline,
+				'listing_expires'     => $listing_expires,
 				'featured'            => 0 === $index % 4 ? '1' : '0',
 				'closed'              => $closed,
 				'address_street'      => ( 100 + $index ) . ' Fixture Street',
@@ -534,6 +679,8 @@ final class Fixtures_Command {
 				'organization_name'   => 0 === $index % 3 ? ( 'demo' === $scenario ? 'Northstar Product Studio' : 'LlamaHire Fixture Studio' ) : '',
 				'organization_url'    => 0 === $index % 3 ? ( 'demo' === $scenario ? home_url( '/product-studio/' ) : home_url( '/fixture-studio/' ) ) : '',
 				'organization_logo'   => 0 === $index % 3 ? wp_get_attachment_url( $attachment ) : '',
+				'application_method'  => $application_method,
+				'application_target'  => $application_target,
 			)
 		);
 		set_post_thumbnail( $job_id, $attachment );
@@ -544,19 +691,34 @@ final class Fixtures_Command {
 
 	private function create_application( $scenario, $seed, $index, array $jobs ) {
 		$repository = Plugin::instance()->services()->get( Service_IDs::APPLICATION_REPOSITORY );
-		$job_id = $jobs[ $index % count( $jobs ) ];
+		$application_jobs = $jobs;
+		if ( 'state-matrix' === $scenario ) {
+			$application_jobs = array_values(
+				array_filter(
+					$jobs,
+					static function ( $job_id ) {
+						$meta = Jobs::get_meta( $job_id );
+						return 'publish' === get_post_status( $job_id ) && 'internal' === $meta['application_method'];
+					}
+				)
+			);
+		}
+		$job_id = $application_jobs[ $index % count( $application_jobs ) ];
 		$key = $this->uuid( $seed . '|application|' . $index );
-		$resume = 0 === $index % 4 ? $this->create_resume( $seed, $index ) : array( 'token' => '', 'name' => '' );
+		$resume_interval = 'state-matrix' === $scenario ? 3 : 4;
+		$resume = 0 === $index % $resume_interval ? $this->create_resume( $seed, $index, $scenario ) : array( 'token' => '', 'name' => '' );
 		$statuses = array( 'new', 'reviewing', 'interviewing', 'offer', 'hired', 'rejected' );
 		$status = $statuses[ ( $index + ( 'demo' === $scenario ? 1 : 0 ) ) % count( $statuses ) ];
 		$candidate_name = 'demo' === $scenario ? array( 'Avery Chen', 'Maya Patel', 'Jordan Williams', 'Sofia Garcia', 'Noah Kim', 'Amara Okafor', 'Theo Martin', 'Priya Shah', 'Lucas Silva', 'Emma Wilson', 'Kai Anderson', 'Nina Rossi', 'Owen Brown', 'Leila Haddad', 'Mateo Rivera', 'Zoe Thompson' )[ $index % 16 ] . ( $index >= 16 ? ' ' . ( 1 + intdiv( $index, 16 ) ) : '' ) : 'Fixture Candidate ' . ( $index + 1 );
+		$phone = 'state-matrix' === $scenario && 1 === $index % 4 ? '' : '+1 604 555 ' . str_pad( (string) ( 1000 + $index ), 4, '0', STR_PAD_LEFT );
+		$cover_letter = 'state-matrix' === $scenario && 2 === $index % 4 ? '' : ( 'demo' === $scenario ? 'I am excited about Northstar Labs because the role combines meaningful ownership, cross-functional collaboration, and a thoughtful approach to customer impact.' : 'I am applying through the deterministic ' . $scenario . ' fixture scenario. Candidate index: ' . ( $index + 1 ) . '.' );
 		$created = $repository->create_once(
 			array(
 				'job_id'        => $job_id,
 				'name'          => $candidate_name,
 				'email'         => ( 'demo' === $scenario ? 'candidate' : 'fixture+' . $seed . '-' ) . ( $index + 1 ) . '@example.test',
-				'phone'         => '+1 604 555 ' . str_pad( (string) ( 1000 + $index ), 4, '0', STR_PAD_LEFT ),
-				'cover_letter'  => 'demo' === $scenario ? 'I am excited about Northstar Labs because the role combines meaningful ownership, cross-functional collaboration, and a thoughtful approach to customer impact.' : 'I am applying through the deterministic ' . $scenario . ' fixture scenario. Candidate index: ' . ( $index + 1 ) . '.',
+				'phone'         => $phone,
+				'cover_letter'  => $cover_letter,
 				'resume_token'  => $resume['token'],
 				'resume_name'   => $resume['name'],
 				'status'        => 'new',
@@ -570,7 +732,14 @@ final class Fixtures_Command {
 			throw new \RuntimeException( $created->get_error_message() );
 		}
 		$application_id = (int) $created['id'];
-		$repository->update( $application_id, array( 'status' => $status, 'notes' => 'Private fixture review note for candidate ' . ( $index + 1 ) . '.' ) );
+		$changes = array( 'status' => $status );
+		if ( 'state-matrix' !== $scenario || 0 !== $index % 3 ) {
+			$changes['notes'] = 'Private fixture review note for candidate ' . ( $index + 1 ) . '.';
+		}
+		$repository->update( $application_id, $changes );
+		if ( 'state-matrix' === $scenario && 2 === $index % 3 ) {
+			Application_Notes::add( $application_id, 'Second append-only fixture note for candidate ' . ( $index + 1 ) . '.' );
+		}
 		$this->set_application_state( $application_id, $scenario, $index );
 		return array( 'id' => $application_id, 'key' => $key );
 	}
@@ -655,7 +824,7 @@ final class Fixtures_Command {
 		return (int) $page_id;
 	}
 
-	private function create_resume( $seed, $index ) {
+	private function create_resume( $seed, $index, $scenario = '' ) {
 		$storage = Plugin::instance()->services()->get( Service_IDs::RESUME_STORAGE );
 		$health = $storage->health();
 		if ( empty( $health['available'] ) ) {
@@ -667,8 +836,20 @@ final class Fixtures_Command {
 		if ( is_wp_error( $directory ) ) {
 			throw new \RuntimeException( 'Private resume storage is unavailable.' );
 		}
-		$name = 'fixture-resume-' . $seed . '-' . ( $index + 1 ) . '.pdf';
+		$is_docx = 'state-matrix' === $scenario && 3 === $index % 6 && class_exists( '\\ZipArchive' );
+		$name = 'fixture-resume-' . $seed . '-' . ( $index + 1 ) . ( $is_docx ? '.docx' : '.pdf' );
 		$path = trailingslashit( $directory ) . wp_unique_filename( $directory, $name );
+		if ( $is_docx ) {
+			$archive = new \ZipArchive();
+			if ( true !== $archive->open( $path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE ) ) {
+				throw new \RuntimeException( 'Could not create the fixture DOCX resume.' );
+			}
+			$archive->addFromString( '[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>' );
+			$archive->addFromString( '_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' );
+			$archive->addFromString( 'word/document.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Fictional state-matrix resume for local testing only.</w:t></w:r></w:p></w:body></w:document>' );
+			$archive->close();
+			return array( 'token' => $path, 'name' => $name );
+		}
 		$pdf = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n";
 		if ( false === file_put_contents( $path, $pdf, LOCK_EX ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions
 			throw new \RuntimeException( 'Could not create the fixture resume.' );
@@ -681,13 +862,14 @@ final class Fixtures_Command {
 		if ( ! is_array( $registry ) || self::OWNER !== ( $registry['owner'] ?? '' ) ) {
 			throw new \RuntimeException( 'The fixture registry is invalid; no records were removed.' );
 		}
-		$counts = array( 'jobs' => 0, 'applications' => 0, 'terms' => 0, 'pages' => 0, 'attachments' => 0 );
+		$counts = array( 'jobs' => 0, 'applications' => 0, 'terms' => 0, 'pages' => 0, 'users' => 0, 'attachments' => 0 );
 		global $wpdb;
 		$repository = Plugin::instance()->services()->get( Service_IDs::APPLICATION_REPOSITORY );
 		$storage = Plugin::instance()->services()->get( Service_IDs::RESUME_STORAGE );
 		foreach ( (array) $registry['applications'] as $application ) {
 			$row = $wpdb->get_row( $wpdb->prepare( 'SELECT id, submission_key, resume_path FROM ' . Applications::table() . ' WHERE id = %d', absint( $application['id'] ?? 0 ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL
 			if ( $row && hash_equals( (string) ( $application['key'] ?? '' ), (string) $row->submission_key ) ) {
+				$wpdb->delete( Audit_Log::table(), array( 'application_id' => absint( $row->id ) ), array( '%d' ) );
 				if ( $row->resume_path ) {
 					$storage->delete( $row->resume_path );
 				}
@@ -697,8 +879,20 @@ final class Fixtures_Command {
 			}
 		}
 		foreach ( (array) $registry['jobs'] as $post_id ) {
+			if ( self::OWNER === get_post_meta( $post_id, self::META, true ) ) {
+				$wpdb->delete( Audit_Log::table(), array( 'job_id' => absint( $post_id ) ), array( '%d' ) );
+			}
 			if ( self::OWNER === get_post_meta( $post_id, self::META, true ) && wp_delete_post( $post_id, true ) ) {
 				$counts['jobs']++;
+			}
+		}
+		foreach ( (array) ( $registry['users'] ?? array() ) as $user_id ) {
+			if ( self::OWNER !== get_user_meta( $user_id, self::META, true ) ) {
+				continue;
+			}
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+			if ( wp_delete_user( $user_id ) ) {
+				$counts['users']++;
 			}
 		}
 		foreach ( (array) $registry['pages'] as $post_id ) {

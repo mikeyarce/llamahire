@@ -40,6 +40,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Validate visual design contract
+        run: npm run design:lint
       - name: Build production JavaScript
         run: npm run build
       - name: Build installable ZIP and checksum

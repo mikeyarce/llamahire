@@ -77,8 +77,6 @@
 
 final result: passed
 
----
-
 # Applications Inline Review Design QA
 
 **Source visual truth**
@@ -533,5 +531,78 @@ final result: passed
 # Current Result
 
 The later Hiring Interaction Polish QA above supersedes the earlier selected-by-default state. The current default has no candidate drawer, card movement is drag-first with drawer stage controls as the accessible fallback, Save exposes an in-context success status, and the former filter ellipsis is now a labeled page-header action. The Reject Candidate Confirmation Modal QA records the current destructive-action flow: no synthetic Next step field, no immediate rejection, and a dismissible confirmation before the server-backed action.
+
+final result: passed
+
+---
+
+# Application Detail Main-and-Sidebar Design QA
+
+## Evidence
+
+- Source visual truth: `/Users/mikeyarce/.codex/generated_images/01a0d999-8234-78f3-b6fa-b6c863f5b76d/exec-12eeb1e8-f69f-4c61-babe-b736b1e4382b.png`
+- Implementation: `http://localhost:8896/wp-admin/edit.php?post_type=llamahire_job&page=llamahire-applications&application=10901`
+- Source image: 1487 × 1058 pixels.
+- Desktop implementation: 1440 × 1024 CSS pixels at device scale 1.
+- Side-by-side normalization: source and implementation were rendered into 720 × 512 frames; the source used proportional `object-fit: contain`, and the live 1440 × 1024 application view was scaled to 0.5.
+- State: administrator viewing Avery Chen, application 10901, with candidate-data controls collapsed. Additional checks covered a 390 × 844 viewport and the expanded candidate-data disclosure.
+
+## Fidelity review
+
+- Layout and hierarchy: passed. The application occupies the wide primary column; compact contact, status, email delivery, and activity sections occupy the sidebar; private notes sit below the application content.
+- Information density: passed. Repeated card chrome was removed in favor of clear sections and quiet dividers.
+- Action placement: passed. Resume actions remain adjacent to the resume, status saving is in the status section, notification retry is in Email delivery, and destructive/privacy controls remain available in a collapsed disclosure below the primary workspace.
+- Responsive behavior: passed. The columns stack without visible horizontal overflow at 390 pixels, and controls remain reachable.
+- Interaction state: passed. The candidate-data disclosure opens correctly, and the browser console reported no errors.
+
+## Findings
+
+- No actionable P0, P1, or P2 issues remain.
+- P3: decorative icons from the visual reference were omitted to keep the implementation quieter and aligned with WordPress admin conventions.
+- Intentional difference: “View all notes” and “View all activity” appear only when additional records exist.
+- Intentional difference: file size and upload metadata were not invented because the current application model does not expose them.
+
+## Comparison history
+
+1. A single normalized side-by-side comparison was completed against the approved visual.
+2. No corrective implementation pass was required after the comparison.
+
+final result: passed
+
+---
+
+# Manage Candidate Data Action Rows Design QA
+
+## Evidence
+
+- Source visual truth: `/Users/mikeyarce/.codex/generated_images/01a0d999-8234-78f3-b6fa-b6c863f5b76d/exec-486a7c6c-3e6a-4a29-bebe-25b1686cfdf0.png`
+- Implementation screenshot: in-app Browser capture from the live implementation route during this QA run.
+- Implementation: `http://localhost:8896/wp-admin/edit.php?post_type=llamahire_job&page=llamahire-applications&application=10901`
+- Source image: 1942 × 809 pixels.
+- Desktop implementation: 1440 × 1024 CSS pixels at device scale 1; focused component measured 1240 × 527 CSS pixels.
+- Responsive implementation: 390 × 844 CSS pixels at device scale 1.
+- State: administrator viewing Avery Chen, application 10901, with Manage candidate data expanded and both confirmation checkboxes unchecked.
+- Full-view comparison evidence: the selected visual and live expanded component were placed together in one normalized browser comparison during this run.
+- Focused-region evidence: direct desktop and mobile captures showed the complete component at readable scale, so no additional crop was needed.
+
+## Fidelity review
+
+- Fonts and typography: passed. The implementation retains WordPress system typography while matching the selected visual’s heading hierarchy, body sizing, red destructive labels, and subdued helper text.
+- Spacing and layout rhythm: passed. Three aligned action rows, consistent dividers, right-aligned desktop actions, and stacked mobile actions match the selected direction.
+- Colors and visual tokens: passed. Native WordPress blue, neutral borders, and restrained red destructive treatments preserve the existing admin design system.
+- Image quality and assets: not applicable; the component contains no image assets or non-standard icons.
+- Copy and content: passed. Each action has a concise consequence, the accepted file types remain visible, and both permanent actions retain their explicit confirmation language.
+- Interaction and accessibility: passed for the inspected states. The disclosure expands and collapses, labels remain programmatically associated, native required checkboxes remain in place, and the browser console reported no errors. Destructive submissions were intentionally not triggered during visual QA.
+- Responsive behavior: passed. At 390 pixels the rows stack, buttons stay reachable, confirmation copy wraps cleanly, and no horizontal overflow is visible.
+
+## Findings
+
+- No actionable P0, P1, or P2 issues remain.
+- P3: the generated reference uses slightly wider action buttons; the implementation keeps WordPress-native button sizing to remain consistent with the surrounding admin UI.
+
+## Comparison history
+
+1. The first normalized comparison found the same information hierarchy, row structure, destructive emphasis, and action placement as the selected visual.
+2. No corrective implementation pass was required after the comparison.
 
 final result: passed

@@ -6,6 +6,7 @@
   "scripts": {
     "build": "wp-scripts build src/admin-applications.js src/admin-activity.js",
     "start": "wp-scripts start src/admin-applications.js src/admin-activity.js",
+    "design:lint": "designmd lint DESIGN.md",
     "wp-env": "wp-env --config=.wp-env.ci.json",
     "env:start": "wp-env --config=.wp-env.ci.json start",
     "env:stop": "wp-env --config=.wp-env.ci.json stop",
@@ -18,6 +19,7 @@
     "test:e2e:critical": "playwright test --grep @critical",
     "test:e2e:cleanup": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/e2e/cleanup.php",
     "fixtures:generate": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures generate --scenario=small",
+    "fixtures:matrix": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures generate --scenario=state-matrix --force",
     "fixtures:status": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures status",
     "fixtures:cleanup": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures cleanup --yes",
     "test:fixtures": "bash scripts/test-fixtures.sh",
@@ -28,6 +30,7 @@
     "@wordpress/views": "1.18.0"
   },
   "devDependencies": {
+    "@google/design.md": "0.4.0",
     "@playwright/test": "1.61.1",
     "@wordpress/env": "11.12.0",
     "@wordpress/scripts": "34.0.0"
