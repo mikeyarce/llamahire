@@ -69,7 +69,7 @@ final class Anti_Spam {
 		if ( ! $token || strlen( $token ) > $maximum_token_length ) {
 			return new \WP_Error( 'anti_spam_missing', __( 'Complete the spam protection check and try again.', 'llamahire' ) );
 		}
-		$endpoint = self::PROVIDER_TURNSTILE === $provider ? 'https://challenges.cloudflare.com/turnstile/v0/siteverify' : 'https://www.google.com/recaptcha/api/siteverify';
+		$endpoint = self::PROVIDER_TURNSTILE === $provider ? 'https://challenges.cloudflare.com/turnstile/v0/siteverify' : 'https://www.google.com/recaptcha/api/siteverify'; // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- These are documented anti-spam verification API endpoints, not remotely hosted plugin assets.
 		$response = wp_safe_remote_post(
 			$endpoint,
 			array(
