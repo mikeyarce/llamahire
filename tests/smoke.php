@@ -72,6 +72,7 @@ try {
 		$locked = true;
 	}
 	$assert( $locked, 'Service container is immutable after initialization' );
+	require __DIR__ . '/review-regressions.php';
 	$assert( LLAMAHIRE_SCHEMA_VERSION === (string) get_option( \LlamaHire\Migrations::OPTION ), 'Database schema is at the declared version' );
 	$audit_table = \LlamaHire\Audit_Log::table();
 	$assert( $audit_table === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $audit_table ) ), 'Privacy-safe audit table is installed' );
@@ -96,6 +97,9 @@ try {
 	$assert( 'edit_llamahire_jobs' === $job_type->cap->edit_posts && 'edit_llamahire_job' === $job_type->cap->edit_post, 'Job post type maps dedicated capabilities' );
 	$empty_job = new WP_Post( (object) array( 'ID' => 0, 'post_type' => \LlamaHire\Jobs::POST_TYPE ) );
 	$assert( empty( $job_type->template ) && 'Add job title' === apply_filters( 'enter_title_here', 'Add title', $empty_job ), 'New jobs start with an empty block canvas and a job-specific title prompt' );
+	$untitled_filter_job = (object) array( 'ID' => 1806, 'post_title' => '' );
+	$titled_filter_job   = (object) array( 'ID' => 1807, 'post_title' => 'Platform Engineer' );
+	$assert( 'Untitled job #1806' === \LlamaHire\Admin::application_filter_job_label( $untitled_filter_job ) && 'Platform Engineer' === \LlamaHire\Admin::application_filter_job_label( $titled_filter_job ), 'Admin job filters provide a stable label for untitled jobs without changing titled jobs' );
 	$assert( 'manage_llamahire_departments' === $department_type->cap->manage_terms, 'Department taxonomy maps dedicated capabilities' );
 	$assert( 'manage_llamahire_job_types' === $employment_type_taxonomy->cap->manage_terms && $employer->has_cap( 'assign_llamahire_job_types' ) && ! $employer->has_cap( 'manage_llamahire_job_types' ), 'Job types are operator-managed while employers can assign existing types' );
 	$assert( false === $employment_type_taxonomy->meta_box_cb, 'Job types use the single-value employment dropdown instead of a duplicate taxonomy meta box' );
@@ -781,6 +785,9 @@ try {
 	$query = $services->get( \LlamaHire\Service_IDs::APPLICATION_QUERY );
 	$results = $query->search( array( 'job_id' => $job_id, 'status' => 'interviewing', 'per_page' => 1 ) );
 	$assert( 1 === $results['total'] && 1 === count( $results['items'] ), 'Application query filters and paginates results' );
+	$stage_before_future = $query->search( array( 'job_id' => $job_id, 'status' => 'interviewing', 'stage_changed_before' => gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS ), 'per_page' => 1 ) );
+	$stage_before_past = $query->search( array( 'job_id' => $job_id, 'status' => 'interviewing', 'stage_changed_before' => '2000-01-01 00:00:00', 'per_page' => 1 ) );
+	$assert( 1 === $stage_before_future['total'] && 0 === $stage_before_past['total'], 'Application query filters candidates by time in their current stage' );
 	$assert( array() === array_intersect( array( 'phone', 'cover_letter', 'resume_name', 'has_resume', 'notes', 'notification_attempts', 'employer_notified_at', 'candidate_notified_at', 'notification_error_code' ), array_keys( get_object_vars( $results['items'][0] ) ) ), 'Application list projections omit private detail and large candidate fields' );
 	$bounded_application_args = \LlamaHire\REST_API::application_query_arguments( array( 'job_ids' => array_merge( range( 1, 150 ), array( 1 ) ), 'statuses' => array( 'new', 'new', 'invalid' ), 'notification_statuses' => array( 'failed', 'failed', 'invalid' ) ) );
 	$bounded_activity_args = \LlamaHire\REST_API::activity_query_arguments( array( 'job_ids' => array_merge( range( 1, 150 ), array( 1 ) ), 'actor_ids' => array_merge( range( 1, 150 ), array( 1 ) ), 'event_types' => array( 'job_submitted', 'job_submitted', 'invalid' ) ) );

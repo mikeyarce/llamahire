@@ -1,0 +1,20 @@
+.llamahire-workspace,
+.llamahire-application-detail,
+.llamahire-settings-screen {
+	--lh-bg: #f6f7f7;
+	--lh-surface: #fff;
+	--lh-border: #dcdcde;
+	--lh-border-strong: #c3c4c7;
+	--lh-ink: #1d2327;
+	--lh-muted: #646970;
+	--lh-secondary: #50575e;
+	--lh-primary: #2271b1;
+	--lh-primary-hover: #135e96;
+	--lh-focus: #3858e9;
+	--lh-success: #14532d;
+	--lh-danger: #b32d2e;
+	--lh-danger-hover: #8a2424;
+	--lh-danger-surface: #fff5f5;
+	--lh-warning: #6e4c00;
+	--lh-warning-surface: #fcf0d5;
+}

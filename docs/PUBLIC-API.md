@@ -29,6 +29,8 @@ Arguments:
 
 Extensions may add their own uniquely named service objects or replace a Free service with an object implementing the required Free contract. A non-conforming replacement stops initialization immediately instead of failing later in a candidate workflow.
 
+After this hook finishes, the default candidate-data lifecycle binds to the final repository and resume-storage services, including when an extension retains or decorates that lifecycle instance. An explicitly replaced lifecycle service remains under the extension's control.
+
 ```php
 add_action(
 	'llamahire_register_services',
@@ -104,7 +106,7 @@ The `llamahire_duplicate_application_policy` filter receives the default `preser
 
 ### Application query
 
-The bounded query service provides paginated `search()`, grouped `counts()`, bounded `recent()`, and batched `export_rows()` operations. Each accepts an optional `author_id` job-owner filter so multi-employer integrations can preserve tenant boundaries. It never exposes the private resume token/path. Extensions must not query the applications table directly.
+The bounded query service provides paginated `search()`, grouped `counts()`, bounded `recent()`, and batched `export_rows()` operations. `search()` also accepts `stage_changed_before` to find applications that have remained in their current stage since a UTC date-time; legacy rows fall back to their receipt time. Each accepts an optional `author_id` job-owner filter so multi-employer integrations can preserve tenant boundaries. It never exposes the private resume token/path. Extensions must not query the applications table directly.
 
 ### Recruiter REST endpoints
 
@@ -174,6 +176,8 @@ Lifecycle observation hooks receive sanitized IDs and aggregate results, never c
 LlamaHire also registers with WordPress's native personal-data tools under the `llamahire-applications` exporter/eraser ID. The exporter returns each exact-email application as a separate item and includes stored candidate, application, hiring-note, resume-filename, and notification fields. It never returns the private resume token or filesystem path. The eraser processes bounded exact-email batches through this lifecycle service, so WordPress reports an item as retained when its private resume cannot be safely removed.
 
 ### Public submission defenses
+
+Submission keys are scoped to the job and normalized applicant email. Multiple candidates can safely submit the same cached form, while retries by the same applicant remain idempotent. Legacy unscoped keys are recognized only for their original job and applicant.
 
 Free applies a honeypot, idempotency key, per-client limit, and per-job limit before accepting a public application upload. Local attempt limits are consumed before an enabled anti-spam provider is contacted, so rejected provider tokens cannot amplify unmetered outbound requests. Raw client addresses are not stored; the transient key uses a keyed hash. Counter updates are serialized with short ownership-token locks, and a request that contends for an active counter lock fails closed rather than sharing an allowance. The defaults are five attempts per client and 100 attempts per job per hour. Hosts and Pro may tune these controls with:
 
@@ -248,6 +252,8 @@ Candidate data must be authorized through LlamaHire’s granular capabilities, n
 | `Capabilities::ERASE_APPLICATIONS` | `llamahire_erase_applications` | Permanently erase applications or private resumes |
 
 Jobs use WordPress meta-cap mapping with the singular `llamahire_job` and plural `llamahire_jobs` capability types. Primitive capabilities include `edit_llamahire_jobs`, `publish_llamahire_jobs`, the private/published/others edit and delete variants, plus dedicated department and job-type term capabilities. Administrators can manage job types; employer accounts can assign existing job types without creating or changing the operator's shared vocabulary.
+
+REST writes to featured status and listing expiration require `edit_others_llamahire_jobs`. Author-scoped metadata updates preserve those fields when omitted and reject attempts to change or delete them before saving the post.
 
 ## Employer registration hooks
 

@@ -85,13 +85,19 @@
 			var sections = screen.find( '[data-llamahire-settings-section]' );
 			var related = screen.find( '[data-llamahire-settings-related]' );
 			var links = screen.find( '[data-llamahire-settings-link]' );
+			var sectionSelect = screen.find( '[data-llamahire-settings-select]' );
 			var defaultSection = 'organization';
 			var storageKey = 'llamahire-settings-section';
 			var currentSection = defaultSection;
+			var initialValues = {};
+			var initialCareersPage = screen.find( '#llamahire-careers-page' ).val();
 
 			function sectionFromHash() {
 				var match = window.location.hash.match( /^#llamahire-settings-([a-z-]+)$/ );
 				var remembered;
+				if ( '#llamahire-email-delivery' === window.location.hash ) {
+					return 'notifications';
+				}
 				if ( match && sections.filter( '[data-llamahire-settings-section="' + match[ 1 ] + '"]' ).length ) {
 					return match[ 1 ];
 				}
@@ -103,7 +109,36 @@
 				return remembered && sections.filter( '[data-llamahire-settings-section="' + remembered + '"]' ).length ? remembered : defaultSection;
 			}
 
-			function showSection( name, shouldFocus ) {
+			function focusEmailDelivery() {
+				var heading = screen.find( '#llamahire-email-delivery' ).get( 0 );
+				if ( '#llamahire-email-delivery' === window.location.hash && heading ) {
+					window.requestAnimationFrame( function () {
+						heading.scrollIntoView( { block: 'start' } );
+						heading.focus( { preventScroll: true } );
+					} );
+				}
+			}
+
+			function updateDirtyState() {
+				var dirty = false;
+				sections.each( function () {
+					var section = $( this );
+					var name = section.attr( 'data-llamahire-settings-section' );
+					var changed = section.find( ':input' ).serialize() !== initialValues[ name ];
+					var link = links.filter( '[data-llamahire-settings-link="' + name + '"]' );
+					link.find( '[data-llamahire-dirty-marker]' ).prop( 'hidden', ! changed );
+					dirty = dirty || changed;
+				} );
+				var note = screen.find( '[data-llamahire-save-note]' );
+				note.text( note.attr( dirty ? 'data-dirty-text' : 'data-saved-text' ) );
+				note.toggleClass( 'is-dirty', dirty );
+				screen.toggleClass( 'has-unsaved', dirty );
+				var careersChanged = screen.find( '#llamahire-careers-page' ).val() !== initialCareersPage;
+				screen.find( '[data-llamahire-careers-saved-status]' ).prop( 'hidden', careersChanged );
+				screen.find( '[data-llamahire-careers-pending]' ).prop( 'hidden', ! careersChanged );
+			}
+
+			function showSection( name ) {
 				var current = sections.filter( '[data-llamahire-settings-section="' + name + '"]' );
 				if ( ! current.length ) {
 					return;
@@ -123,14 +158,22 @@
 						link.removeAttr( 'aria-current' );
 					}
 				} );
+				sectionSelect.val( name );
 				try {
 					window.sessionStorage.setItem( storageKey, name );
 				} catch ( error ) {
 					// The active hash still preserves the section when storage is unavailable.
 				}
-				if ( shouldFocus ) {
-					current.find( 'h2' ).first().trigger( 'focus' );
+			}
+
+			function navigateSection( name ) {
+				if ( window.history && window.history.replaceState ) {
+					window.history.replaceState( null, '', '#llamahire-settings-' + name );
+				} else {
+					window.location.hash = 'llamahire-settings-' + name;
 				}
+				showSection( name );
+				sections.filter( '[data-llamahire-settings-section="' + name + '"]' ).find( 'h2' ).first().get( 0 ).scrollIntoView( { block: 'start' } );
 			}
 
 			screen.addClass( 'is-enhanced' );
@@ -168,15 +211,18 @@
 				}
 				picker.addClass( 'is-enhanced' );
 			} );
+			sections.each( function () {
+				var section = $( this );
+				initialValues[ section.attr( 'data-llamahire-settings-section' ) ] = section.find( ':input' ).serialize();
+			} );
+			form.on( 'input change', ':input', updateDirtyState );
 			links.on( 'click', function ( event ) {
 				var name = $( this ).attr( 'data-llamahire-settings-link' );
 				event.preventDefault();
-				if ( window.history && window.history.replaceState ) {
-					window.history.replaceState( null, '', '#llamahire-settings-' + name );
-				} else {
-					window.location.hash = 'llamahire-settings-' + name;
-				}
-				showSection( name, true );
+				navigateSection( name );
+			} );
+			sectionSelect.on( 'change', function () {
+				navigateSection( $( this ).val() );
 			} );
 			form.on( 'submit', function () {
 				var action = form.attr( 'action' ).split( '#' )[ 0 ];
@@ -185,13 +231,15 @@
 			form.on( 'invalid', ':input', function () {
 				var section = $( this ).closest( '[data-llamahire-settings-section]' ).attr( 'data-llamahire-settings-section' );
 				if ( section ) {
-					showSection( section, false );
+					showSection( section );
 				}
 			} );
 			$( window ).on( 'hashchange', function () {
-				showSection( sectionFromHash(), false );
+				showSection( sectionFromHash() );
+				focusEmailDelivery();
 			} );
-			showSection( sectionFromHash(), false );
+			showSection( sectionFromHash() );
+			focusEmailDelivery();
 		} );
 
 		$( '[data-llamahire-setup]' ).each( function () {

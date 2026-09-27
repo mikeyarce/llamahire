@@ -2,6 +2,10 @@
 	'use strict';
 
 	const config = window.llamahireHiring || {};
+	document.querySelectorAll( '.llamahire-hiring-filters select[name="job_id"]' ).forEach( ( select ) => {
+		select.addEventListener( 'change', () => select.form.submit() );
+	} );
+
 	const pipeline = document.querySelector( '[data-hiring-pipeline]' );
 	if ( ! pipeline ) {
 		return;
@@ -153,10 +157,6 @@
 			event.stopPropagation();
 		}
 	}, true );
-
-	document.querySelectorAll( '.llamahire-hiring-filters select[name="job_id"]' ).forEach( ( select ) => {
-		select.addEventListener( 'change', () => select.form.submit() );
-	} );
 
 	document.querySelectorAll( '[data-open-reject-dialog]' ).forEach( ( button ) => {
 		button.addEventListener( 'click', () => {

@@ -10,7 +10,7 @@ interface Application_Query {
 	/**
 	 * Search applications with stable pagination.
 	 *
-	 * @param array $arguments Statuses, candidate/email search, jobs, notification states, received dates, sorting, author scope, and pagination.
+	 * @param array $arguments Statuses, candidate/email search, jobs, notification states, received dates, stage_changed_before, sorting, author scope, and pagination.
 	 * @return array{items:array,total:int,page:int,per_page:int,pages:int}
 	 */
 	public function search( array $arguments = array() );

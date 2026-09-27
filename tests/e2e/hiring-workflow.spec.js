@@ -120,9 +120,9 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await expect( page.getByRole( 'link', { name: 'Setup', exact: true } ) ).toHaveCount( 0 );
 
 		await page.goto( '/wp-admin/edit.php?post_type=llamahire_job&page=llamahire-settings' );
-		await expect( page.getByText( 'Setup complete', { exact: true } ) ).toBeVisible();
-		await expect( page.getByRole( 'button', { name: 'Restart setup', exact: true } ) ).toBeVisible();
 		await openSettingsSection( page, 'Site purpose' );
+		await expect( page.getByText( 'Initial setup completed', { exact: true } ) ).toBeVisible();
+		await expect( page.getByRole( 'button', { name: 'Restart setup', exact: true } ) ).toHaveAttribute( 'form', 'llamahire-restart-setup-form' );
 		await expect( page.getByRole( 'radio', { name: /Company careers site/ } ) ).toBeChecked();
 		await openSettingsSection( page, 'Organization' );
 		await expect( page.getByLabel( 'Organization name', { exact: true } ) ).toHaveValue( 'LlamaHire CI Employer' );
@@ -142,6 +142,8 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await openSettingsSection( page, 'Pages' );
 		await expect( page.getByRole( 'combobox', { name: 'Careers page', exact: true } ) ).toHaveValue( 'LlamaHire E2E Careers' );
 		await expect( page.locator( '#llamahire-careers-page' ) ).toHaveValue( /\d+/ );
+		await expect( page.getByText( 'Published page with a Jobs Directory block.', { exact: true } ) ).toBeVisible();
+		await expect( page.getByRole( 'link', { name: 'View page' } ) ).toBeVisible();
 		await page.goto( '/llamahire-e2e-careers/' );
 		await expect( page.getByRole( 'heading', { name: 'Do your best work with us' } ) ).toBeVisible();
 		await expect( page.getByRole( 'heading', { name: 'LlamaHire Browser Test Role' } ) ).toBeVisible();
@@ -191,9 +193,18 @@ test.describe.serial( 'complete hiring workflow', () => {
 
 	test( '@settings @notifications administrator can review email settings and rendered previews', async ( { page } ) => {
 		await logIn( page );
-		await page.goto( '/wp-admin/edit.php?post_type=llamahire_job&page=llamahire-settings' );
-		await openSettingsSection( page, 'Notifications' );
+		await page.goto( '/wp-admin/edit.php?post_type=llamahire_job&page=llamahire-settings#llamahire-email-delivery' );
+		await expect( page.getByRole( 'heading', { name: 'Email previews and delivery diagnostics' } ) ).toBeVisible();
+		await expect( page.getByRole( 'heading', { name: 'Email previews and delivery diagnostics' } ) ).toBeFocused();
 		await expect( page.getByLabel( 'Sender name', { exact: true } ) ).toHaveValue( 'LlamaHire Hiring' );
+		const senderLabel = await page.locator( 'label[for="llamahire-email-sender-name"]' ).boundingBox();
+		const senderInput = await page.getByLabel( 'Sender name', { exact: true } ).boundingBox();
+		expect( senderInput.y ).toBeGreaterThan( senderLabel.y + senderLabel.height );
+		await page.getByLabel( 'Sender name', { exact: true } ).fill( 'Unsaved sender' );
+		await expect( page.locator( '[data-llamahire-settings-link="notifications"] [data-llamahire-dirty-marker]' ) ).toBeVisible();
+		await expect( page.locator( '[data-llamahire-save-note]' ) ).toHaveText( 'Unsaved changes' );
+		await page.getByLabel( 'Sender name', { exact: true } ).fill( 'LlamaHire Hiring' );
+		await expect( page.locator( '[data-llamahire-settings-link="notifications"] [data-llamahire-dirty-marker]' ) ).toBeHidden();
 		await expect( page.getByLabel( 'Sender email', { exact: true } ) ).toHaveValue( 'jobs@example.test' );
 		await expect( page.getByLabel( 'Employer subject', { exact: true } ) ).toHaveValue( 'New candidate: {candidate_name} for {job_title}' );
 		await expect( page.getByLabel( 'Candidate message', { exact: true } ) ).toContainText( 'Thanks for applying to {site_name}.' );
@@ -204,6 +215,22 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await candidatePreview.locator( 'summary' ).click();
 		await expect( candidatePreview ).toContainText( 'Application received for Sample role' );
 		await expect( page.getByRole( 'button', { name: 'Send test email' } ) ).toBeVisible();
+		const pagesLink = page.locator( '[data-llamahire-settings-link="pages"]' );
+		await pagesLink.click();
+		await expect( pagesLink ).toBeFocused();
+		await expect( page.getByRole( 'heading', { name: 'Pages', exact: true } ) ).not.toBeFocused();
+		await expect( page.getByRole( 'combobox', { name: 'Careers page' } ) ).toBeVisible();
+		await page.locator( '[data-llamahire-settings-link="notifications"]' ).click();
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await expect( page.getByRole( 'heading', { name: 'Notifications', exact: true } ) ).toBeVisible();
+		const sectionSelect = page.getByRole( 'combobox', { name: 'Settings section' } );
+		await expect( sectionSelect ).toBeVisible();
+		await sectionSelect.selectOption( 'pages' );
+		await expect( page.getByRole( 'heading', { name: 'Pages', exact: true } ) ).toBeVisible();
+		await expect( page ).toHaveURL( /#llamahire-settings-pages$/ );
+		await sectionSelect.selectOption( 'notifications' );
+		await expect( page.getByRole( 'heading', { name: 'Notifications', exact: true } ) ).toBeVisible();
+		expect( await page.evaluate( () => document.documentElement.scrollWidth - document.documentElement.clientWidth ) ).toBeLessThanOrEqual( 1 );
 	} );
 
 	test( '@public @responsive careers patterns compose at a narrow viewport', async ( { page } ) => {
@@ -389,13 +416,43 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await page.goto( '/wp-admin/admin.php?page=llamahire-applications' );
 		const candidateDetailUrl = await page.getByRole( 'link', { name: 'Critical Flow Candidate', exact: true } ).getAttribute( 'href' );
 		await page.goto( candidateDetailUrl );
+		await expect( page.locator( 'head link#llamahire-admin-application-detail-css' ) ).toHaveCount( 1 );
+		await expect( page.locator( 'head link#llamahire-admin-tokens-css' ) ).toHaveCount( 1 );
+		const notes = page.locator( '.llamahire-application-detail__notes' );
+		await expect( notes.locator( 'details' ) ).toHaveCount( 0 );
 		await page.getByLabel( 'Status', { exact: true } ).selectOption( 'reviewing' );
 		await page.getByRole( 'button', { name: 'Save status' } ).evaluate( ( button ) => button.click() );
 		await expect( page.getByRole( 'status' ) ).toContainText( 'Application review saved.' );
 		await page.getByLabel( 'Add private note', { exact: true } ).fill( 'Reviewed in the fast release path.' );
 		await page.getByRole( 'button', { name: 'Add note' } ).evaluate( ( button ) => button.click() );
 		await expect( page.getByRole( 'status' ) ).toContainText( 'Private note added.' );
+		await expect( notes.getByText( 'Reviewed in the fast release path.', { exact: true } ) ).toHaveCount( 1 );
+		await expect( notes.locator( 'details' ) ).toHaveCount( 0 );
+		await page.getByLabel( 'Add private note', { exact: true } ).fill( 'Ready for the next interview.' );
+		await page.getByRole( 'button', { name: 'Add note' } ).evaluate( ( button ) => button.click() );
+		await expect( page.getByRole( 'status' ) ).toContainText( 'Private note added.' );
+		await notes.getByText( 'View earlier notes', { exact: true } ).click();
+		await expect( notes.locator( '.llamahire-application-detail__latest-note p' ) ).toHaveText( 'Ready for the next interview.' );
+		await expect( notes.locator( 'details li p' ) ).toHaveText( [ 'Reviewed in the fast release path.' ] );
+		await expect( notes.getByText( 'Ready for the next interview.', { exact: true } ) ).toHaveCount( 1 );
+		await page.getByText( 'Manage candidate data', { exact: true } ).click();
+		await page.setViewportSize( { width: 375, height: 812 } );
+		const detailOverflow = await page.evaluate( () => document.documentElement.scrollWidth - document.documentElement.clientWidth );
+		expect( detailOverflow ).toBeLessThanOrEqual( 1 );
 		await expect( page.getByRole( 'link', { name: 'Download resume' } ) ).toBeVisible();
+		await page.goto( '/wp-admin/edit.php?post_type=llamahire_job&page=llamahire-hiring&candidate=Critical%20Flow%20Candidate' );
+		await page.getByRole( 'link', { name: /Critical Flow Candidate/ } ).click();
+		const drawer = page.locator( '.llamahire-candidate-drawer' );
+		await expect( drawer.getByRole( 'heading', { name: 'Application materials' } ) ).toBeVisible();
+		await expect( drawer.getByText( 'Fast release-path application.' ) ).toBeVisible();
+		await expect( drawer.getByRole( 'link', { name: 'View resume' } ) ).toBeVisible();
+		await expect( drawer.locator( '.llamahire-drawer-latest-note p' ) ).toHaveText( 'Ready for the next interview.' );
+		await drawer.getByText( 'View earlier notes', { exact: true } ).click();
+		await expect( drawer.locator( '.llamahire-drawer-notes details li p' ) ).toHaveText( [ 'Reviewed in the fast release path.' ] );
+		await expect( drawer.getByText( '555-0123' ) ).toBeVisible();
+		await expect( drawer.getByRole( 'link', { name: 'View full application' } ) ).toHaveAttribute( 'href', /application=\d+/ );
+		await expect( drawer.getByRole( 'button', { name: 'Move to Interviewing' } ) ).toBeVisible();
+		expect( await page.evaluate( () => document.documentElement.scrollWidth - document.documentElement.clientWidth ) ).toBeLessThanOrEqual( 1 );
 	} );
 
 	test( '@recruiter @applications recruiter reviews a candidate and manages the private resume', async ( { page } ) => {
@@ -588,12 +645,52 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await expect( page.getByText( candidateEmail ) ).toHaveCount( 0 );
 	} );
 
+	test( '@recruiter @responsive hiring workspace keeps filtered states compact and recoverable', async ( { page } ) => {
+		await logIn( page );
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await page.goto( '/wp-admin/edit.php?post_type=llamahire_job&page=llamahire-hiring&candidate=No%20matching%20candidate' );
+
+		const title = page.getByRole( 'heading', { name: 'Hiring', level: 1 } );
+		await expect( title ).toBeVisible();
+		expect( await title.evaluate( ( heading ) => getComputedStyle( heading ).fontSize ) ).toBe( '28px' );
+		await expect( page.getByRole( 'heading', { name: 'No candidates match these filters.' } ) ).toBeVisible();
+		await expect( page.locator( '[data-hiring-pipeline]' ) ).toHaveCount( 0 );
+
+		const filters = page.locator( '.llamahire-hiring-filters' );
+		expect( ( await filters.boundingBox() )?.height ).toBeLessThanOrEqual( 100 );
+		const jobFilter = page.locator( '.llamahire-job-filter select[name="job_id"]' );
+		expect( ( await page.locator( '.llamahire-job-filter' ).boundingBox() )?.height ).toBeLessThanOrEqual( 44 );
+		const firstJobValue = await jobFilter.locator( 'option' ).nth( 1 ).getAttribute( 'value' );
+		await jobFilter.selectOption( firstJobValue );
+		await expect( page ).toHaveURL( new RegExp( `job_id=${ firstJobValue }` ) );
+		await jobFilter.selectOption( 'all' );
+		await expect( page ).toHaveURL( /job_id=all/ );
+
+		await page.getByRole( 'link', { name: 'Clear filters' } ).evaluate( ( link ) => link.click() );
+		await expect( page ).not.toHaveURL( /candidate=/ );
+		await expect( page.locator( '[data-hiring-pipeline]' ) ).toBeVisible();
+		await page.goto( '/wp-admin/edit.php?post_type=llamahire_job&page=llamahire-dashboard' );
+		await expect( page.getByRole( 'heading', { name: 'Needs attention' } ) ).toBeVisible();
+		await expect( page.getByRole( 'heading', { name: 'Hiring pulse' } ) ).toBeVisible();
+		await expect( page.getByRole( 'heading', { name: 'Jobs to watch' } ) ).toBeVisible();
+		const dashboardOverflow = await page.evaluate( () => document.documentElement.scrollWidth - document.documentElement.clientWidth );
+		expect( dashboardOverflow ).toBeLessThanOrEqual( 1 );
+		const primaryAction = page.locator( '.llamahire-dashboard--company .llamahire-header-actions .button-primary' );
+		const primaryLabel = await primaryAction.innerText();
+		await primaryAction.click();
+		await expect( page.getByRole( 'heading', { name: 'Hiring', level: 1 } ) ).toBeVisible();
+		if ( primaryLabel.includes( 'Review new candidates' ) ) {
+			await expect( page ).toHaveURL( /#llamahire-stage-new$/ );
+		}
+	} );
+
 	test( '@critical @employer @job-board approved employer drafts, previews, and submits a complete job for moderation', async ( { page } ) => {
 		test.setTimeout( 90_000 );
 		await logIn( page );
 		await page.goto( '/wp-admin/edit.php?post_type=llamahire_job&page=llamahire-settings' );
 		await openSettingsSection( page, 'Site purpose' );
 		await page.getByRole( 'radio', { name: /Community job board/ } ).check();
+		await expect( page.getByText( 'After changing the site purpose, save to load its settings and page controls.' ) ).toBeVisible();
 		await page.getByRole( 'button', { name: 'Save changes' } ).evaluate( ( button ) => button.click() );
 		await expect( page ).toHaveURL( /#llamahire-settings-site-purpose$/ );
 		await expect( page.getByText( 'Settings saved.', { exact: true } ) ).toBeVisible();

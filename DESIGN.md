@@ -252,6 +252,11 @@ interaction, and restrained semantic colors. White surfaces sit on the normal
 WordPress gray canvas. Borders and subtle surface shifts provide separation;
 large tinted regions should be rare.
 
+Workspace and application-detail styles share `assets/css/admin-tokens.css`
+through a stylesheet dependency. Its scoped `--lh-*` properties map to the
+canonical colors above; reuse these properties for shared admin surfaces,
+text, borders, and actions.
+
 Public screens derive their accent, foreground, and surface colors from the
 active theme. The `public-*-fallback` tokens describe the safe fallback palette,
 not a mandate to override a site's brand.

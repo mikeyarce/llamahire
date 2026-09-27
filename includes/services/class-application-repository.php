@@ -53,11 +53,13 @@ final class Application_Repository implements Application_Repository_Contract {
 
 		$statuses       = array_keys( Applications::workflow_statuses() );
 		$status         = in_array( $application['status'], $statuses, true ) ? $application['status'] : 'new';
-		$submission_key = preg_match( '/^[a-f0-9-]{36}$/', (string) $application['submission_key'] ) ? $application['submission_key'] : null;
+		$legacy_key     = preg_match( '/^[a-f0-9-]{36}$/', (string) $application['submission_key'] ) ? $application['submission_key'] : null;
+		// Public HTML may be cached: one form key must not deduplicate different applicants or jobs.
+		$submission_key = $legacy_key ? hash( 'sha256', $legacy_key . '|' . Applications::candidate_key( $application['job_id'], $application['email'] ) ) : null;
 		$now            = current_time( 'mysql', true );
 		global $wpdb;
 		if ( $submission_key ) {
-			$existing = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Applications::table() . ' WHERE submission_key = %s', $submission_key ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Applications::table() returns only the trusted WordPress prefix plus a fixed suffix; the key is prepared.
+			$existing = $this->find_submission( $submission_key, $legacy_key, $application );
 			if ( $existing ) {
 				return array( 'id' => (int) $existing, 'created' => false );
 			}
@@ -92,7 +94,7 @@ final class Application_Repository implements Application_Repository_Contract {
 
 		if ( ! $created ) {
 			if ( $submission_key ) {
-				$existing = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Applications::table() . ' WHERE submission_key = %s', $submission_key ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Applications::table() returns only the trusted WordPress prefix plus a fixed suffix; the key is prepared.
+				$existing = $this->find_submission( $submission_key, $legacy_key, $application );
 				if ( $existing ) {
 					return array( 'id' => (int) $existing, 'created' => false );
 				}
@@ -106,6 +108,12 @@ final class Application_Repository implements Application_Repository_Contract {
 			return new \WP_Error( 'llamahire_application_storage_failed', __( 'The application could not be stored.', 'llamahire' ) );
 		}
 		return array( 'id' => (int) $wpdb->insert_id, 'created' => true, 'reason' => '' );
+	}
+
+	private function find_submission( $submission_key, $legacy_key, array $application ) {
+		global $wpdb;
+		// Retain retries of pre-upgrade UUID keys, but only for the same job and email.
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Applications::table() . ' WHERE submission_key IN (%s, %s) AND job_id = %d AND LOWER(email) = %s ORDER BY id ASC LIMIT 1', $submission_key, $legacy_key, absint( $application['job_id'] ), strtolower( $application['email'] ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Applications::table() is trusted; keys and applicant identity are prepared.
 	}
 
 	public function find_duplicate( $job_id, $email ) {

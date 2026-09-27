@@ -15,6 +15,7 @@ final class Admin {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
 		add_action( 'admin_menu', array( __CLASS__, 'order_job_menu' ), PHP_INT_MAX );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_menu_assets' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 		add_action( 'admin_enqueue_scripts', array( 'LlamaHire\\Admin_Workspaces', 'enqueue_assets' ) );
 		add_action( 'admin_post_llamahire_update_application', array( __CLASS__, 'update_application' ) );
 		add_action( 'admin_post_llamahire_add_application_note', array( __CLASS__, 'add_application_note' ) );
@@ -198,6 +199,14 @@ final class Admin {
 		);
 	}
 
+	public static function enqueue_assets() {
+		wp_register_style( 'llamahire-admin-tokens', LLAMAHIRE_URL . 'assets/css/admin-tokens.css', array(), LLAMAHIRE_VERSION );
+		$page = sanitize_key( wp_unslash( $_GET['page'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin screen selection.
+		if ( 'llamahire-applications' === $page && isset( $_GET['application'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only detail routing; authorization is checked in application_detail().
+			wp_enqueue_style( 'llamahire-admin-application-detail', LLAMAHIRE_URL . 'assets/css/admin-application-detail.css', array( 'llamahire-admin-tokens' ), LLAMAHIRE_VERSION );
+		}
+	}
+
 	public static function activity_page() {
 		self::require_capability( Capabilities::VIEW_APPLICATIONS );
 		$asset_path = LLAMAHIRE_PATH . 'build/admin-activity.asset.php';
@@ -237,7 +246,7 @@ final class Admin {
 				),
 				'jobs'    => array_map(
 					static function ( $job ) {
-						return array( 'value' => (int) $job->ID, 'label' => $job->post_title );
+						return array( 'value' => (int) $job->ID, 'label' => self::application_filter_job_label( $job ) );
 					},
 					self::application_filter_jobs( $author_id )
 				),
@@ -283,7 +292,6 @@ final class Admin {
 	public static function applications_page() {
 		self::require_capability( Capabilities::VIEW_APPLICATIONS );
 		if ( isset( $_GET['application'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only detail routing; authorization is checked in application_detail().
-			wp_enqueue_style( 'llamahire-admin-application-detail', LLAMAHIRE_URL . 'assets/css/admin-application-detail.css', array(), LLAMAHIRE_VERSION );
 			self::application_detail( absint( $_GET['application'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only application identifier; authorization is checked in application_detail().
 			return;
 		}
@@ -329,7 +337,7 @@ final class Admin {
 				'initialJobId'  => absint( $_GET['job_id'] ?? 0 ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only inbox filter.
 				'jobs'          => array_map(
 					static function ( $job ) {
-						return array( 'value' => (int) $job->ID, 'label' => $job->post_title );
+						return array( 'value' => (int) $job->ID, 'label' => self::application_filter_job_label( $job ) );
 					},
 					$jobs
 				),
@@ -373,6 +381,19 @@ final class Admin {
 		return get_posts( $args );
 	}
 
+	public static function application_filter_job_label( $job ) {
+		$title = trim( (string) ( $job->post_title ?? '' ) );
+		if ( '' !== $title ) {
+			return $title;
+		}
+
+		return sprintf(
+			/* translators: %d: Job post ID. */
+			__( 'Untitled job #%d', 'llamahire' ),
+			absint( $job->ID ?? 0 )
+		);
+	}
+
 	private static function application_detail( $id ) {
 		if ( ! Ownership::user_can_access_application( $id, Capabilities::VIEW_APPLICATIONS ) ) {
 			wp_die( esc_html__( 'Application not found.', 'llamahire' ), 404 );
@@ -391,7 +412,13 @@ final class Admin {
 		<p class="llamahire-application-detail__back"><a href="<?php echo esc_url( self::applications_url() ); ?>">&larr; <?php esc_html_e( 'All applications', 'llamahire' ); ?></a></p>
 		<header class="llamahire-application-detail__header">
 			<h1><?php echo esc_html( $row->name ); ?></h1>
-			<p><strong><?php echo esc_html( $job_title ); ?></strong><span aria-hidden="true"> · </span><?php printf( esc_html__( 'Applied %s', 'llamahire' ), esc_html( $applied_at ) ); ?></p>
+				<p><strong><?php echo esc_html( $job_title ); ?></strong><span aria-hidden="true"> · </span><?php
+					printf(
+						/* translators: %s: Date, and optionally time, the candidate applied. */
+						esc_html__( 'Applied %s', 'llamahire' ),
+						esc_html( $applied_at )
+					);
+				?></p>
 		</header>
 		<?php if ( $updated ) : ?><div class="notice notice-success inline" role="status"><p><?php esc_html_e( 'Application review saved.', 'llamahire' ); ?></p></div><?php endif; ?>
 		<?php if ( ! empty( $_GET['note_added'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action. ?><div class="notice notice-success inline" role="status"><p><?php esc_html_e( 'Private note added.', 'llamahire' ); ?></p></div><?php elseif ( ! empty( $_GET['note_error'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action. ?><div class="notice notice-error inline" role="alert"><p><?php esc_html_e( 'The private note could not be added.', 'llamahire' ); ?></p></div><?php endif; ?>
@@ -415,7 +442,7 @@ final class Admin {
 					<?php if ( current_user_can( Capabilities::MANAGE_APPLICATIONS ) ) : ?><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="llamahire_add_application_note"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_add_note_' . $id ); ?><p><label for="notes"><strong><?php esc_html_e( 'Add private note', 'llamahire' ); ?></strong></label><textarea id="notes" name="note" rows="4" maxlength="<?php echo esc_attr( Application_Notes::MAX_LENGTH ); ?>" required></textarea></p><p class="llamahire-application-detail__form-actions"><button class="button button-primary"><?php esc_html_e( 'Add note', 'llamahire' ); ?></button></p></form><?php endif; ?>
 					<?php if ( $private_notes ) : $latest_note = $private_notes[0]; ?>
 					<div class="llamahire-application-detail__latest-note"><p><?php echo esc_html( $latest_note->body ); ?></p><small><?php echo esc_html( Application_Notes::author_label( $latest_note ) ); ?> · <?php echo esc_html( get_date_from_gmt( $latest_note->created_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></small></div>
-					<?php if ( count( $private_notes ) > 1 ) : ?><details class="llamahire-application-detail__history"><summary><?php esc_html_e( 'View all notes', 'llamahire' ); ?></summary><ol><?php foreach ( $private_notes as $note ) : ?><li><p><?php echo esc_html( $note->body ); ?></p><small><?php echo esc_html( Application_Notes::author_label( $note ) ); ?> · <?php echo esc_html( get_date_from_gmt( $note->created_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></small></li><?php endforeach; ?></ol></details><?php endif; ?>
+					<?php if ( count( $private_notes ) > 1 ) : ?><details class="llamahire-application-detail__history"><summary><?php esc_html_e( 'View earlier notes', 'llamahire' ); ?></summary><ol><?php foreach ( array_slice( $private_notes, 1 ) as $note ) : ?><li><p><?php echo esc_html( $note->body ); ?></p><small><?php echo esc_html( Application_Notes::author_label( $note ) ); ?> · <?php echo esc_html( get_date_from_gmt( $note->created_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></small></li><?php endforeach; ?></ol></details><?php endif; ?>
 					<?php else : ?><p><?php esc_html_e( 'No private notes yet.', 'llamahire' ); ?></p><?php endif; ?>
 				</section>
 			</main>

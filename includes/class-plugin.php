@@ -82,7 +82,8 @@ final class Plugin {
 		$storage_driver = sanitize_key( apply_filters( 'llamahire_resume_storage_driver', 'local_private' ) );
 		$resume_storage = 'vip_acl' === $storage_driver ? new Services\VIP_ACL_Resume_Storage() : new Services\Resume_Storage();
 		$this->services->set( Service_IDs::RESUME_STORAGE, $resume_storage );
-		$this->services->set( Service_IDs::CANDIDATE_DATA, new Services\Candidate_Data_Lifecycle( $this->services->get( Service_IDs::APPLICATION_REPOSITORY ), $this->services->get( Service_IDs::RESUME_STORAGE ) ) );
+		$lifecycle = new Services\Candidate_Data_Lifecycle( $this->services->get( Service_IDs::APPLICATION_REPOSITORY ), $this->services->get( Service_IDs::RESUME_STORAGE ) );
+		$this->services->set( Service_IDs::CANDIDATE_DATA, $lifecycle );
 		$this->services->set( Service_IDs::SCHEMA_BUILDER, new Services\Schema_Builder() );
 
 		/**
@@ -108,6 +109,8 @@ final class Plugin {
 				throw new \UnexpectedValueException( sprintf( 'The %1$s service must implement %2$s.', $id, $contract ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception text is not rendered.
 			}
 		}
+		// Also update the original instance when an extension decorates it.
+		$lifecycle->set_dependencies( $this->services->get( Service_IDs::APPLICATION_REPOSITORY ), $this->services->get( Service_IDs::RESUME_STORAGE ) );
 		$this->services->lock();
 	}
 

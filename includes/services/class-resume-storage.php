@@ -28,8 +28,11 @@ class Resume_Storage implements Resume_Storage_Contract {
 	 */
 	public function store_upload( array $file, $job_id ) {
 		$upload = $this->validate_upload( $file, $job_id );
-		if ( is_wp_error( $upload ) || '' === $upload['name'] ) {
+		if ( is_wp_error( $upload ) ) {
 			return $upload;
+		}
+		if ( '' === $upload['name'] ) {
+			return array( 'token' => '', 'name' => '' );
 		}
 
 		$directory = $this->directory( true );

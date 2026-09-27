@@ -30,8 +30,11 @@ final class VIP_ACL_Resume_Storage extends Resume_Storage {
 			return new \WP_Error( 'resume_storage' );
 		}
 		$upload = $this->validate_upload( $file, $job_id );
-		if ( is_wp_error( $upload ) || '' === $upload['name'] ) {
+		if ( is_wp_error( $upload ) ) {
 			return $upload;
+		}
+		if ( '' === $upload['name'] ) {
+			return array( 'token' => '', 'name' => '' );
 		}
 		$directory = $this->directory( true );
 		if ( is_wp_error( $directory ) ) {
@@ -50,20 +53,32 @@ final class VIP_ACL_Resume_Storage extends Resume_Storage {
 			return new \WP_Error( 'resume_error' );
 		}
 
+		$attachment_id = $this->create_attachment( $path, $upload['type'] );
+		if ( is_wp_error( $attachment_id ) ) {
+			$filesystem->delete( $path, false, 'f' );
+			return $attachment_id;
+		}
+
+		return array( 'token' => self::TOKEN_PREFIX . $attachment_id, 'name' => $upload['name'] );
+	}
+
+	/** Create and verify the attachment for an already validated private file. */
+	private function create_attachment( $path, $mime_type ) {
 		$attachment_id = wp_insert_attachment(
 			array(
-				'post_mime_type' => $upload['type'],
+				'post_mime_type' => $mime_type,
 				'post_title'     => 'Private candidate resume',
 				'post_status'    => 'inherit',
 			),
-			$path
+			$path,
+			0,
+			true
 		);
 		if ( is_wp_error( $attachment_id ) || ! $attachment_id ) {
-			$filesystem->delete( $path, false, 'f' );
-
 			return new \WP_Error( 'resume_error' );
 		}
-		$attached = update_attached_file( $attachment_id, $path );
+		// wp_insert_attachment() already saves the path; an identical update returns false.
+		$attached = wp_normalize_path( get_attached_file( $attachment_id, true ) ) === wp_normalize_path( $path );
 		$marked   = update_post_meta( $attachment_id, self::MARKER_META, '1' );
 		if ( ! $attached || false === $marked ) {
 			wp_delete_attachment( $attachment_id, true );
@@ -71,7 +86,7 @@ final class VIP_ACL_Resume_Storage extends Resume_Storage {
 			return new \WP_Error( 'resume_error' );
 		}
 
-		return array( 'token' => self::TOKEN_PREFIX . $attachment_id, 'name' => $upload['name'] );
+		return $attachment_id;
 	}
 
 	/**

@@ -90,6 +90,20 @@ can run without its preceding setup scenario. The tags and the planned fast,
 independent scenario coverage are listed in
 [`E2E-SCENARIOS.md`](E2E-SCENARIOS.md).
 
+The independent cached-form and Hiring pagination regressions manage and clean
+their own disposable fixtures, including 101 candidates. Run them with:
+
+```sh
+npm run test:e2e -- tests/e2e/review-fixes.spec.js
+```
+
+These checks cover distinct applicants sharing cached form HTML, safe retries,
+full stage totals, keyboard access to older candidates, and retained review context at
+desktop and narrow widths. The smoke suite also runs
+`tests/review-regressions.php` for legacy submission keys, VIP attachment path
+verification, replacement-service lifecycle binding, employer REST restrictions
+on featured status and listing expiration, and pagination boundaries.
+
 Stop the environment when finished:
 
 ```sh

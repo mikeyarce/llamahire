@@ -176,6 +176,10 @@ final class Application_Query implements Application_Query_Contract {
 		if ( ! empty( $args['received_before_exclusive'] ) ) {
 			$where[] = 'applications.created_at < %s'; $params[] = $args['received_before_exclusive'];
 		}
+		if ( ! empty( $args['stage_changed_before'] ) ) {
+			$where[] = 'COALESCE(applications.stage_changed_at, applications.created_at) <= %s';
+			$params[] = $args['stage_changed_before'];
+		}
 		return array( implode( ' AND ', $where ), $params );
 	}
 }

@@ -299,7 +299,7 @@ final class Settings {
 			wp_enqueue_style(
 				'llamahire-admin-settings',
 				LLAMAHIRE_URL . 'assets/css/admin-settings.css',
-				array(),
+				array( 'llamahire-admin-tokens' ),
 				(string) filemtime( LLAMAHIRE_PATH . 'assets/css/admin-settings.css' )
 			);
 			wp_enqueue_style( 'wp-components' );
@@ -342,22 +342,17 @@ final class Settings {
 				<nav class="llamahire-settings-nav" aria-label="<?php esc_attr_e( 'Settings sections', 'llamahire' ); ?>">
 					<ul>
 						<?php foreach ( $sections as $slug => $section ) : ?>
-							<li><a href="#llamahire-settings-<?php echo esc_attr( $slug ); ?>" data-llamahire-settings-link="<?php echo esc_attr( $slug ); ?>"><span class="dashicons <?php echo esc_attr( $section[1] ); ?>" aria-hidden="true"></span><span><?php echo esc_html( $section[0] ); ?></span></a></li>
+							<li><a href="#llamahire-settings-<?php echo esc_attr( $slug ); ?>" data-llamahire-settings-link="<?php echo esc_attr( $slug ); ?>"><span class="dashicons <?php echo esc_attr( $section[1] ); ?>" aria-hidden="true"></span><span><?php echo esc_html( $section[0] ); ?></span><span class="llamahire-settings-dirty-marker" data-llamahire-dirty-marker hidden><?php esc_html_e( 'Unsaved', 'llamahire' ); ?></span></a></li>
 						<?php endforeach; ?>
 					</ul>
-					<?php if ( Setup::is_complete() ) : ?>
-						<div class="llamahire-settings-setup-status">
-							<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>
-							<div>
-								<strong><?php esc_html_e( 'Setup complete', 'llamahire' ); ?></strong>
-								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-									<input type="hidden" name="action" value="llamahire_restart_setup">
-									<?php wp_nonce_field( 'llamahire_restart_setup', 'llamahire_restart_setup_nonce' ); ?>
-									<button type="submit" class="button-link"><?php esc_html_e( 'Restart setup', 'llamahire' ); ?></button>
-								</form>
-							</div>
-						</div>
-					<?php endif; ?>
+					<label class="llamahire-settings-mobile-nav" for="llamahire-settings-section-select">
+						<span><?php esc_html_e( 'Settings section', 'llamahire' ); ?></span>
+						<select id="llamahire-settings-section-select" data-llamahire-settings-select>
+							<?php foreach ( $sections as $slug => $section ) : ?>
+								<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $section[0] ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</label>
 				</nav>
 				<div class="llamahire-settings-content">
 					<form id="llamahire-settings-form" method="post" action="options.php" data-llamahire-settings-form>
@@ -370,6 +365,7 @@ final class Settings {
 								<label><input type="radio" name="<?php echo esc_attr( self::OPTION ); ?>[site_mode]" value="company" <?php checked( self::SITE_MODE_COMPANY, $settings['site_mode'] ); ?>><span><strong><?php esc_html_e( 'Company careers site', 'llamahire' ); ?></strong><span class="description"><?php esc_html_e( 'Publish jobs for one organization using shared employer defaults.', 'llamahire' ); ?></span></span></label>
 								<label><input type="radio" name="<?php echo esc_attr( self::OPTION ); ?>[site_mode]" value="job_board" <?php checked( self::SITE_MODE_JOB_BOARD, $settings['site_mode'] ); ?>><span><strong><?php esc_html_e( 'Community job board', 'llamahire' ); ?></strong><span class="description"><?php esc_html_e( 'Publish listings from multiple employers while this site acts as the board operator.', 'llamahire' ); ?></span></span></label>
 							</fieldset>
+							<p class="description llamahire-settings-mode-note"><?php esc_html_e( 'After changing the site purpose, save to load its settings and page controls.', 'llamahire' ); ?></p>
 							<?php if ( $is_job_board ) : ?>
 								<div class="llamahire-settings-callout">
 									<h3><?php esc_html_e( 'Employer registration', 'llamahire' ); ?></h3>
@@ -393,6 +389,12 @@ final class Settings {
 								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[employer_registration_page_id]" value="<?php echo esc_attr( $settings['employer_registration_page_id'] ); ?>">
 								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[active_listing_limit]" value="<?php echo esc_attr( $settings['active_listing_limit'] ); ?>">
 								<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>[listing_duration_days]" value="<?php echo esc_attr( $settings['listing_duration_days'] ); ?>">
+							<?php endif; ?>
+							<?php if ( Setup::is_complete() ) : ?>
+								<div class="llamahire-settings-setup-status">
+									<strong><?php esc_html_e( 'Initial setup completed', 'llamahire' ); ?></strong>
+									<button type="submit" form="llamahire-restart-setup-form" class="button"><?php esc_html_e( 'Restart setup', 'llamahire' ); ?></button>
+								</div>
 							<?php endif; ?>
 						</section>
 
@@ -457,10 +459,14 @@ final class Settings {
 
 						<section id="llamahire-settings-notifications" class="llamahire-settings-section" data-llamahire-settings-section="notifications" aria-labelledby="llamahire-settings-notifications-title">
 							<header><h2 id="llamahire-settings-notifications-title" tabindex="-1"><?php esc_html_e( 'Notifications', 'llamahire' ); ?></h2><p><?php esc_html_e( 'Choose where application alerts are sent and customize the messages candidates and hiring teams receive.', 'llamahire' ); ?></p></header>
-							<table class="form-table" role="presentation">
+							<h3><?php esc_html_e( 'Recipients and sender', 'llamahire' ); ?></h3>
+							<table class="form-table llamahire-settings-delivery-fields" role="presentation">
 								<tr><th scope="row"><label for="llamahire-notification-email"><?php esc_html_e( 'Hiring inbox', 'llamahire' ); ?></label></th><td><input class="regular-text" type="email" id="llamahire-notification-email" name="<?php echo esc_attr( self::OPTION ); ?>[notification_email]" value="<?php echo esc_attr( $settings['notification_email'] ); ?>" required><p class="description"><?php esc_html_e( 'New application notifications are sent here.', 'llamahire' ); ?></p></td></tr>
 								<tr><th scope="row"><label for="llamahire-email-sender-name"><?php esc_html_e( 'Sender name', 'llamahire' ); ?></label></th><td><input class="regular-text" type="text" id="llamahire-email-sender-name" name="<?php echo esc_attr( self::OPTION ); ?>[email_sender_name]" value="<?php echo esc_attr( $settings['email_sender_name'] ); ?>" maxlength="120" required></td></tr>
 								<tr><th scope="row"><label for="llamahire-email-sender-email"><?php esc_html_e( 'Sender email', 'llamahire' ); ?></label></th><td><input class="regular-text" type="email" id="llamahire-email-sender-email" name="<?php echo esc_attr( self::OPTION ); ?>[email_sender_email]" value="<?php echo esc_attr( $settings['email_sender_email'] ); ?>" required><p class="description"><?php esc_html_e( 'Use an address authorized by your domain and mail provider.', 'llamahire' ); ?></p></td></tr>
+							</table>
+							<h3><?php esc_html_e( 'Message templates', 'llamahire' ); ?></h3>
+							<table class="form-table" role="presentation">
 								<tr><th scope="row"><label for="llamahire-employer-email-subject"><?php esc_html_e( 'Employer subject', 'llamahire' ); ?></label></th><td><input class="regular-text" type="text" id="llamahire-employer-email-subject" name="<?php echo esc_attr( self::OPTION ); ?>[employer_email_subject]" value="<?php echo esc_attr( $settings['employer_email_subject'] ); ?>" maxlength="200" required></td></tr>
 								<tr><th scope="row"><label for="llamahire-employer-email-body"><?php esc_html_e( 'Employer message', 'llamahire' ); ?></label></th><td><textarea class="large-text code" rows="6" id="llamahire-employer-email-body" name="<?php echo esc_attr( self::OPTION ); ?>[employer_email_body]" maxlength="5000" required><?php echo esc_textarea( $settings['employer_email_body'] ); ?></textarea></td></tr>
 								<tr><th scope="row"><label for="llamahire-candidate-email-subject"><?php esc_html_e( 'Candidate subject', 'llamahire' ); ?></label></th><td><input class="regular-text" type="text" id="llamahire-candidate-email-subject" name="<?php echo esc_attr( self::OPTION ); ?>[candidate_email_subject]" value="<?php echo esc_attr( $settings['candidate_email_subject'] ); ?>" maxlength="200" required></td></tr>
@@ -471,7 +477,7 @@ final class Settings {
 						<section id="llamahire-settings-pages" class="llamahire-settings-section" data-llamahire-settings-section="pages" aria-labelledby="llamahire-settings-pages-title">
 							<header><h2 id="llamahire-settings-pages-title" tabindex="-1"><?php esc_html_e( 'Pages', 'llamahire' ); ?></h2><p><?php esc_html_e( 'Connect the public pages that visitors and employers use.', 'llamahire' ); ?></p></header>
 							<table class="form-table" role="presentation">
-								<tr><th scope="row"><label for="llamahire-careers-page"><?php esc_html_e( 'Careers page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-careers-page', self::OPTION . '[careers_page_id]', $settings['careers_page_id'], __( 'No Careers page selected', 'llamahire' ), '', __( 'Careers page', 'llamahire' ) ); ?></td></tr>
+								<tr><th scope="row"><label for="llamahire-careers-page"><?php esc_html_e( 'Careers page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-careers-page', self::OPTION . '[careers_page_id]', $settings['careers_page_id'], __( 'No Careers page selected', 'llamahire' ), '', __( 'Careers page', 'llamahire' ) ); ?><p class="description"><?php esc_html_e( 'Visitors use this page to browse your open jobs.', 'llamahire' ); ?></p><?php self::careers_page_status( $settings['careers_page_id'] ); ?><p class="description" data-llamahire-careers-pending hidden><?php esc_html_e( 'Save changes to check the newly selected page.', 'llamahire' ); ?></p></td></tr>
 								<?php if ( $is_job_board ) : ?>
 									<tr><th scope="row"><label for="llamahire-submit-job-page"><?php esc_html_e( 'Submit a Job page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-submit-job-page', self::OPTION . '[submit_job_page_id]', $settings['submit_job_page_id'], __( 'Create automatically', 'llamahire' ), '', __( 'Submit a Job page', 'llamahire' ) ); ?><p class="description"><?php esc_html_e( 'Use a page containing [llamahire_submit_job].', 'llamahire' ); ?></p></td></tr>
 									<tr><th scope="row"><label for="llamahire-my-jobs-page"><?php esc_html_e( 'My Jobs page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-my-jobs-page', self::OPTION . '[my_jobs_page_id]', $settings['my_jobs_page_id'], __( 'Create automatically', 'llamahire' ), '', __( 'My Jobs page', 'llamahire' ) ); ?><p class="description"><?php esc_html_e( 'Use a page containing [llamahire_my_jobs].', 'llamahire' ); ?></p></td></tr>
@@ -486,9 +492,15 @@ final class Settings {
 						<?php self::email_delivery_panel(); ?>
 					</div>
 					<div class="llamahire-settings-actions">
-						<span class="llamahire-settings-save-note"><?php esc_html_e( 'Changes apply when you save.', 'llamahire' ); ?></span>
+						<span class="llamahire-settings-save-note" data-llamahire-save-note data-saved-text="<?php esc_attr_e( 'Changes apply when you save.', 'llamahire' ); ?>" data-dirty-text="<?php esc_attr_e( 'Unsaved changes', 'llamahire' ); ?>" role="status"><?php esc_html_e( 'Changes apply when you save.', 'llamahire' ); ?></span>
 						<button type="submit" form="llamahire-settings-form" name="submit" class="button button-primary"><?php esc_html_e( 'Save changes', 'llamahire' ); ?></button>
 					</div>
+					<?php if ( Setup::is_complete() ) : ?>
+						<form id="llamahire-restart-setup-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+								<input type="hidden" name="action" value="llamahire_restart_setup">
+								<?php wp_nonce_field( 'llamahire_restart_setup', 'llamahire_restart_setup_nonce' ); ?>
+						</form>
+					<?php endif; ?>
 				</div>
 			</div>
 		</div>
@@ -501,11 +513,11 @@ final class Settings {
 		$diagnostics = wp_parse_args( (array) get_option( self::EMAIL_DIAGNOSTICS, array() ), array( 'tested_at' => '', 'success' => null, 'error_codes' => array() ) );
 		?>
 		<hr>
-		<h2 id="llamahire-email-delivery"><?php esc_html_e( 'Email previews and delivery diagnostics', 'llamahire' ); ?></h2>
+		<h2 id="llamahire-email-delivery" tabindex="-1"><?php esc_html_e( 'Email previews and delivery diagnostics', 'llamahire' ); ?></h2>
 		<p><?php esc_html_e( 'Previews use saved settings and sample candidate data. Save changes before testing an edit.', 'llamahire' ); ?></p>
-		<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px;max-width:1100px">
+		<div class="llamahire-settings-previews">
 			<?php foreach ( array( 'employer' => __( 'Employer email preview', 'llamahire' ), 'candidate' => __( 'Candidate email preview', 'llamahire' ) ) as $channel => $title ) : ?>
-			<details><summary><strong><?php echo esc_html( $title ); ?></strong></summary><div class="card" style="max-width:none;margin-top:8px"><p><strong><?php esc_html_e( 'To:', 'llamahire' ); ?></strong> <?php echo esc_html( $preview[ $channel ]['to'] ); ?><br><strong><?php esc_html_e( 'Subject:', 'llamahire' ); ?></strong> <?php echo esc_html( $preview[ $channel ]['subject'] ); ?></p><pre style="white-space:pre-wrap"><?php echo esc_html( $preview[ $channel ]['message'] ); ?></pre></div></details>
+			<details><summary><strong><?php echo esc_html( $title ); ?></strong></summary><div class="llamahire-settings-preview-content"><p><strong><?php esc_html_e( 'To:', 'llamahire' ); ?></strong> <?php echo esc_html( $preview[ $channel ]['to'] ); ?><br><strong><?php esc_html_e( 'Subject:', 'llamahire' ); ?></strong> <?php echo esc_html( $preview[ $channel ]['subject'] ); ?></p><pre><?php echo esc_html( $preview[ $channel ]['message'] ); ?></pre></div></details>
 			<?php endforeach; ?>
 		</div>
 		<h3><?php esc_html_e( 'Send a test email', 'llamahire' ); ?></h3>
@@ -604,6 +616,27 @@ final class Settings {
 			return;
 		}
 		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_dropdown_pages() escapes the select; the injected ID is escaped above.
+	}
+
+	private static function careers_page_status( $page_id ) {
+		$page_id = absint( $page_id );
+		$page = $page_id ? get_post( $page_id ) : null;
+		$published = $page && 'page' === $page->post_type && 'publish' === $page->post_status;
+		$has_directory = $published && has_block( 'llamahire/jobs-directory', $page->post_content );
+		?>
+		<p class="llamahire-settings-page-status <?php echo $has_directory ? 'is-ready' : 'is-attention'; ?>" data-llamahire-careers-saved-status>
+			<?php if ( ! $page_id ) : ?>
+				<?php esc_html_e( 'No Careers page is selected.', 'llamahire' ); ?>
+			<?php elseif ( ! $published ) : ?>
+				<?php esc_html_e( 'The selected Careers page is not published.', 'llamahire' ); ?>
+			<?php elseif ( ! $has_directory ) : ?>
+				<?php esc_html_e( 'Published page. Add the Jobs Directory block to display openings.', 'llamahire' ); ?>
+			<?php else : ?>
+				<?php esc_html_e( 'Published page with a Jobs Directory block.', 'llamahire' ); ?>
+			<?php endif; ?>
+			<?php if ( $published ) : ?><a href="<?php echo esc_url( get_permalink( $page ) ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'View page', 'llamahire' ); ?></a><?php endif; ?>
+		</p>
+		<?php
 	}
 
 	public static function field_mode_select( $id, $name, $selected ) {

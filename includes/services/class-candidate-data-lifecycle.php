@@ -16,6 +16,15 @@ final class Candidate_Data_Lifecycle implements Candidate_Data_Lifecycle_Contrac
 	private $resumes;
 
 	public function __construct( Application_Repository $applications, Resume_Storage $resumes ) {
+		$this->set_dependencies( $applications, $resumes );
+	}
+
+	/**
+	 * Bind the final services after extensions finish registering replacements.
+	 *
+	 * @internal Called by Plugin before the service registry is locked.
+	 */
+	public function set_dependencies( Application_Repository $applications, Resume_Storage $resumes ) {
 		$this->applications = $applications;
 		$this->resumes      = $resumes;
 	}

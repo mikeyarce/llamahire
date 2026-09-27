@@ -70,6 +70,30 @@ final class Jobs {
 		add_filter( 'post_row_actions', array( __CLASS__, 'row_actions' ), 10, 2 );
 		add_action( 'admin_action_llamahire_duplicate_job', array( __CLASS__, 'duplicate' ) );
 		add_filter( 'display_post_states', array( __CLASS__, 'post_states' ), 10, 2 );
+		add_filter( 'rest_pre_insert_' . self::POST_TYPE, array( __CLASS__, 'protect_operator_meta' ), 10, 2 );
+	}
+
+	/** Preserve board-controlled fields when an author saves job metadata through REST. */
+	public static function protect_operator_meta( $prepared_post, $request ) {
+		$meta = $request->get_param( 'meta' );
+		if ( is_wp_error( $prepared_post ) || current_user_can( 'edit_others_llamahire_jobs' ) || ! is_array( $meta ) || ! array_key_exists( self::META_KEY, $meta ) ) {
+			return $prepared_post;
+		}
+		$input   = $meta[ self::META_KEY ];
+		$current = ! empty( $prepared_post->ID ) ? self::get_meta( $prepared_post->ID ) : self::defaults();
+		if ( ! is_array( $input ) ) {
+			return new \WP_Error( 'llamahire_operator_meta_forbidden', __( 'Only a board manager can change featured status or listing expiration.', 'llamahire' ), array( 'status' => 403 ) );
+		}
+		$merged = self::sanitize_meta( array_merge( $current, $input ) );
+		foreach ( array( 'featured', 'listing_expires' ) as $field ) {
+			if ( $merged[ $field ] !== $current[ $field ] ) {
+				return new \WP_Error( 'llamahire_operator_meta_forbidden', __( 'Only a board manager can change featured status or listing expiration.', 'llamahire' ), array( 'status' => 403 ) );
+			}
+		}
+		// REST replaces the complete object: omitted protected fields must retain their saved values.
+		$meta[ self::META_KEY ] = $merged;
+		$request->set_param( 'meta', $meta );
+		return $prepared_post;
 	}
 
 	/**
