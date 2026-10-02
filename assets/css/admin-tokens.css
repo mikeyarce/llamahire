@@ -1,5 +1,7 @@
 .llamahire-workspace,
 .llamahire-application-detail,
+.llamahire-activity-screen,
+.llamahire-applications-screen,
 .llamahire-settings-screen {
 	--lh-bg: #f6f7f7;
 	--lh-surface: #fff;
@@ -17,4 +19,46 @@
 	--lh-danger-surface: #fff5f5;
 	--lh-warning: #6e4c00;
 	--lh-warning-surface: #fcf0d5;
+}
+
+.llamahire-product-header {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	margin-top: 20px;
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--lh-border);
+	background: var(--lh-surface);
+}
+
+.llamahire-product-header img {
+	display: block;
+	width: 30px;
+	height: 30px;
+	border-radius: 4px;
+}
+
+.llamahire-product-header strong {
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.llamahire-product-header span {
+	padding-left: 9px;
+	border-left: 1px solid var(--lh-border);
+	color: var(--lh-muted);
+	font-size: 13px;
+	line-height: 1.3;
+}
+
+.llamahire-activity-screen > .llamahire-product-header + h1,
+.llamahire-applications-screen > .llamahire-product-header + h1 {
+	margin-top: 24px;
+}
+
+@media screen and (max-width: 782px) {
+	.llamahire-product-header {
+		margin-top: 10px;
+	}
 }

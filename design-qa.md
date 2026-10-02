@@ -1,3 +1,61 @@
+# Settings Product Strip Design QA
+
+**Source visual truth**
+
+- User-selected `Product strip` variant: `/Users/mikeyarce/.codex/visualizations/2026/09/28/01a0e9f8-fbdf-7283-ae24-22948fd18fcf/settings-branding-options.html`
+- Source composition: contained WordPress admin mock at a 920 px maximum product-window width, using the selected 30 px LlamaHire mark and a compact `LlamaHire | Settings` strip.
+
+**Implementation evidence**
+
+- Live Studio page: `http://localhost:8896/wp-admin/edit.php?post_type=llamahire_job&page=llamahire-settings`
+- Browser-rendered implementation screenshots: current-task Codex in-app browser captures at 1280 × 900 and 390 × 844 CSS pixels, retained with the live browser tab rather than written into the repository.
+- Device density: browser-native CSS-pixel capture; no density normalization was needed.
+- State: authenticated WordPress administrator, Organization section selected; Notifications hash route also verified.
+- Runtime image: `assets/images/llamahire-mark.png`, 128 × 128 source pixels displayed at 30 × 30 CSS pixels.
+
+**Full-view comparison evidence**
+
+- The implementation preserves the selected hierarchy: product strip first, ordinary `Settings` page title second, then the existing description and section navigation.
+- The strip spans the Settings content width without replacing or competing with the WordPress admin bar or Jobs navigation.
+- At 390 px the strip remains a single compact row, the title and description wrap naturally, and the existing responsive section selector remains directly below them.
+
+**Focused comparison evidence**
+
+- The focused header comparison confirmed the same 30 px square mark, 9 px label spacing, subdued `Settings` label, one-pixel divider, neutral surface, and compact vertical padding used by the selected mock.
+- The mark loaded successfully at its natural 128 px width and remained sharp at both verified viewport sizes.
+
+**Required fidelity surfaces**
+
+- Fonts and typography: the strip uses the WordPress admin system stack, 15 px semibold product name, and 13 px muted section label; the existing 28/24 px responsive page-title hierarchy is preserved.
+- Spacing and layout rhythm: 10 × 12 px strip padding, 9 px gaps, 30 px mark, and a 24 px gap before the desktop page title match the selected compact treatment without changing form density.
+- Colors and visual tokens: the strip maps to the existing `--lh-surface`, `--lh-border`, and `--lh-muted` admin tokens rather than introducing a parallel palette.
+- Image quality and asset fidelity: the selected supplied llama mark is used directly; it is not approximated with CSS, SVG, emoji, or a text glyph.
+- Copy and content: `LlamaHire`, `Settings`, and the existing mode-aware settings description match the selected composition and current product language.
+
+**Findings**
+
+- No actionable P0, P1, or P2 differences remain.
+- No focused visual fix was required after the first live comparison.
+
+**Interaction and quality checks**
+
+- Organization and Notifications section routes rendered correctly with the product strip persistent above the active section.
+- Desktop and 390 px layouts showed no strip overlap, clipping, or horizontal overflow.
+- Browser console: no errors or warnings.
+- PHP syntax, focused PHPCS, `npm run design:lint`, and `git diff --check`: passed.
+
+**Comparison history**
+
+1. First comparison: passed with no actionable P0/P1/P2 findings; no corrective visual iteration was required.
+
+**Follow-up polish**
+
+- None required for the Settings implementation. The design contract allows the same restrained identity strip on another product-owned admin page only when it improves product orientation.
+
+final result: passed
+
+---
+
 # Job Filter Chips and Automatic Filtering Design QA
 
 **Source visual truth**

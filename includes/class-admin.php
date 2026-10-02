@@ -226,7 +226,7 @@ final class Admin {
 		wp_enqueue_style(
 			'llamahire-admin-activity',
 			LLAMAHIRE_URL . 'build/admin-activity.css',
-			array( 'wp-components' ),
+			array( 'wp-components', 'llamahire-admin-tokens' ),
 			$asset['version']
 		);
 		wp_style_add_data( 'llamahire-admin-activity', 'rtl', 'replace' );
@@ -259,7 +259,13 @@ final class Admin {
 			)
 		);
 		?>
-		<div class="wrap llamahire-activity-screen"><h1><?php esc_html_e( 'Hiring activity', 'llamahire' ); ?></h1><p><?php esc_html_e( 'Privacy-safe operational history. Candidate names, contact details, notes, resume filenames, IP addresses, and browser data are never copied here.', 'llamahire' ); ?></p>
+		<div class="wrap llamahire-activity-screen">
+		<header class="llamahire-product-header">
+			<img src="<?php echo esc_url( LLAMAHIRE_URL . 'assets/images/llamahire-mark.png' ); ?>" alt="" width="30" height="30">
+			<strong><?php esc_html_e( 'LlamaHire', 'llamahire' ); ?></strong>
+			<span><?php esc_html_e( 'Activity', 'llamahire' ); ?></span>
+		</header>
+		<h1><?php esc_html_e( 'Hiring activity', 'llamahire' ); ?></h1><p><?php esc_html_e( 'Privacy-safe operational history. Candidate names, contact details, notes, resume filenames, IP addresses, and browser data are never copied here.', 'llamahire' ); ?></p>
 		<div id="llamahire-activity-root"><p><?php esc_html_e( 'Loading activity…', 'llamahire' ); ?></p></div>
 		<noscript><div class="notice notice-error inline"><p><?php esc_html_e( 'The Activity interface requires JavaScript.', 'llamahire' ); ?></p></div></noscript>
 		</div>
@@ -312,7 +318,7 @@ final class Admin {
 		wp_enqueue_style(
 			'llamahire-admin-applications',
 			LLAMAHIRE_URL . 'build/admin-applications.css',
-			array( 'wp-components' ),
+			array( 'wp-components', 'llamahire-admin-tokens' ),
 			$asset['version']
 		);
 		wp_style_add_data( 'llamahire-admin-applications', 'rtl', 'replace' );
@@ -344,7 +350,13 @@ final class Admin {
 			)
 		);
 		?>
-		<div class="wrap llamahire-applications-screen"><h1><?php esc_html_e( 'Applications', 'llamahire' ); ?></h1>
+		<div class="wrap llamahire-applications-screen">
+		<header class="llamahire-product-header">
+			<img src="<?php echo esc_url( LLAMAHIRE_URL . 'assets/images/llamahire-mark.png' ); ?>" alt="" width="30" height="30">
+			<strong><?php esc_html_e( 'LlamaHire', 'llamahire' ); ?></strong>
+			<span><?php esc_html_e( 'Applications', 'llamahire' ); ?></span>
+		</header>
+		<h1><?php esc_html_e( 'Applications', 'llamahire' ); ?></h1>
 		<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only result notice for a previously nonce-protected action.
 		if ( ! empty( $_GET['application_erased'] ) ) : ?>
 		<div class="notice notice-success inline" role="status"><p><?php esc_html_e( 'The application and its private resume were permanently erased.', 'llamahire' ); ?></p></div><?php endif; ?>

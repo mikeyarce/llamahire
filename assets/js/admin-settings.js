@@ -173,7 +173,6 @@
 					window.location.hash = 'llamahire-settings-' + name;
 				}
 				showSection( name );
-				sections.filter( '[data-llamahire-settings-section="' + name + '"]' ).find( 'h2' ).first().get( 0 ).scrollIntoView( { block: 'start' } );
 			}
 
 			screen.addClass( 'is-enhanced' );

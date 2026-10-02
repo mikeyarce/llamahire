@@ -27,6 +27,10 @@
 	margin: 0 0 5px;
 }
 
+.llamahire-workspace > .llamahire-product-header + .llamahire-page-header {
+	margin-top: 24px;
+}
+
 .llamahire-page-header p,
 .llamahire-section-heading p {
 	color: var(--lh-muted);

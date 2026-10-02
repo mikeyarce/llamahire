@@ -93,6 +93,11 @@ final class Admin_Workspaces {
 		$open_jobs_url = add_query_arg( 'llamahire_job_state', 'open', $jobs_url );
 		?>
 		<div class="wrap llamahire-workspace llamahire-dashboard">
+			<header class="llamahire-product-header">
+				<img src="<?php echo esc_url( LLAMAHIRE_URL . 'assets/images/llamahire-mark.png' ); ?>" alt="" width="30" height="30">
+				<strong><?php esc_html_e( 'LlamaHire', 'llamahire' ); ?></strong>
+				<span><?php esc_html_e( 'Dashboard', 'llamahire' ); ?></span>
+			</header>
 			<div class="llamahire-page-header">
 				<div><h1><?php echo esc_html( $title ); ?></h1><p><?php echo esc_html( $intro ); ?></p></div>
 				<div class="llamahire-header-actions">
@@ -200,6 +205,11 @@ final class Admin_Workspaces {
 		$has_attention = $counts['new'] || $closing_count || $send_issues;
 		?>
 		<div class="wrap llamahire-workspace llamahire-dashboard llamahire-dashboard--company">
+			<header class="llamahire-product-header">
+				<img src="<?php echo esc_url( LLAMAHIRE_URL . 'assets/images/llamahire-mark.png' ); ?>" alt="" width="30" height="30">
+				<strong><?php esc_html_e( 'LlamaHire', 'llamahire' ); ?></strong>
+				<span><?php esc_html_e( 'Dashboard', 'llamahire' ); ?></span>
+			</header>
 			<div class="llamahire-page-header">
 				<div><h1><?php esc_html_e( 'Hiring dashboard', 'llamahire' ); ?></h1><p><?php esc_html_e( 'See what needs attention across your jobs and candidates.', 'llamahire' ); ?></p></div>
 				<div class="llamahire-header-actions"><a class="button" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . Jobs::POST_TYPE ) ); ?>"><?php esc_html_e( 'Add job', 'llamahire' ); ?></a><a class="button button-primary" href="<?php echo esc_url( $counts['new'] ? $new_url : $hiring_url ); ?>"><?php echo esc_html( ! $can_hire ? __( 'View applications', 'llamahire' ) : ( $counts['new'] ? __( 'Review new candidates', 'llamahire' ) : __( 'Open Hiring', 'llamahire' ) ) ); ?></a></div>
@@ -261,6 +271,11 @@ final class Admin_Workspaces {
 			: null;
 		?>
 		<div class="wrap llamahire-workspace llamahire-hiring<?php echo $selected ? ' has-drawer' : ''; ?>">
+			<header class="llamahire-product-header">
+				<img src="<?php echo esc_url( LLAMAHIRE_URL . 'assets/images/llamahire-mark.png' ); ?>" alt="" width="30" height="30">
+				<strong><?php esc_html_e( 'LlamaHire', 'llamahire' ); ?></strong>
+				<span><?php esc_html_e( 'Hiring', 'llamahire' ); ?></span>
+			</header>
 			<div class="llamahire-page-header">
 				<div><h1><?php esc_html_e( 'Hiring', 'llamahire' ); ?></h1><p><?php esc_html_e( 'Move candidates through your hiring process.', 'llamahire' ); ?></p></div>
 				<div class="llamahire-header-actions"><a class="button" href="<?php echo esc_url( Admin::applications_url( array( 'job_id' => $job_id ) ) ); ?>"><?php esc_html_e( 'View applications', 'llamahire' ); ?></a></div>

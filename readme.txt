@@ -1,5 +1,5 @@
 === LlamaHire – Job Board & Careers ===
-Contributors: llamahire
+Contributors: mikeyarce
 Tags: jobs, careers, hiring, applications, job board
 Requires at least: 6.5
 Tested up to: 7.1
@@ -60,6 +60,8 @@ No. LlamaHire has no WooCommerce dependency, and its core job and application fe
 LlamaHire sends through WordPress's configured mail transport. Configure the hiring inbox in Setup or Settings and send a test email. Delivery depends on your site's mail configuration; Site Health reports related setup guidance.
 
 == Source code and support ==
+
+Plugin website: https://llamahire.com/
 
 Source code and build instructions: https://github.com/mikeyarce/llamahire. The bundled admin JavaScript and CSS are built from the unminified `src/` files with `npm ci` and `npm run build`.
 

@@ -334,7 +334,12 @@ final class Settings {
 		}
 		?>
 		<div class="wrap llamahire-settings-screen" data-llamahire-settings>
-			<h1><?php esc_html_e( 'LlamaHire settings', 'llamahire' ); ?></h1>
+			<header class="llamahire-product-header">
+				<img src="<?php echo esc_url( LLAMAHIRE_URL . 'assets/images/llamahire-mark.png' ); ?>" alt="" width="30" height="30">
+				<strong><?php esc_html_e( 'LlamaHire', 'llamahire' ); ?></strong>
+				<span><?php esc_html_e( 'Settings', 'llamahire' ); ?></span>
+			</header>
+			<h1><?php esc_html_e( 'Settings', 'llamahire' ); ?></h1>
 			<?php settings_errors(); ?>
 			<?php if ( 'sent' === $email_test ) : ?><div class="notice notice-success inline" role="status"><p><?php esc_html_e( 'WordPress accepted the test email. Confirm that it arrived before relying on application notifications.', 'llamahire' ); ?></p></div><?php elseif ( in_array( $email_test, array( 'failed', 'invalid' ), true ) ) : ?><div class="notice notice-error inline" role="alert" tabindex="-1"><p><?php esc_html_e( 'The test email was not accepted. Review the sender details and your WordPress mail transport.', 'llamahire' ); ?></p></div><?php endif; ?>
 			<p class="llamahire-settings-intro"><?php echo esc_html( $is_job_board ? __( 'Manage the defaults and operating rules for this multi-employer job board.', 'llamahire' ) : __( 'Manage the organization defaults used across your careers site and job listings.', 'llamahire' ) ); ?></p>

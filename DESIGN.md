@@ -393,6 +393,14 @@ substitute emoji and text glyphs for UI icons. Public imagery should come from
 the site or product context; do not add decorative illustration merely to fill
 space.
 
+Product-owned admin pages may use the packaged LlamaHire mark once in a compact
+page-level identity strip. Keep the strip visually subordinate to the page
+title and WordPress navigation; do not repeat the mascot within settings
+sections or use it in place of functional Dashicons.
+Settings, Dashboard, Activity, Hiring, and Applications share
+`.llamahire-product-header` from the admin token
+stylesheet: a 30px mark, product name, and muted page label above the page title.
+
 ## Do's and Don'ts
 
 - Do use WordPress components and conventions before creating admin variants.
