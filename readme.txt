@@ -77,7 +77,7 @@ Usage reporting defaults to off in both Setup and Settings. An administrator mus
 
 Service: https://posthog.com/
 Privacy policy: https://posthog.com/privacy
-Event details: https://github.com/mikeyarce/llamahire/blob/main/docs/TELEMETRY.md
+Event details: https://github.com/mikeyarce/llamahire/blob/4dc42651eead80bddce3292c859eb5cf4f2e2824/docs/TELEMETRY.md
 
 = Google Geocoding API =
 
