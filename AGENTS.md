@@ -162,6 +162,44 @@ npm run test:e2e:cleanup
 npm run env:stop
 ```
 
+### Browser user-flow tests
+
+Start OrbStack or another Docker runtime before running `npm run env:start`.
+Run commands from the plugin root. Reserve the disposable site for one test
+run at a time: other chats, fixture commands, smoke checks, or theme tests can
+reset its shared settings and records. Keep Playwright configured with one worker.
+
+For the complete browser suite, including setup, settings, job editing,
+candidate submissions, hiring workflows, and independent regressions:
+
+```sh
+npm run env:start
+npm run test:e2e:setup
+npm run test:e2e
+npm run test:e2e:cleanup
+```
+
+For only the independent user journeys:
+
+```sh
+npm run env:start
+npm run test:e2e:flows
+npm run test:e2e:cleanup
+```
+
+The independent suite creates and cleans its own fixtures per test; it does not
+require `test:e2e:setup`. It covers employer registration and approval, job
+publishing and moderation, closing/renewal/relisting, candidate stages, private
+data permissions and erasure, notification retry, settings and anti-spam, and
+no-JavaScript submissions. Its transport stubs mail and provider verification;
+it does not verify real inbox delivery or live provider widgets.
+
+Use `npm run test:e2e:critical` after `test:e2e:setup` for the critical path.
+Run cleanup even after a failure to recover interrupted independent fixtures.
+Stop the environment with `npm run env:stop` only when no other task needs it.
+Failure traces, screenshots, and videos are transient output under `test-results/`.
+See `docs/TESTING.md` for focused commands and separate theme-matrix coverage.
+
 Do not assume the whole sequence is necessary for every change. Run the
 smallest relevant checks first, then expand based on risk:
 

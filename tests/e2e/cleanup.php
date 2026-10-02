@@ -5,6 +5,14 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 	exit( 'Run this file with WP-CLI.' );
 }
 
+// Recover independently owned fixtures and the transport after interrupted runs.
+if ( get_option( 'llamahire_e2e_flows' ) ) {
+	( static function () {
+		$args = array( 'cleanup' );
+		require __DIR__ . '/flow-fixtures.php';
+	} )();
+}
+
 global $wpdb;
 
 $table = \LlamaHire\Applications::table();

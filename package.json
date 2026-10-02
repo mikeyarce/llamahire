@@ -17,6 +17,7 @@
     "test:e2e:setup": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/e2e/setup.php",
     "test:e2e": "playwright test",
     "test:e2e:critical": "playwright test --grep @critical",
+    "test:e2e:flows": "playwright test tests/e2e/user-flows.spec.js",
     "test:e2e:cleanup": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/e2e/cleanup.php",
     "fixtures:generate": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures generate --scenario=small",
     "fixtures:matrix": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures generate --scenario=state-matrix --force",

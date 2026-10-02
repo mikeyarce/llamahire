@@ -97,7 +97,35 @@ their own disposable fixtures, including 101 candidates. Run them with:
 npm run test:e2e -- tests/e2e/review-fixes.spec.js
 ```
 
-These checks cover distinct applicants sharing cached form HTML, safe retries,
+The additional user journeys also create fresh fixtures before each test and
+restore settings, remove owned records and resumes, and deactivate their test
+transport afterward:
+
+```sh
+npm run env:start
+npm run test:e2e:flows
+```
+
+These cover employer registration and validation, verification and manual or
+automatic approval, admin job creation and publishing, moderation outcomes,
+closing/reopening, renewal and relisting, unavailable jobs, external application
+destinations, every candidate stage and rejection cancellation, cross-employer
+access denial and scoped exports, candidate erasure, notification failure/retry, settings taking
+effect on public forms, both anti-spam providers, and actual application/job
+submission with JavaScript disabled. All run in the complete CI browser suite.
+
+`flow-fixtures.php` refuses any site other than `http://localhost:8897`. Its
+temporary transport intercepts mail and anti-spam verification, so these tests
+require neither real inboxes nor provider keys. Verification links are captured
+privately by the fixture helper; candidate mail bodies are never recorded. The
+shared-IP employer registration limit is disabled only while these fixtures
+are active; rate-limit boundaries remain covered by the PHP suite. Mail retry
+proves WordPress acceptance and retry state, not delivery to an external inbox.
+Use `npm run test:e2e:cleanup` to recover fixtures after an interrupted run.
+Keep one browser worker because settings are shared across the disposable site.
+
+The cached-form and pagination regressions cover distinct applicants sharing
+cached form HTML, safe retries,
 full stage totals, keyboard access to older candidates, and retained review context at
 desktop and narrow widths. The smoke suite also runs
 `tests/review-regressions.php` for legacy submission keys, VIP attachment path
@@ -189,7 +217,7 @@ The GitHub Actions workflow runs:
 
 The `WordPress/WordPress#master` development mirror tracks WordPress trunk. That forward-looking job is informational and allowed to fail so upstream changes are visible without blocking a release. All declared supported versions are blocking. Browser traces, screenshots, video, and the HTML report are retained when a test fails.
 
-The ten-test browser workflow verifies:
+The browser suites verify:
 
 1. An administrator can enter, skip, resume, and complete first-run organization setup.
 2. Setup values persist, drive the hiring inbox and privacy notice, become defaults for new jobs, and create a public Careers page from the supplied pattern.

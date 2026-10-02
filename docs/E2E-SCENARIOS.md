@@ -18,10 +18,12 @@ duplicate of the PHP contract suite.
   notification internals, and storage-driver cases remain in the faster PHP
   suite. Browser tests prove that the corresponding user journey is connected.
 
-The existing workflow uses a serial fixture because later scenarios consume
+The original hiring workflow uses a serial fixture because later scenarios consume
 state created by earlier ones. The first optimization step is the flow tags
 below. The next step is to give each group a small fixture factory and split it
-into an independent spec; that will allow safe Playwright parallelism.
+into an independent spec. The additional `user-flows.spec.js` journeys already
+create and clean fixtures per test and support focused runs. They still require
+one worker because site settings are shared.
 
 ## Flow tags
 
@@ -78,7 +80,8 @@ job-board page creation exercised by the employer workflow.
    active schema; reopening restores both when dates remain valid.
 
 Automated today: structured-field readiness, save/reload, public facts, and
-schema agreement.
+schema agreement. The independent journeys also create and publish a new job
+through the editor and close/reopen its public form and schema.
 
 ### 3. Public job discovery (`@discovery @public`)
 
@@ -116,7 +119,9 @@ composition, department context, and narrow-width overflow.
    form identifies the company receiving candidate data.
 
 Automated today: success, required/optional/omitted fields, progress and busy
-states, retry, validation restoration, duplicate privacy, and recipient copy.
+states, retry, validation restoration, duplicate privacy, recipient copy, actual
+no-JavaScript resume submission, unavailable-job POST rejection with valid
+nonces, and external website/email destinations.
 
 ### 5. Recruiter application lifecycle (`@critical @recruiter @applications`)
 
@@ -135,8 +140,8 @@ states, retry, validation restoration, duplicate privacy, and recipient copy.
    returns focus, and changes stage only after confirmation.
 
 Automated today: review, stage changes, notes, protected resume, filters,
-bulk-stage workflow, history, and narrow keyboard flow. Full one-by-one stage
-progression is a follow-up scenario.
+bulk-stage workflow, history, narrow keyboard flow, every saved workflow stage,
+and explicit rejection with cancellation and focus return.
 
 ### 6. Export and candidate privacy (`@recruiter @applications`)
 
@@ -150,8 +155,12 @@ progression is a follow-up scenario.
    cannot view, export, erase, or download another employer's candidate data.
 
 Automated today: authorized export, formula neutralization, and protected
-resume download. Erasure and cross-employer browser journeys are follow-ups;
-their permission contracts already run in the PHP suite.
+resume download, erasure with revocation of a previously working resume link,
+and cross-employer job/candidate/resume access denial, ownership-scoped exports,
+and erasure denial.
+Protected endpoint checks use valid nonces for the attacking browser session.
+Employers retain export capability, but an export filtered to another employer’s
+job returns headers with no candidate rows.
 
 ### 7. Employer registration and approval (`@employer @job-board`)
 
@@ -163,12 +172,15 @@ their permission contracts already run in the PHP suite.
    error without leaking whether an account exists.
 3. **Operator approves an employer.** An administrator sees the pending queue,
    approves the request, and the employer can access Submit a Job and My Jobs.
-4. **Rejected or pending employers are contained.** They can sign in but cannot
-   create or manage listings until approved.
+4. **Pending employers are contained.** They can sign in but cannot create or
+   manage listings until approved.
 
-Automated today: public field/policy contract and an approved employer's portal
-access. Real registration submission, verification, approval, and rejection are
-the next critical-flow additions.
+Automated today: public field/policy contract, real registration submission,
+server-side policy/password validation with retry, captured verification links,
+single-use verification, pending-account restrictions, manual operator approval,
+and automatic approval configured through Settings. There is currently no
+employer-account rejection action or rejected account status in the product;
+listing rejection is covered separately.
 
 ### 8. Employer job submission and moderation (`@critical @employer @job-board`)
 
@@ -189,7 +201,8 @@ the next critical-flow additions.
 
 Automated today: draft, persistence after validation, adaptive location and
 routing fields, preview, submit, operator approval, published state, and public
-recipient disclosure. Request-changes and reject UI paths are follow-ups.
+recipient disclosure, request-changes and decline outcomes, and actual
+no-JavaScript draft/preview/moderation submission.
 
 ### 9. Employer listing lifecycle (`@employer @job-board`)
 
@@ -207,8 +220,8 @@ recipient disclosure. Request-changes and reject UI paths are follow-ups.
    removes it from My Jobs without affecting other employers.
 
 Automated today: ownership-scoped search/filter, duplication, deliberate
-deletion, and expiration labels. Close, renew, expiration, and relist browser
-paths are follow-ups and have PHP contract coverage.
+deletion, expiration labels, close/reopen, renewal preserving the application
+deadline, and expired-to-draft-to-preview-to-moderation relisting.
 
 ### 10. Notifications and recovery (`@settings @notifications`)
 
@@ -223,9 +236,10 @@ paths are follow-ups and have PHP contract coverage.
 4. **Employer lifecycle notices are singular.** Registration, moderation, and
    expiration events send at most once per saved event.
 
-Automated today: settings and rendered previews. Failure/retry and singular
-delivery are currently covered by PHP contracts and need one connected browser
-scenario.
+Automated today: settings, rendered previews, non-blocking application mail
+failure, explicit successful retry, attempt counts, and duplicate submission
+without another delivery attempt. Employer lifecycle notice counts remain
+covered by PHP contracts.
 
 ### 11. Anti-spam perimeter (`@candidate @employer`)
 
@@ -238,8 +252,10 @@ scenario.
 4. **Incomplete configuration fails safe.** Missing keys render no broken
    widget and surface an administrator configuration warning.
 
-Automated today: default unchallenged forms. Provider rendering and failure are
-PHP-covered follow-up browser scenarios.
+Automated today: default unchallenged forms, incomplete-key fallback, both
+Turnstile and reCAPTCHA rendering, per-form activation settings, and failed
+provider verification preventing candidate and employer persistence. Provider
+widgets and server verification are stubbed; no external provider is contacted.
 
 ### 12. Authorization boundaries (`@applications @employer @job-board`)
 
@@ -252,18 +268,21 @@ PHP-covered follow-up browser scenarios.
 4. **Nonces are enforced.** Replayed, missing, or cross-record action tokens do
    not mutate state.
 
-These boundaries have broad PHP coverage. Add one browser-level cross-employer
-journey and one granular recruiter journey; keep the exhaustive matrix out of
-Playwright for speed.
+Automated today: cross-employer job and application isolation, protected resume
+denials and ownership-scoped exports with valid session nonces, and denied
+candidate erasure.
+Granular recruiter permission combinations and the exhaustive nonce matrix
+remain in the PHP suite; a focused view-only recruiter UI journey remains useful.
 
-## Recommended implementation order
+## Remaining browser improvements
 
-1. Split the existing candidate, recruiter, and employer workflows into
-   independent specs backed by named fixture factories.
-2. Add the real employer registration-to-approval path, then remove the
-   pre-approved employer shortcut from that one scenario.
-3. Add full application stage progression and candidate erasure.
-4. Add listing close, renew, expire, and relist.
-5. Add one cross-employer authorization journey and one notification retry.
-6. Enable two Playwright workers after every mutating scenario owns isolated
-   records and the shared settings scenarios remain in a serial group.
+1. Split the original serial workflow into independent fixtures so its tags can
+   run alone, as the additional user journeys already do.
+2. Add a focused view-only recruiter journey and logged-out private-link checks;
+   retain the exhaustive capability and nonce matrices in PHP.
+3. Add deliberate setup restart and transport-test UI coverage.
+4. Measure the expanded suite against the timing goals above. Its new fixtures
+   favor isolation and clear failures over shared mutable state.
+5. Consider multiple workers only after settings are isolated per site or all
+   settings-dependent scenarios are scheduled safely. Unique records alone do
+   not make shared WordPress settings safe to mutate concurrently.
