@@ -18,7 +18,7 @@ After the plugin is approved in the WordPress.org Plugin Directory:
    and checksum, but the WordPress.org deployment step is safely skipped.
 4. Optionally add required reviewers to the environment if releases should
    require a final human approval before deployment.
-5. Replace the temporary WordPress.org listing artwork in `.wordpress-org/`.
+5. Confirm the final WordPress.org listing artwork in `.wordpress-org/`.
    Those files are separate from the plugin's runtime `assets/` directory; see
    [`WORDPRESS-ORG-ASSETS.md`](WORDPRESS-ORG-ASSETS.md).
 
