@@ -240,3 +240,40 @@ The browser suites verify:
 19. Internal job-board applications clearly identify the receiving company before submission.
 20. Application status changes appear in privacy-safe application history and the author-scoped Activity screen without exposing candidate email addresses.
 21. Optional Turnstile or reCAPTCHA protection renders only after complete provider keys are configured, covers employer registration and candidate applications independently, consumes local attempt limits before contacting the provider, and blocks failed server-side verification.
+
+## Launch theme compatibility
+
+Run the dedicated matrix against the disposable site:
+
+```sh
+npm run env:start
+npm run test:e2e:themes
+```
+
+The opt-in suite installs Twenty Twenty-Five, Astra, GeneratePress, Hello
+Elementor, and Elementor. It uses the existing browser fixture setup/cleanup;
+run it separately from other browser suites because themes and settings are
+shared. It restores the original theme, Elementor activation state, and
+Twenty Twenty-Five user styles. Installed packages remain in the test site.
+It refuses a base URL other than the isolated site.
+
+Six configurations cover Twenty Twenty-Five default/Midnight, Astra,
+GeneratePress, and Hello alone/with Elementor active. Checks cover directory,
+department, careers patterns, single-job/application, and employer registration
+at 1440px and 360px, duplicate application forms, a 600px job content
+column, and contrast of metadata, help text, required labels, and submit buttons.
+It also checks search empty states, rendered success/error notices, and
+authenticated My Jobs, Account, and Submit a Job pages at both widths.
+Classic archives retain the native theme loop; the Careers page provides the
+complete searchable directory. Screenshots and theme versions are attached to `playwright-theme-report/`
+for visual review.
+Elementor activation coverage does not certify Elementor-authored pages or Pro
+Theme Builder templates.
+
+Before publishing a tested-theme claim, record installed versions and review
+screenshots, keyboard focus, text/control contrast, 200% and 320% zoom, actual form
+submission/closed states and a real sidebar
+configuration. Do not treat passing overflow checks as visual approval.
+
+The launch support policy and saved-pattern limitations are documented in
+[THEME-SUPPORT.md](THEME-SUPPORT.md).

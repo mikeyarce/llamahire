@@ -408,3 +408,14 @@ space.
 - Don't expose private data in screenshots, URLs, fixtures, logs, or examples.
 - Don't force public pages into a fixed LlamaHire brand that conflicts with the
   site's theme.
+
+## Public theme compatibility
+
+Launch validation targets Twenty Twenty-Five (default and Midnight), Astra,
+GeneratePress, and Hello Elementor (alone and with Elementor active). This is
+a test matrix, not a claim that untested configurations are certified.
+Public layouts must respond to their content container, including narrow
+desktop columns. Theme spacing presets need explicit fallback values. Preserve
+theme heading typography and content widths; avoid `!important` layout rules
+that prevent Site Editor or theme customizations. Keep foreground and surface
+colors paired, and verify muted text and controls in dark variations.

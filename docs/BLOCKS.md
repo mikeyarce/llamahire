@@ -104,3 +104,9 @@ Variations only provide useful starting attributes. They use the same underlying
 The LlamaHire pattern category contains Careers Page, Careers Hero, Featured Jobs Section, and Department Landing Page. Patterns are registered by the plugin, remain ordinary editable block markup, and use theme-inheriting core blocks around LlamaHire's dynamic blocks.
 
 Jobs Directory has an optional fixed `department` attribute for department landing pages. Authors select the taxonomy term by name in the editor. On the front end, the fixed department is preserved as a hidden value while visitors can use the remaining controls; it is not presented as a removable URL filter.
+
+Supplied pattern groups use the scoped `llamahire-pattern-section` class for
+small-screen width constraints and theme-aware surface tokens. Spacing presets
+in the Careers Page pattern have explicit fallbacks for classic themes and
+block themes with different preset names. These classes remain styling details,
+not public extension contracts.

@@ -24,7 +24,8 @@
     "fixtures:status": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures status",
     "fixtures:cleanup": "wp-env --config=.wp-env.ci.json run cli wp llamahire fixtures cleanup --yes",
     "test:fixtures": "bash scripts/test-fixtures.sh",
-    "i18n:make-pot": "wp i18n make-pot . languages/llamahire.pot --domain=llamahire --exclude=.git,.github,.wordpress-org,build,dist,docs,node_modules,test-results,tests,tools,vendor --headers='{\"Report-Msgid-Bugs-To\":\"https://github.com/mikeyarce/llamahire/issues\",\"POT-Creation-Date\":\"\",\"X-Generator\":\"WP-CLI\"}'"
+    "i18n:make-pot": "wp i18n make-pot . languages/llamahire.pot --domain=llamahire --exclude=.git,.github,.wordpress-org,build,dist,docs,node_modules,test-results,tests,tools,vendor --headers='{\"Report-Msgid-Bugs-To\":\"https://github.com/mikeyarce/llamahire/issues\",\"POT-Creation-Date\":\"\",\"X-Generator\":\"WP-CLI\"}'",
+    "test:e2e:themes": "PLAYWRIGHT_HTML_OUTPUT_DIR=playwright-theme-report LLAMAHIRE_THEME_MATRIX=1 playwright test tests/e2e/theme-compatibility.spec.js --reporter=line,html --output=theme-test-results"
   },
   "dependencies": {
     "@wordpress/dataviews": "17.2.0",

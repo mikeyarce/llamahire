@@ -151,7 +151,7 @@ final class Blocks {
 				'heading' => __( 'Apply for this role', 'llamahire' ),
 			)
 		);
-		return '<div class="llamahire-single-layout"><div class="llamahire-single-main">' . $details . $content . '</div><aside class="llamahire-single-apply" aria-label="' . esc_attr__( 'Apply for this role', 'llamahire' ) . '">' . $application . '</aside></div>';
+		return '<div class="llamahire-single-container"><div class="llamahire-single-layout"><div class="llamahire-single-main">' . $details . $content . '</div><aside class="llamahire-single-apply" aria-label="' . esc_attr__( 'Apply for this role', 'llamahire' ) . '">' . $application . '</aside></div></div>';
 	}
 
 	public static function render_directory( $attributes ) {
