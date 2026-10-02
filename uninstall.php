@@ -20,6 +20,9 @@ if ( $llamahire_remove_data ) {
 }
 
 $llamahire_uninstall_current_site = static function () use ( $llamahire_remove_data ) {
+	foreach ( array( 'reporting_enabled', 'reactivated', 'site_snapshot' ) as $event ) {
+		wp_clear_scheduled_hook( 'llamahire_send_telemetry', array( $event ) );
+	}
 	wp_clear_scheduled_hook( 'llamahire_cleanup_expired_applications' );
 	wp_clear_scheduled_hook( 'llamahire_send_expiring_listing_notices' );
 	wp_clear_scheduled_hook( 'llamahire_geocode_job' );

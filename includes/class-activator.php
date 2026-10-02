@@ -21,6 +21,9 @@ final class Activator {
 		if ( is_multisite() && $network_wide ) {
 			self::for_each_site(
 				static function () {
+					wp_clear_scheduled_hook( Telemetry::HOOK, array( 'reporting_enabled' ) );
+					wp_clear_scheduled_hook( Telemetry::HOOK, array( 'reactivated' ) );
+					wp_clear_scheduled_hook( Telemetry::HOOK, array( 'site_snapshot' ) );
 					wp_clear_scheduled_hook( Applications::RETENTION_HOOK );
 					wp_clear_scheduled_hook( Employer_Notifications::EXPIRING_HOOK );
 					wp_clear_scheduled_hook( Geocoding::HOOK );
@@ -30,6 +33,9 @@ final class Activator {
 			);
 			return;
 		}
+		wp_clear_scheduled_hook( Telemetry::HOOK, array( 'reporting_enabled' ) );
+		wp_clear_scheduled_hook( Telemetry::HOOK, array( 'reactivated' ) );
+		wp_clear_scheduled_hook( Telemetry::HOOK, array( 'site_snapshot' ) );
 		wp_clear_scheduled_hook( Applications::RETENTION_HOOK );
 		wp_clear_scheduled_hook( Employer_Notifications::EXPIRING_HOOK );
 		wp_clear_scheduled_hook( Geocoding::HOOK );
@@ -60,6 +66,7 @@ final class Activator {
 		Migrations::run();
 		Capabilities::install();
 		Setup::mark_pending();
+		Telemetry::on_activation();
 		delete_option( 'rewrite_rules' );
 	}
 }

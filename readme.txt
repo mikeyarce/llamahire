@@ -69,7 +69,15 @@ For setup help or bug reports, use the WordPress.org support forum for this plug
 
 == External services ==
 
-LlamaHire does not contact an external service by default. A site administrator may optionally configure the following services.
+LlamaHire does not contact an external service before an administrator completes Setup or enables a service in Settings. Usage reporting is unchecked by default and requires the administrator to enable it.
+
+= Optional usage reporting =
+
+Usage reporting defaults to off in both Setup and Settings. An administrator must check the consent box to enable it. Saving Setup for later does not enable reporting. When enabled, LlamaHire sends a reporting-enabled event to PostHog, and another event if the plugin is reactivated. It also sends a site snapshot when reporting begins and every 15 days afterward. All events include a random installation ID, site URL, site mode, and LlamaHire, WordPress, and PHP versions. Snapshots also include aggregate counts of published, draft, and pending jobs; active plugin names and versions; active theme name and version; locale; and multisite status. No applicant, employer-account, visitor, individual job, or page-view data is sent. The administrator can disable reporting in Settings at any time. This stops future events; previously sent events remain subject to PostHog's retention policy.
+
+Service: https://posthog.com/
+Privacy policy: https://posthog.com/privacy
+Event details: https://github.com/mikeyarce/llamahire/blob/main/docs/TELEMETRY.md
 
 = Google Geocoding API =
 

@@ -67,6 +67,7 @@ final class Settings {
 			'application_resume'  => 'optional',
 			'application_letter'  => 'optional',
 			'retention_days'       => 365,
+			'usage_reporting'      => 0,
 		);
 	}
 
@@ -121,6 +122,7 @@ final class Settings {
 			'application_resume'  => self::field_mode( $input['application_resume'] ?? 'optional', 'optional' ),
 			'application_letter'  => self::field_mode( $input['application_letter'] ?? 'optional', 'optional' ),
 			'retention_days'       => self::sanitize_retention_days( $input['retention_days'] ?? $defaults['retention_days'] ),
+			'usage_reporting'      => empty( $input['usage_reporting'] ) ? 0 : 1,
 		);
 	}
 
@@ -451,6 +453,7 @@ final class Settings {
 								<tr><th scope="row"><label for="llamahire-privacy-text"><?php esc_html_e( 'Privacy notice', 'llamahire' ); ?></label></th><td><textarea class="large-text" rows="3" id="llamahire-privacy-text" name="<?php echo esc_attr( self::OPTION ); ?>[privacy_text]" required data-company-default="<?php echo esc_attr( self::default_privacy_text( self::SITE_MODE_COMPANY ) ); ?>" data-job-board-default="<?php echo esc_attr( self::default_privacy_text( self::SITE_MODE_JOB_BOARD ) ); ?>"><?php echo esc_textarea( $settings['privacy_text'] ); ?></textarea><p class="description"><?php esc_html_e( 'Shown beside the application form. Describe how candidate information will be used.', 'llamahire' ); ?></p></td></tr>
 								<tr><th scope="row"><label for="llamahire-privacy-page"><?php esc_html_e( 'Privacy policy page', 'llamahire' ); ?></label></th><td><?php self::page_select( 'llamahire-privacy-page', self::OPTION . '[privacy_page_id]', $settings['privacy_page_id'], __( 'Use the WordPress privacy policy', 'llamahire' ), '', __( 'Privacy policy page', 'llamahire' ) ); ?></td></tr>
 								<tr><th scope="row"><label for="llamahire-retention-days"><?php esc_html_e( 'Application retention', 'llamahire' ); ?></label></th><td><select class="regular-text" id="llamahire-retention-days" name="<?php echo esc_attr( self::OPTION ); ?>[retention_days]"><?php foreach ( array( 30 => __( '30 days', 'llamahire' ), 90 => __( '90 days', 'llamahire' ), 180 => __( '180 days', 'llamahire' ), 365 => __( '1 year', 'llamahire' ), 730 => __( '2 years', 'llamahire' ), 1095 => __( '3 years', 'llamahire' ), 1825 => __( '5 years', 'llamahire' ), 0 => __( 'Keep until manually erased', 'llamahire' ) ) as $days => $label ) : ?><option value="<?php echo esc_attr( $days ); ?>" <?php selected( $settings['retention_days'], $days ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select><p class="description"><?php esc_html_e( 'Applications and private resumes older than this are permanently deleted by the daily cleanup task.', 'llamahire' ); ?></p></td></tr>
+								<tr><th scope="row"><?php esc_html_e( 'Usage reporting', 'llamahire' ); ?></th><td><?php Telemetry::field( self::OPTION . '[usage_reporting]', $settings['usage_reporting'], 'llamahire-usage-reporting' ); ?></td></tr>
 							</table>
 							<h3><?php esc_html_e( 'Spam protection', 'llamahire' ); ?></h3>
 							<p class="description"><?php esc_html_e( 'Add an optional bot check to public forms. Existing rate limits and the application honeypot remain active.', 'llamahire' ); ?></p>

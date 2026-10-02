@@ -213,6 +213,7 @@ final class Setup {
 								<tr><th scope="row"><label for="llamahire-setup-privacy-text"><?php esc_html_e( 'Candidate privacy text', 'llamahire' ); ?> <span class="llamahire-required"><?php esc_html_e( '(required)', 'llamahire' ); ?></span></label></th><td><textarea class="large-text" rows="4" id="llamahire-setup-privacy-text" name="organization[privacy_text]" required aria-describedby="llamahire-setup-privacy-text-description" data-company-default="<?php echo esc_attr( Settings::default_privacy_text( Settings::SITE_MODE_COMPANY ) ); ?>" data-job-board-default="<?php echo esc_attr( Settings::default_privacy_text( Settings::SITE_MODE_JOB_BOARD ) ); ?>"><?php echo esc_textarea( $settings['privacy_text'] ); ?></textarea><p class="description" id="llamahire-setup-privacy-text-description"><?php esc_html_e( 'Shown beside every application form. This operational preview is not legal advice.', 'llamahire' ); ?></p></td></tr>
 								<tr><th scope="row"><label for="llamahire-setup-privacy-page"><?php esc_html_e( 'Privacy policy page', 'llamahire' ); ?></label></th><td><?php Settings::page_select( 'llamahire-setup-privacy-page', 'organization[privacy_page_id]', $settings['privacy_page_id'], $privacy_empty_label, 'llamahire-setup-privacy-page-description' ); ?><p class="description" id="llamahire-setup-privacy-page-description"><?php esc_html_e( 'Choose a published page, or use the page selected in WordPress Settings → Privacy.', 'llamahire' ); ?></p></td></tr>
 								<tr><th scope="row"><label for="llamahire-setup-retention"><?php esc_html_e( 'Application retention', 'llamahire' ); ?></label></th><td><select class="regular-text" id="llamahire-setup-retention" name="organization[retention_days]"><?php foreach ( $retention_options as $days => $label ) : ?><option value="<?php echo esc_attr( $days ); ?>" <?php selected( $settings['retention_days'], $days ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select><p class="description"><?php esc_html_e( 'Older applications and private resumes are permanently deleted by the daily cleanup task.', 'llamahire' ); ?></p></td></tr>
+								<tr><th scope="row"><?php esc_html_e( 'Usage reporting', 'llamahire' ); ?></th><td><?php Telemetry::field( 'organization[usage_reporting]', $settings['usage_reporting'], 'llamahire-setup-usage-reporting' ); ?></td></tr>
 							</table>
 						</div>
 						<aside class="llamahire-candidate-preview" aria-labelledby="llamahire-candidate-preview-title" data-default-policy-available="<?php echo $wp_privacy_page ? '1' : '0'; ?>">
@@ -244,7 +245,7 @@ final class Setup {
 						<div class="llamahire-setup-review__groups">
 							<section><header><h4><?php esc_html_e( 'Purpose', 'llamahire' ); ?></h4><button type="button" class="button-link" data-llamahire-setup-edit="1" aria-label="<?php esc_attr_e( 'Edit site purpose', 'llamahire' ); ?>"><?php esc_html_e( 'Edit', 'llamahire' ); ?></button></header><p data-llamahire-review="purpose"></p></section>
 							<section><header><h4><?php esc_html_e( 'Identity & defaults', 'llamahire' ); ?></h4><button type="button" class="button-link" data-llamahire-setup-edit="2" aria-label="<?php esc_attr_e( 'Edit identity and defaults', 'llamahire' ); ?>"><?php esc_html_e( 'Edit', 'llamahire' ); ?></button></header><p data-llamahire-review="identity"></p><p data-llamahire-review="defaults"></p></section>
-							<section><header><h4><?php esc_html_e( 'Applications & privacy', 'llamahire' ); ?></h4><button type="button" class="button-link" data-llamahire-setup-edit="3" aria-label="<?php esc_attr_e( 'Edit applications and privacy', 'llamahire' ); ?>"><?php esc_html_e( 'Edit', 'llamahire' ); ?></button></header><p data-llamahire-review="email"></p><p data-llamahire-review="privacy"></p><p data-llamahire-review="retention"></p></section>
+							<section><header><h4><?php esc_html_e( 'Applications & privacy', 'llamahire' ); ?></h4><button type="button" class="button-link" data-llamahire-setup-edit="3" aria-label="<?php esc_attr_e( 'Edit applications and privacy', 'llamahire' ); ?>"><?php esc_html_e( 'Edit', 'llamahire' ); ?></button></header><p data-llamahire-review="email"></p><p data-llamahire-review="privacy"></p><p data-llamahire-review="retention"></p><p data-llamahire-review="reporting" data-on="<?php esc_attr_e( 'Usage reporting to PostHog: On', 'llamahire' ); ?>" data-off="<?php esc_attr_e( 'Usage reporting to PostHog: Off', 'llamahire' ); ?>"></p></section>
 							<section><header><h4><?php esc_html_e( 'Public jobs page', 'llamahire' ); ?></h4><button type="button" class="button-link" data-llamahire-setup-edit="4" aria-label="<?php esc_attr_e( 'Edit public jobs page', 'llamahire' ); ?>"><?php esc_html_e( 'Edit', 'llamahire' ); ?></button></header><p data-llamahire-review="careers"></p><p data-llamahire-review="publication"></p><p data-llamahire-review="employer-pages" data-llamahire-job-board-only <?php echo $is_job_board ? '' : 'hidden'; ?>></p></section>
 						</div>
 					</div>
@@ -339,7 +340,9 @@ final class Setup {
 		} else {
 			self::setup_error( __( 'Create a public jobs page or select a published page containing the LlamaHire Jobs Directory block.', 'llamahire' ), $settings, $careers_action, $careers_title, 4 );
 		}
-		update_option( Settings::OPTION, $settings, false );
+		if ( ! add_option( Settings::OPTION, $settings, '', false ) ) {
+			update_option( Settings::OPTION, $settings, false );
+		}
 		update_option( self::OPTION, array( 'version' => self::VERSION, 'status' => 'completed' ), false );
 		self::redirect( 'completed' );
 	}

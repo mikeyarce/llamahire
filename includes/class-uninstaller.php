@@ -213,11 +213,12 @@ final class Uninstaller {
 	 * Remove plugin options and transient rate counters.
 	 */
 	private static function delete_options() {
-		foreach ( array( 'llamahire_db_version', 'llamahire_schema_version', 'llamahire_capabilities_version', 'llamahire_migration_lock', 'llamahire_organization', 'llamahire_setup', 'llamahire_settings', 'llamahire_email_diagnostics' ) as $option ) {
+		foreach ( array( 'llamahire_db_version', 'llamahire_schema_version', 'llamahire_capabilities_version', 'llamahire_migration_lock', 'llamahire_organization', 'llamahire_setup', 'llamahire_settings', 'llamahire_email_diagnostics', 'llamahire_telemetry_installation_id', 'llamahire_telemetry_registered' ) as $option ) {
 			delete_option( $option );
 		}
 
 		global $wpdb;
+		delete_transient( 'llamahire_telemetry_retry_after' );
 		$cursor_like = $wpdb->esc_like( 'llamahire_migration_cursor_' ) . '%';
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $cursor_like ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Explicit uninstall cleanup for plugin-owned migration cursors.
 		$lock_like = $wpdb->esc_like( Rate_Limiter::LOCK_PREFIX ) . '%';

@@ -280,6 +280,7 @@
 				var currency = form.find( '#llamahire-setup-currency option:selected' ).text();
 				var policy = form.find( '#llamahire-setup-privacy-page option:selected' ).text();
 				var retention = form.find( '#llamahire-setup-retention option:selected' ).text();
+				var reporting = form.find( '[data-llamahire-review="reporting"]' );
 
 				reviewValue( 'purpose', mode );
 				reviewValue( 'identity', form.find( '#llamahire-setup-name' ).val() );
@@ -287,6 +288,7 @@
 				reviewValue( 'email', 'Notifications: ' + form.find( '#llamahire-setup-email' ).val() );
 				reviewValue( 'privacy', 'Privacy policy: ' + policy );
 				reviewValue( 'retention', 'Retention: ' + retention );
+				reviewValue( 'reporting', reporting.attr( form.find( '#llamahire-setup-usage-reporting' ).prop( 'checked' ) ? 'data-on' : 'data-off' ) );
 				reviewValue( 'careers', pageValue );
 				reviewValue( 'publication', 'create' === action ? 'This page will be published when Setup is completed.' : 'Existing compatible published page.' );
 				reviewValue( 'employer-pages', isJobBoard ? 'Submit a Job, My Jobs, and Account pages will be created automatically if needed.' : '' );

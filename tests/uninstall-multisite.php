@@ -42,6 +42,12 @@ foreach ( $sites as $site_id ) {
 		if ( ! wp_next_scheduled( \LlamaHire\Employer_Notifications::EXPIRING_HOOK ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', \LlamaHire\Employer_Notifications::EXPIRING_HOOK );
 		}
+		foreach ( array( 'reporting_enabled', 'reactivated', 'site_snapshot' ) as $event ) {
+			wp_schedule_single_event( time() + HOUR_IN_SECONDS, \LlamaHire\Telemetry::HOOK, array( $event ) );
+		}
+		update_option( 'llamahire_telemetry_installation_id', wp_generate_uuid4(), false );
+		update_option( 'llamahire_telemetry_registered', true, false );
+		set_transient( 'llamahire_telemetry_retry_after', true, DAY_IN_SECONDS );
 		update_option( 'llamahire_email_diagnostics', array( 'test' => $site_id ), false );
 		wp_insert_post(
 			array(
@@ -76,6 +82,10 @@ foreach ( $sites as $site_id ) {
 		$assert( null === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $applications_table ) ) ), 'The applications table is removed from site ' . $site_id );
 		$assert( null === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $audit_table ) ) ), 'The audit table is removed from site ' . $site_id );
 		$assert( null === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $notes_table ) ) ), 'The notes table is removed from site ' . $site_id );
+		foreach ( array( 'reporting_enabled', 'reactivated', 'site_snapshot' ) as $event ) {
+			$assert( ! wp_next_scheduled( \LlamaHire\Telemetry::HOOK, array( $event ) ), 'Reporting tasks are removed from site ' . $site_id );
+		}
+		$assert( false === get_option( 'llamahire_telemetry_installation_id', false ) && false === get_option( 'llamahire_telemetry_registered', false ) && false === get_transient( 'llamahire_telemetry_retry_after' ), 'Reporting state is removed from site ' . $site_id );
 		$assert( false === get_option( 'llamahire_email_diagnostics', false ), 'Plugin options are removed from site ' . $site_id );
 		$assert( ! wp_next_scheduled( \LlamaHire\Applications::RETENTION_HOOK ) && ! wp_next_scheduled( \LlamaHire\Employer_Notifications::EXPIRING_HOOK ), 'Scheduled tasks are removed from site ' . $site_id );
 		$assert( ! get_role( 'administrator' )->has_cap( \LlamaHire\Capabilities::VIEW_APPLICATIONS ) && ! get_role( \LlamaHire\Capabilities::EMPLOYER_ROLE ) && ! get_role( \LlamaHire\Capabilities::HIRING_MANAGER_ROLE ), 'Plugin roles and capabilities are removed from site ' . $site_id );

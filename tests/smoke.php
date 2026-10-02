@@ -109,6 +109,59 @@ try {
 	$assert( ! is_wp_error( $privacy_page_id ) && $privacy_page_id > 0, 'A published candidate privacy page can be selected' );
 	$sanitized_settings = \LlamaHire\Settings::sanitize( array( 'site_mode' => 'company', 'name' => 'Example Employer', 'website' => 'https://employer.example.test/', 'default_locality' => ' Vancouver ', 'default_region' => ' bc ', 'default_country' => 'ca', 'default_currency' => 'cad', 'notification_email' => 'hiring@example.test', 'email_sender_name' => ' Example Hiring ', 'email_sender_email' => 'jobs@example.test', 'employer_email_subject' => 'Applicant {candidate_name}: {job_title}', 'employer_email_body' => "{candidate_name} applied.\n\nOpen {applications_url}", 'candidate_email_subject' => 'Application received: {job_title}', 'candidate_email_body' => "Hello {candidate_name},\n\nThank you from {site_name}.\n{site_url}", 'privacy_text' => ' Candidate data is used only for hiring. ', 'privacy_page_id' => $privacy_page_id, 'application_phone' => 'required', 'application_resume' => 'required', 'application_letter' => 'hidden' ) );
 	$assert( 'Vancouver' === $sanitized_settings['default_locality'] && 'bc' === $sanitized_settings['default_region'] && 'CA' === $sanitized_settings['default_country'] && 'CAD' === $sanitized_settings['default_currency'] && '' === $sanitized_settings['google_geocoding_api_key'] && 'hiring@example.test' === $sanitized_settings['notification_email'] && 'Candidate data is used only for hiring.' === $sanitized_settings['privacy_text'] && $privacy_page_id === $sanitized_settings['privacy_page_id'] && 365 === $sanitized_settings['retention_days'], 'Setup defaults normalize organization, geocoding, privacy, retention, and hiring inbox values' );
+	$assert( 0 === $sanitized_settings['usage_reporting'] && 1 === \LlamaHire\Settings::sanitize( array( 'usage_reporting' => '1' ) )['usage_reporting'], 'Usage reporting requires an explicit saved opt-in' );
+	$telemetry_requests = array();
+	$telemetry_interceptor = static function ( $preempt, $arguments, $url ) use ( &$telemetry_requests ) {
+		if ( 'https://us.i.posthog.com/i/v0/e/' === $url ) {
+			$telemetry_requests[] = json_decode( $arguments['body'], true );
+			return array( 'response' => array( 'code' => 200, 'message' => 'OK' ), 'body' => '{}' );
+		}
+		return $preempt;
+	};
+	add_filter( 'pre_http_request', $telemetry_interceptor, 10, 3 );
+	$telemetry_original_id = get_option( 'llamahire_telemetry_installation_id', false );
+	$telemetry_original_registered = get_option( \LlamaHire\Telemetry::REGISTERED, false );
+	$telemetry_original_retry = get_transient( 'llamahire_telemetry_retry_after' );
+	try {
+		$telemetry_settings = \LlamaHire\Settings::get();
+		$telemetry_settings['usage_reporting'] = 1;
+		update_option( \LlamaHire\Settings::OPTION, $telemetry_settings, false );
+		$assert( (bool) wp_next_scheduled( \LlamaHire\Telemetry::HOOK, array( 'site_snapshot' ) ), 'Opting in schedules a site snapshot' );
+		\LlamaHire\Telemetry::send( 'site_snapshot' );
+		$telemetry_payload = end( $telemetry_requests );
+		$telemetry_properties = $telemetry_payload['properties'] ?? array();
+		$base_properties = array( '$process_person_profile', 'site_url', 'site_mode', 'plugin_version', 'wp_version', 'php_version' );
+		$expected_snapshot_properties = array( 'jobs_published', 'jobs_draft', 'jobs_pending', 'active_plugins', 'active_theme', 'locale', 'is_multisite' );
+		$assert( 'llamahire_site_snapshot' === ( $telemetry_payload['event'] ?? '' ) && count( array_merge( $base_properties, $expected_snapshot_properties ) ) === count( $telemetry_properties ) && count( $expected_snapshot_properties ) === count( array_intersect( $expected_snapshot_properties, array_keys( $telemetry_properties ) ) ) && is_int( $telemetry_properties['jobs_published'] ?? null ), 'Site snapshot sends only aggregate jobs and disclosed system fields' );
+		\LlamaHire\Telemetry::send( 'reporting_enabled' );
+		$assert( true === get_option( \LlamaHire\Telemetry::REGISTERED ) && $telemetry_payload['distinct_id'] === end( $telemetry_requests )['distinct_id'], 'Reporting-enabled delivery records registration and preserves the installation ID' );
+		$sent_before_invalid_event = count( $telemetry_requests );
+		\LlamaHire\Telemetry::send( 'unrecognized_event' );
+		$assert( $sent_before_invalid_event === count( $telemetry_requests ), 'Unknown reporting event names are not delivered' );
+		$telemetry_settings['usage_reporting'] = 0;
+		update_option( \LlamaHire\Settings::OPTION, $telemetry_settings, false );
+		$sent_before_opt_out = count( $telemetry_requests );
+		\LlamaHire\Telemetry::send( 'site_snapshot' );
+		$assert( ! wp_next_scheduled( \LlamaHire\Telemetry::HOOK, array( 'site_snapshot' ) ) && $sent_before_opt_out === count( $telemetry_requests ), 'Opting out clears the snapshot schedule and blocks delivery' );
+	} finally {
+		remove_filter( 'pre_http_request', $telemetry_interceptor, 10 );
+		if ( false === $telemetry_original_id ) {
+			delete_option( 'llamahire_telemetry_installation_id' );
+		}
+		if ( false === $telemetry_original_registered ) {
+			delete_option( \LlamaHire\Telemetry::REGISTERED );
+		} else {
+			update_option( \LlamaHire\Telemetry::REGISTERED, $telemetry_original_registered, false );
+		}
+		if ( false !== $telemetry_original_retry ) {
+			set_transient( 'llamahire_telemetry_retry_after', $telemetry_original_retry, DAY_IN_SECONDS );
+		}
+		if ( false === $original_settings ) {
+			delete_option( \LlamaHire\Settings::OPTION );
+		} else {
+			update_option( \LlamaHire\Settings::OPTION, $original_settings, false );
+		}
+	}
 	$geocoding_settings = \LlamaHire\Settings::sanitize( array( 'google_geocoding_api_key' => ' test-geocoding-key ' ) );
 	$assert( 'test-geocoding-key' === $geocoding_settings['google_geocoding_api_key'], 'Google geocoding credentials are normalized without enabling the optional service by default' );
 	$preserve_setup_settings = new ReflectionMethod( \LlamaHire\Setup::class, 'preserve_unmanaged_settings' );
