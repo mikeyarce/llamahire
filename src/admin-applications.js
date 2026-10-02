@@ -2,7 +2,7 @@ import apiFetch from '@wordpress/api-fetch';
 import { Button, Modal, SelectControl, Spinner } from '@wordpress/components';
 import domReady from '@wordpress/dom-ready';
 import { DataViews } from '@wordpress/dataviews/wp';
-import { createRoot, Fragment, useEffect, useMemo, useRef, useState } from '@wordpress/element';
+import { createRoot, Fragment, useCallback, useEffect, useMemo, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { addQueryArgs } from '@wordpress/url';
 import { useView } from './wordpress-views';
@@ -1113,7 +1113,7 @@ function ApplicationsDataView() {
 		return () => window.cancelAnimationFrame( focusFrame );
 	}, [ expandedId ] );
 
-	const bulkStatusComplete = ( response, destination ) => {
+	const bulkStatusComplete = useCallback( ( response, destination ) => {
 		const destinationLabel = labelFor( STATUS_OPTIONS, destination );
 		setResult( ( current ) => ( {
 			...current,
@@ -1139,7 +1139,13 @@ function ApplicationsDataView() {
 				: __( 'The selected candidates were already in that status.', 'llamahire' )
 		);
 		setRefreshKey( ( current ) => current + 1 );
-	};
+	}, [] );
+
+	// DataViews treats RenderModal as a component. Keep its identity stable so
+	// background inbox updates do not remount it and erase the selected status.
+	const renderBulkStatusModal = useCallback( ( modalProps ) => (
+		<BulkStatusModal { ...modalProps } onComplete={ bulkStatusComplete } />
+	), [ bulkStatusComplete ] );
 
 	const toggleReview = ( item, trigger ) => {
 		const id = String( item.id );
@@ -1206,12 +1212,7 @@ function ApplicationsDataView() {
 							),
 						icon: STATUS_ACTION_ICON,
 						supportsBulk: true,
-						RenderModal: ( modalProps ) => (
-							<BulkStatusModal
-								{ ...modalProps }
-								onComplete={ bulkStatusComplete }
-							/>
-						),
+						RenderModal: renderBulkStatusModal,
 					},
 			  ]
 			: [] ),

@@ -412,8 +412,8 @@ msgstr ""
 
 #: includes/class-admin-workspaces.php:285
 #: includes/class-employer-applications.php:100
-#: src/admin-applications.js:1263
-#: src/admin-applications.js:1278
+#: src/admin-applications.js:1264
+#: src/admin-applications.js:1279
 msgid "Search candidates"
 msgstr ""
 
@@ -760,7 +760,7 @@ msgid "The application and its private resume were permanently erased."
 msgstr ""
 
 #: includes/class-admin.php:363
-#: src/admin-applications.js:1175
+#: src/admin-applications.js:1181
 msgid "Loading applications…"
 msgstr ""
 
@@ -4701,17 +4701,17 @@ msgid "Select all"
 msgstr ""
 
 #: src/admin-applications.js:924
-#: src/admin-applications.js:1187
+#: src/admin-applications.js:1193
 msgid "Quick view"
 msgstr ""
 
 #: src/admin-applications.js:961
-#: src/admin-applications.js:1268
+#: src/admin-applications.js:1269
 msgid "No applications match this view."
 msgstr ""
 
 #: src/admin-applications.js:963
-#: src/admin-applications.js:1269
+#: src/admin-applications.js:1270
 msgid "No applications yet."
 msgstr ""
 
@@ -4732,32 +4732,32 @@ msgid "The selected candidates were already in that status."
 msgstr ""
 
 #. translators: %s: Number of matching applications.
-#: src/admin-applications.js:1178
+#: src/admin-applications.js:1184
 #, js-format
 msgid "%s matching applications"
 msgstr ""
 
-#: src/admin-applications.js:1195
+#: src/admin-applications.js:1201
 msgid "Change status"
 msgstr ""
 
 #. translators: %d: Number of selected candidates.
-#: src/admin-applications.js:1199
+#: src/admin-applications.js:1205
 #, js-format
 msgid "Change status for %d candidate"
 msgid_plural "Change status for %d candidates"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/admin-applications.js:1229
+#: src/admin-applications.js:1230
 msgid "Export filtered CSV"
 msgstr ""
 
-#: src/admin-applications.js:1230
+#: src/admin-applications.js:1231
 msgid "Export CSV"
 msgstr ""
 
-#: src/admin-applications.js:1244
+#: src/admin-applications.js:1245
 msgid "Dismiss this notice."
 msgstr ""
 

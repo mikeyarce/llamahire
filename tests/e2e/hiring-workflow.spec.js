@@ -630,6 +630,7 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await page.getByRole( 'button', { name: 'Change status' } ).evaluate( ( button ) => button.click() );
 		await expect( page.getByRole( 'dialog', { name: 'Change status for 2 candidates' } ) ).toBeVisible();
 		await page.getByLabel( 'Move selected candidates to' ).selectOption( 'interviewing' );
+		await expect( page.getByLabel( 'Move selected candidates to' ) ).toHaveValue( 'interviewing' );
 		await expect( page.getByText( '2 candidates will move to Interviewing.' ) ).toBeVisible();
 		await page.getByRole( 'button', { name: 'Confirm status change' } ).focus();
 		await page.keyboard.press( 'Enter' );
@@ -679,7 +680,8 @@ test.describe.serial( 'complete hiring workflow', () => {
 		expect( dashboardOverflow ).toBeLessThanOrEqual( 1 );
 		const primaryAction = page.locator( '.llamahire-dashboard--company .llamahire-header-actions .button-primary' );
 		const primaryLabel = await primaryAction.innerText();
-		await primaryAction.click();
+		await primaryAction.focus();
+		await primaryAction.press( 'Enter' );
 		await expect( page.getByRole( 'heading', { name: 'Hiring', level: 1 } ) ).toBeVisible();
 		if ( primaryLabel.includes( 'Review new candidates' ) ) {
 			await expect( page ).toHaveURL( /#llamahire-stage-new$/ );
