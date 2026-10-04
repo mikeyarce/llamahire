@@ -7,7 +7,6 @@
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            LlamaHire
- * Author URI:        https://llamahire.com/
  * Text Domain:       llamahire
  * License:           GPL-2.0-or-later
  */
