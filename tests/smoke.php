@@ -48,7 +48,7 @@ $original_current_user_id = get_current_user_id();
 require_once LLAMAHIRE_PATH . 'includes/class-uninstaller.php';
 
 try {
-	$assert( defined( 'LLAMAHIRE_API_VERSION' ) && '1.0.0-alpha.12' === LLAMAHIRE_API_VERSION, 'Public API version is declared' );
+	$assert( defined( 'LLAMAHIRE_API_VERSION' ) && '1.0.0-alpha.13' === LLAMAHIRE_API_VERSION, 'Public API version is declared' );
 	$assert( 1 === did_action( 'llamahire_ready' ), 'Public ready action fired once' );
 	$services = \LlamaHire\Plugin::instance()->services();
 	$assert( $services instanceof \LlamaHire\Contracts\Service_Container, 'Public service container is available' );
@@ -65,6 +65,7 @@ try {
 	$assert( $vip_path_method->invoke( $vip_storage, '/wp-content/uploads/llamahire-private/resume.pdf' ) && ! $vip_path_method->invoke( $vip_storage, '/wp-content/uploads/resume.pdf' ), 'VIP ACL driver limits its deny rule to the dedicated private resume prefix' );
 	$assert( $services->get( \LlamaHire\Service_IDs::CANDIDATE_DATA ) instanceof \LlamaHire\Contracts\Candidate_Data_Lifecycle, 'Candidate-data lifecycle satisfies its public contract' );
 	$assert( $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER ) instanceof \LlamaHire\Contracts\Schema_Builder, 'Schema builder satisfies its public contract' );
+	$assert( $services->get( \LlamaHire\Service_IDs::EXTENSION_ACCESS ) instanceof \LlamaHire\Contracts\Extension_Access, 'Extension access satisfies its public contract' );
 	$locked = false;
 	try {
 		$services->set( 'llamahire.smoke_test', new stdClass() );
@@ -948,6 +949,11 @@ try {
 	$scoped_export = iterator_to_array( $query->export_rows( \LlamaHire\Ownership::query_arguments() ) );
 	$assert( 1 === $scoped_results['total'] && 1 === array_sum( array_intersect_key( $scoped_counts, array_flip( array_keys( \LlamaHire\Applications::workflow_statuses() ) ) ) ) && 1 === count( $scoped_recent ) && 1 === count( $scoped_export ), 'Employer application lists, counts, recent rows, and exports are scoped to authored jobs' );
 	$assert( \LlamaHire\Ownership::user_can_access_application( $employer_application_ids[0], \LlamaHire\Capabilities::VIEW_APPLICATIONS ) && ! \LlamaHire\Ownership::user_can_access_application( $employer_application_ids[1], \LlamaHire\Capabilities::VIEW_APPLICATIONS ), 'Employer ownership checks allow own candidates and deny another company candidate' );
+	$extension_access = $services->get( \LlamaHire\Service_IDs::EXTENSION_ACCESS );
+	$assert( $extension_access->can_access_application( $employer_application_ids[0], \LlamaHire\Capabilities::VIEW_APPLICATIONS ) && ! $extension_access->can_access_application( $employer_application_ids[1], \LlamaHire\Capabilities::VIEW_APPLICATIONS ), 'Public extension authorization preserves candidate ownership' );
+	$assert( array( 'author_id' => $employer_user_ids[0] ) === $extension_access->application_scope( \LlamaHire\Capabilities::VIEW_APPLICATIONS ), 'Public extension query scope preserves author ownership' );
+	$assert( null === $extension_access->job_context( $employer_job_ids[1] ) && $employer_user_ids[0] === $extension_access->job_context( $employer_job_ids[0] )['owner_id'], 'Public extension job context is restricted to authorized owners' );
+	$assert( ! $extension_access->can_access_application( $employer_application_ids[0], 'manage_options' ), 'Public extension access rejects unrelated capabilities' );
 	$scoped_erasure_user = get_userdata( $employer_user_ids[0] );
 	$scoped_erasure_user->add_cap( \LlamaHire\Capabilities::ERASE_APPLICATIONS );
 	$assert( \LlamaHire\Ownership::user_can_access_application( $employer_application_ids[0], \LlamaHire\Capabilities::ERASE_APPLICATIONS ) && ! \LlamaHire\Ownership::user_can_access_application( $employer_application_ids[1], \LlamaHire\Capabilities::ERASE_APPLICATIONS ), 'Candidate-data erasure capability remains scoped to applications owned by the employer' );

@@ -7,16 +7,21 @@
 	"prefer-stable": true,
 	"require-dev": {
 		"automattic/vipwpcs": "^3.0",
-		"phpcompatibility/phpcompatibility-wp": "^3.0@dev"
+		"phpcompatibility/phpcompatibility-wp": "^3.0@dev",
+		"phpunit/phpunit": "^9.6"
 	},
 	"config": {
 		"allow-plugins": {
 			"dealerdirect/phpcodesniffer-composer-installer": true
 		},
-		"sort-packages": true
+		"sort-packages": true,
+		"platform": {
+			"php": "7.4.33"
+		}
 	},
 	"scripts": {
 		"phpcs": "phpcs",
-		"phpcompatibility": "phpcs --standard=phpcompatibility.xml.dist"
+		"phpcompatibility": "phpcs --standard=phpcompatibility.xml.dist",
+		"test:unit": "phpunit --configuration phpunit.xml.dist"
 	}
 }

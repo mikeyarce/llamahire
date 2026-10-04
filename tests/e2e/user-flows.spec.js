@@ -320,6 +320,30 @@ test.describe( '@flows independent user journeys', () => {
 		await expect( page.locator( '#llamahire-application-activity' ) ).toContainText( 'Hired → Rejected' );
 	} );
 
+	test( '@privacy extension access authorizes own candidate REST records and conceals foreign records', async ( { page } ) => {
+		for ( const user of [ 'owner', 'other' ] ) {
+			await page.context().clearCookies();
+			await login( page, f.users[ user ], password );
+			const cookie = ( await page.context().cookies() ).find( item => item.name.startsWith( 'wordpress_logged_in_' ) );
+			const access = await fixtures( 'access', cookie.value, user );
+			expect( access.valid_session ).toBeTruthy();
+			expect( access.contract_allowed ).toBe( user === 'owner' );
+			if ( user === 'owner' ) {
+				expect( access.job_context.job_id ).toBe( f.jobs.open );
+				expect( access.job_context.mode ).toBe( 'job_board' );
+			} else {
+				expect( access.job_context ).toBeNull();
+			}
+			const response = await page.request.get( `/wp-json/llamahire/v1/applications/${ f.candidate }`, { headers: { 'X-WP-Nonce': access.rest_nonce } } );
+			expect( response.status() ).toBe( user === 'owner' ? 200 : 404 );
+			if ( user === 'owner' ) {
+				expect( ( await response.json() ).id ).toBe( f.candidate );
+			} else {
+				expect( ( await response.json() ).code ).toBe( 'llamahire_application_not_found' );
+			}
+		}
+	} );
+
 	test( '@privacy employers see only their own jobs, candidates, resumes and export rows', async ( { page } ) => {
 		await login( page );
 		await page.goto( `${ adminApplications }&application=${ f.candidate }` );

@@ -20,13 +20,13 @@ final class Plugin {
 	}
 
 	private function load_files() {
-		foreach ( array( 'interface-service-container.php', 'interface-application-repository.php', 'interface-application-query.php', 'interface-notification-service.php', 'interface-resume-storage.php', 'interface-candidate-data-lifecycle.php', 'interface-schema-builder.php' ) as $file ) {
+		foreach ( array( 'interface-service-container.php', 'interface-application-repository.php', 'interface-application-query.php', 'interface-notification-service.php', 'interface-resume-storage.php', 'interface-candidate-data-lifecycle.php', 'interface-schema-builder.php', 'interface-extension-access.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/contracts/' . $file;
 		}
 		foreach ( array( 'class-service-ids.php', 'class-service-container.php', 'class-settings.php', 'class-telemetry.php', 'class-anti-spam.php', 'class-rate-limiter.php', 'class-setup.php', 'class-migrations.php', 'class-capabilities.php', 'class-jobs.php', 'class-geocoding.php', 'class-ownership.php', 'class-audit-log.php', 'class-application-notes.php', 'class-employer-notifications.php', 'class-employer-registration.php', 'class-employer-portal.php', 'class-employer-account.php', 'class-employer-applications.php', 'class-applications.php', 'class-privacy.php', 'class-blocks.php', 'class-job-feed.php', 'class-theme-support.php', 'class-admin-workspaces.php', 'class-admin.php', 'class-rest-api.php', 'class-seo.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/' . $file;
 		}
-		foreach ( array( 'class-application-repository.php', 'class-application-query.php', 'class-notification-service.php', 'class-resume-storage.php', 'class-vip-acl-resume-storage.php', 'class-candidate-data-lifecycle.php', 'class-schema-builder.php' ) as $file ) {
+		foreach ( array( 'class-application-repository.php', 'class-application-query.php', 'class-notification-service.php', 'class-resume-storage.php', 'class-vip-acl-resume-storage.php', 'class-candidate-data-lifecycle.php', 'class-schema-builder.php', 'class-extension-access.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/services/' . $file;
 		}
 	}
@@ -86,6 +86,8 @@ final class Plugin {
 		$lifecycle = new Services\Candidate_Data_Lifecycle( $this->services->get( Service_IDs::APPLICATION_REPOSITORY ), $this->services->get( Service_IDs::RESUME_STORAGE ) );
 		$this->services->set( Service_IDs::CANDIDATE_DATA, $lifecycle );
 		$this->services->set( Service_IDs::SCHEMA_BUILDER, new Services\Schema_Builder() );
+		$extension_access = new Services\Extension_Access( $this->services->get( Service_IDs::APPLICATION_REPOSITORY ) );
+		$this->services->set( Service_IDs::EXTENSION_ACCESS, $extension_access );
 
 		/**
 		 * Fires while extensions may register or replace service implementations.
@@ -104,6 +106,7 @@ final class Plugin {
 			Service_IDs::RESUME_STORAGE         => Contracts\Resume_Storage::class,
 			Service_IDs::CANDIDATE_DATA         => Contracts\Candidate_Data_Lifecycle::class,
 			Service_IDs::SCHEMA_BUILDER         => Contracts\Schema_Builder::class,
+			Service_IDs::EXTENSION_ACCESS       => Contracts\Extension_Access::class,
 		);
 		foreach ( $required as $id => $contract ) {
 			if ( ! $this->services->has( $id ) || ! is_a( $this->services->get( $id ), $contract ) ) {
@@ -112,6 +115,7 @@ final class Plugin {
 		}
 		// Also update the original instance when an extension decorates it.
 		$lifecycle->set_dependencies( $this->services->get( Service_IDs::APPLICATION_REPOSITORY ), $this->services->get( Service_IDs::RESUME_STORAGE ) );
+		$extension_access->set_repository( $this->services->get( Service_IDs::APPLICATION_REPOSITORY ) );
 		$this->services->lock();
 	}
 

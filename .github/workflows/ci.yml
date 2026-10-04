@@ -25,6 +25,8 @@ jobs:
           tools: composer:v2
       - name: Install PHP quality tools
         run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Run extension contract unit tests
+        run: composer test:unit
       - name: Run WordPress VIP coding standards
         run: composer phpcs
       - name: Check PHP 7.4+ compatibility

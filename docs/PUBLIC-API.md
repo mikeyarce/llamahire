@@ -1,6 +1,6 @@
 # LlamaHire Free public API
 
-API version: `1.0.0-alpha.12`
+API version: `1.0.0-alpha.13` (unreleased extension-contract work)
 Plugin version introduced: `0.1.0`
 Status: experimental until API 1.0
 
@@ -85,6 +85,40 @@ Use constants rather than copying identifier strings:
 | `Service_IDs::NOTIFICATIONS` | `Contracts\Notification_Service` | Free |
 | `Service_IDs::RESUME_STORAGE` | `Contracts\Resume_Storage` | Free |
 | `Service_IDs::SCHEMA_BUILDER` | `Contracts\Schema_Builder` | Free |
+| `Service_IDs::EXTENSION_ACCESS` | `Contracts\Extension_Access` | Free |
+
+### Extension context and authorization
+
+Added in unreleased API alpha.13; the submitted 0.1.0/alpha.12 artifact is unchanged.
+Obtain `Service_IDs::EXTENSION_ACCESS` after `llamahire_ready`:
+
+- `site_context(): array` returns only `site_id` (current WordPress blog ID) and
+  `mode` (`company` or `job_board`). Settings storage remains internal.
+- `job_context($job_id, $user_id = 0): ?array` returns `site_id`, `mode`, `job_id`,
+  and `owner_id` only when that user may manage the job; otherwise returns null.
+- `can_manage_job($job_id, $user_id = 0): bool` uses Free's ownership boundary,
+  including moderated frontend management of employer-owned published jobs.
+  This is not approval to publish or a payment entitlement.
+- `can_access_application($application_id, $capability, $user_id = 0): bool`
+  requires a documented granular candidate capability plus management access to
+  that application's job. Missing and foreign records both return false. Arbitrary
+  capabilities such as `manage_options` are rejected before reading candidate data.
+- `application_scope($capability, $user_id = 0): ?array` requires that candidate
+  capability and returns `author_id` for bounded query/export calls. Zero means an
+  authorized board-wide manager. Null means denial, including anonymous requests;
+  never turn null into an empty/unscoped query. Check individual records with
+  `can_access_application` when performing record actions.
+
+Zero user ID selects the current user. Scope and records belong to the current
+site; application/job IDs must never be reused across sites without switching
+WordPress site context and checking authorization again. A boolean permission
+check does not replace the separate nonce check for a request. Pro commerce
+capabilities alone do not authorize candidate data. Default authorization binds
+its final registered repository before the service container locks.
+
+This first contract slice does not provide publication gates, form extension
+hooks, durable answer coordination, or recruiter-detail rendering extensions.
+Those remain required under Pro ticket #2 before a compatible Pro feature release.
 
 ### Application repository
 

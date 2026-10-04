@@ -277,3 +277,20 @@ configuration. Do not treat passing overflow checks as visual approval.
 
 The launch support policy and saved-pattern limitations are documented in
 [THEME-SUPPORT.md](THEME-SUPPORT.md).
+
+## Extension contract unit tests
+
+Run `composer install` followed by `composer test:unit`. The isolated PHPUnit
+suite verifies public extension access, author scope, anonymous denial, foreign
+job/application denial, granular candidate capabilities, current-site context,
+and final repository replacement. It runs in the coding-standards CI job.
+
+The `@privacy extension access` independent browser journey verifies the same
+ownership boundary through real WordPress sessions and the recruiter REST route,
+with allowed own-record access and indistinguishable foreign-record denial.
+It creates and cleans its own fixtures. Run it after `npm run env:start` with:
+
+```sh
+npx playwright test tests/e2e/user-flows.spec.js --grep 'extension access'
+npm run test:e2e:cleanup
+```
