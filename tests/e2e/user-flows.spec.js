@@ -328,6 +328,7 @@ test.describe( '@flows independent user journeys', () => {
 			const access = await fixtures( 'access', cookie.value, user );
 			expect( access.valid_session ).toBeTruthy();
 			expect( access.contract_allowed ).toBe( user === 'owner' );
+			expect( access.invalid_identity_denied ).toBeTruthy();
 			if ( user === 'owner' ) {
 				expect( access.job_context.job_id ).toBe( f.jobs.open );
 				expect( access.job_context.mode ).toBe( 'job_board' );

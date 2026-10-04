@@ -52,6 +52,29 @@ final class ExtensionAccessTest extends PHPUnit\Framework\TestCase {
 		$this->assertNull( $this->access->application_scope( Capabilities::VIEW_APPLICATIONS, 9 ) );
 	}
 
+	/** @dataProvider invalid_user_ids */
+	public function test_invalid_explicit_identity_never_aliases_a_user_or_current_session( $invalid_id ): void {
+		$this->repository->expects( $this->never() )->method( 'find' );
+		foreach ( array( 0, 8 ) as $current_user ) {
+			$GLOBALS['unit_user_id'] = $current_user;
+			$this->assertNull( $this->access->application_scope( Capabilities::VIEW_APPLICATIONS, $invalid_id ) );
+			$this->assertFalse( $this->access->can_access_application( 20, Capabilities::VIEW_APPLICATIONS, $invalid_id ) );
+			$this->assertFalse( $this->access->can_manage_job( 11, $invalid_id ) );
+			$this->assertNull( $this->access->job_context( 11, $invalid_id ) );
+		}
+	}
+
+	public function invalid_user_ids(): array {
+		return array( array( -8 ), array( '-8' ), array( -7 ), array( false ), array( null ), array( 8.5 ), array( '8invalid' ), array( array() ), array( PHP_INT_MAX . '0' ) );
+	}
+
+	public function test_zero_defaults_and_valid_numeric_ids_preserve_authorization(): void {
+		$this->assertSame( array( 'author_id' => 7 ), $this->access->application_scope( Capabilities::VIEW_APPLICATIONS, 0 ) );
+		$this->assertSame( array( 'author_id' => 7 ), $this->access->application_scope( Capabilities::VIEW_APPLICATIONS, '0' ) );
+		$this->assertSame( array( 'author_id' => 0 ), $this->access->application_scope( Capabilities::VIEW_APPLICATIONS, '8' ) );
+		$this->assertTrue( $this->access->can_manage_job( 12, '8' ) );
+	}
+
 	public function test_unrelated_and_missing_capabilities_do_not_read_candidate_storage(): void {
 		$this->repository->expects( $this->never() )->method( 'find' );
 		$this->assertFalse( $this->access->can_access_application( 20, 'manage_options', 9 ) );

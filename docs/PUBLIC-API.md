@@ -109,7 +109,11 @@ Obtain `Service_IDs::EXTENSION_ACCESS` after `llamahire_ready`:
   never turn null into an empty/unscoped query. Check individual records with
   `can_access_application` when performing record actions.
 
-Zero user ID selects the current user. Scope and records belong to the current
+Zero user ID (integer `0` or string `"0"`) selects the current user. Explicit IDs
+must be nonnegative integers or valid integer strings within PHP's integer range.
+Negative, malformed, overflowing, boolean, null, and fractional values deny access;
+they never select another account or fall back to the current user.
+Scope and records belong to the current
 site; application/job IDs must never be reused across sites without switching
 WordPress site context and checking authorization again. A boolean permission
 check does not replace the separate nonce check for a request. Pro commerce

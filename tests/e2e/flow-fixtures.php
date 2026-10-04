@@ -31,6 +31,7 @@ if ( 'access' === $fixture_action ) {
 		'valid_session' => WP_Session_Tokens::get_instance( $registry['users'][ $access_user ] )->verify( wp_get_session_token() ),
 		'rest_nonce' => wp_create_nonce( 'wp_rest' ),
 		'contract_allowed' => \LlamaHire\Plugin::instance()->services()->get( \LlamaHire\Service_IDs::EXTENSION_ACCESS )->can_access_application( $registry['candidate'], \LlamaHire\Capabilities::VIEW_APPLICATIONS ),
+		'invalid_identity_denied' => null === \LlamaHire\Plugin::instance()->services()->get( \LlamaHire\Service_IDs::EXTENSION_ACCESS )->application_scope( \LlamaHire\Capabilities::VIEW_APPLICATIONS, -get_current_user_id() ),
 		'job_context' => \LlamaHire\Plugin::instance()->services()->get( \LlamaHire\Service_IDs::EXTENSION_ACCESS )->job_context( $registry['jobs']['open'] ),
 		'erase_nonce' => wp_create_nonce( 'llamahire_erase_application_' . $registry['candidate'] ),
 	) );
