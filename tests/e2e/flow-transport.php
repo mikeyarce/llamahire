@@ -39,3 +39,19 @@ add_filter(
 	10,
 	2
 );
+
+// Synthetic extension exercises only the documented presentation filter.
+add_filter(
+	'llamahire_employer_job_summaries',
+	static function ( $items, $context ) {
+		$registry = get_option( 'llamahire_e2e_flows', array() );
+		if ( empty( $registry['summaries'] ) || $context['job_id'] !== ( $registry['jobs']['draft'] ?? 0 ) || $context['owner_id'] !== ( $registry['users']['owner'] ?? 0 ) || get_current_blog_id() !== $context['site_id'] ) {
+			return $items;
+		}
+		$items[] = array( 'label' => 'Payment needed', 'detail' => 'Review the listing price before checkout.', 'action' => array( 'label' => 'Review payment', 'url' => get_permalink( $registry['pages']['submit_job'] ) ), 'private_reference' => 'summary-private-reference' );
+		$items[] = array( 'label' => '<img src=x onerror=alert(1)>', 'detail' => 'Unsafe actions are omitted.', 'action' => array( 'label' => 'Unsafe payment link', 'url' => 'javascript:alert(1)' ) );
+		return $items;
+	},
+	10,
+	2
+);

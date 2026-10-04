@@ -294,3 +294,21 @@ It creates and cleans its own fixtures. Run it after `npm run env:start` with:
 npx playwright test tests/e2e/user-flows.spec.js --grep 'extension access'
 npm run test:e2e:cleanup
 ```
+
+## Employer job-summary extension contract (unreleased alpha.14)
+
+Pro issue #2's employer payment-status integration is covered independently of
+payment processing. `EmployerJobExtensionsTest` checks pre-callback authorization,
+company-mode isolation, authorized context, malformed output, bounded Unicode
+text, field allowlisting, and unsafe action URLs. `tests/employer-job-summaries.php`
+is included in the real WordPress smoke suite and checks anonymous/foreign denial,
+owner/manager access, actual escaping, unchanged publication state and extension-off
+markup with owned disposable records and cleanup.
+
+`tests/e2e/employer-summaries.spec.js` exercises the real My Jobs view without
+JavaScript at desktop and narrow widths, keyboard navigation, inert hostile text,
+unsafe-action omission, foreign/anonymous denial and extension-off behavior.
+It uses the existing isolated flow fixtures and disables browser recordings.
+Run it with `npm run test:e2e -- tests/e2e/employer-summaries.spec.js`; run
+`composer test:unit` and `npm run test:smoke` for the other layers. Payment,
+publication gates, paid expiry and durable custom answers remain separate work.

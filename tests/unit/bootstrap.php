@@ -17,3 +17,11 @@ $root = dirname( __DIR__, 2 );
 foreach ( array( 'contracts/interface-application-repository.php', 'contracts/interface-extension-access.php', 'class-capabilities.php', 'class-jobs.php', 'class-settings.php', 'class-ownership.php', 'services/class-extension-access.php' ) as $file ) {
 	require_once $root . '/includes/' . $file;
 }
+
+// Minimal external boundaries; the real WordPress suite covers escaping and hooks.
+function apply_filters( $hook, $value, ...$args ) {
+	return isset( $GLOBALS['unit_filters'][ $hook ] ) ? $GLOBALS['unit_filters'][ $hook ]( $value, ...$args ) : $value;
+}
+function wp_parse_url( $value ) { return parse_url( $value ); }
+function esc_url_raw( $value, $protocols = null ) { return $value; }
+require_once $root . '/includes/class-employer-job-extensions.php';

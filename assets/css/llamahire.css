@@ -193,3 +193,6 @@
 @media(max-width:760px){
  .llamahire-pattern-section.alignwide,.llamahire-pattern-section .alignwide{box-sizing:border-box;margin-inline:0;max-width:100%;width:100%}
 }
+
+.llamahire-employer-portal__extension-summary { margin-block-start: .5rem; overflow-wrap: anywhere; }
+.llamahire-employer-portal__extension-summary>a { display: inline-flex; align-items: center; min-height: 44px; }
