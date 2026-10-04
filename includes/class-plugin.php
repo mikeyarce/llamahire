@@ -20,13 +20,13 @@ final class Plugin {
 	}
 
 	private function load_files() {
-		foreach ( array( 'interface-service-container.php', 'interface-application-repository.php', 'interface-atomic-application-repository.php', 'interface-application-extension.php', 'interface-application-query.php', 'interface-notification-service.php', 'interface-resume-storage.php', 'interface-candidate-data-lifecycle.php', 'interface-schema-builder.php', 'interface-extension-access.php', 'interface-listing-policy.php', 'interface-job-lifecycle.php' ) as $file ) {
+		foreach ( array( 'interface-service-container.php', 'interface-application-repository.php', 'interface-atomic-application-repository.php', 'interface-application-extension.php', 'interface-application-query.php', 'interface-notification-service.php', 'interface-resume-storage.php', 'interface-candidate-data-lifecycle.php', 'interface-schema-builder.php', 'interface-extension-access.php', 'interface-listing-policy.php', 'interface-job-lifecycle.php', 'interface-application-privacy.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/contracts/' . $file;
 		}
 		foreach ( array( 'class-service-ids.php', 'class-service-container.php', 'class-settings.php', 'class-telemetry.php', 'class-anti-spam.php', 'class-rate-limiter.php', 'class-setup.php', 'class-migrations.php', 'class-capabilities.php', 'class-jobs.php', 'class-listing-rules.php', 'class-listing-store.php', 'class-listing-lock.php', 'class-job-publication.php', 'class-geocoding.php', 'class-ownership.php', 'class-audit-log.php', 'class-application-notes.php', 'class-employer-notifications.php', 'class-employer-registration.php', 'class-employer-portal.php', 'class-employer-job-extensions.php', 'class-employer-account.php', 'class-employer-applications.php', 'class-applications.php', 'class-application-extensions.php', 'class-privacy.php', 'class-blocks.php', 'class-job-feed.php', 'class-theme-support.php', 'class-admin-workspaces.php', 'class-admin.php', 'class-rest-api.php', 'class-seo.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/' . $file;
 		}
-		foreach ( array( 'class-application-repository.php', 'class-application-query.php', 'class-notification-service.php', 'class-resume-storage.php', 'class-vip-acl-resume-storage.php', 'class-candidate-data-lifecycle.php', 'class-schema-builder.php', 'class-extension-access.php', 'class-job-lifecycle.php' ) as $file ) {
+		foreach ( array( 'class-application-repository.php', 'class-application-query.php', 'class-notification-service.php', 'class-resume-storage.php', 'class-vip-acl-resume-storage.php', 'class-candidate-data-lifecycle.php', 'class-schema-builder.php', 'class-extension-access.php', 'class-job-lifecycle.php', 'class-application-privacy.php' ) as $file ) {
 			require_once LLAMAHIRE_PATH . 'includes/services/' . $file;
 		}
 	}
@@ -88,6 +88,7 @@ final class Plugin {
 		$this->services->set( Service_IDs::CANDIDATE_DATA, $lifecycle );
 		$this->services->set( Service_IDs::SCHEMA_BUILDER, new Services\Schema_Builder() );
 		$this->services->set( Service_IDs::JOB_LIFECYCLE, new Services\Job_Lifecycle() );
+		$this->services->set( Service_IDs::APPLICATION_PRIVACY, new Services\Application_Privacy( $this->services ) );
 		$extension_access = new Services\Extension_Access( $this->services->get( Service_IDs::APPLICATION_REPOSITORY ) );
 		$this->services->set( Service_IDs::EXTENSION_ACCESS, $extension_access );
 
@@ -110,6 +111,7 @@ final class Plugin {
 			Service_IDs::SCHEMA_BUILDER         => Contracts\Schema_Builder::class,
 			Service_IDs::EXTENSION_ACCESS       => Contracts\Extension_Access::class,
 			Service_IDs::JOB_LIFECYCLE          => Contracts\Job_Lifecycle::class,
+			Service_IDs::APPLICATION_PRIVACY    => Contracts\Application_Privacy::class,
 		);
 		foreach ( $required as $id => $contract ) {
 			if ( ! $this->services->has( $id ) || ! is_a( $this->services->get( $id ), $contract ) ) {

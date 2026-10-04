@@ -1,6 +1,6 @@
 # LlamaHire Free public API
 
-API version: `1.0.0-alpha.17` (unreleased extension-contract work)
+API version: `1.0.0-alpha.18` (unreleased extension-contract work)
 Plugin version introduced: `0.1.0`
 Status: experimental until API 1.0
 
@@ -86,6 +86,7 @@ Use constants rather than copying identifier strings:
 | `Service_IDs::RESUME_STORAGE` | `Contracts\Resume_Storage` | Free |
 | `Service_IDs::SCHEMA_BUILDER` | `Contracts\Schema_Builder` | Free |
 | `Service_IDs::EXTENSION_ACCESS` | `Contracts\Extension_Access` | Free |
+| `Service_IDs::APPLICATION_PRIVACY` | `Contracts\Application_Privacy` | Free |
 | `Service_IDs::JOB_LIFECYCLE` | `Contracts\Job_Lifecycle` | Free |
 
 ### Extension context and authorization
@@ -628,3 +629,33 @@ content/ownership changes, expiry/schema parity, replay/renewal, query/REST guar
 leases and database fault recovery. `tests/listing-multisite.php` covers interrupted
 migration recovery and identical IDs on separate sites. `tests/e2e/job-publication.spec.js`
 exercises native moderation and anonymous pages in both payment/approval orders.
+
+
+## Extension-owned privacy records (alpha.18, unreleased)
+
+`Service_IDs::APPLICATION_PRIVACY` implements `Contracts\Application_Privacy`.
+Call `references($email_address, $operation, $page = 1)` from a WordPress privacy
+exporter/eraser for the current site and user. The operation is exactly `export`
+or `erase`, the email must be valid and exact (case-insensitive), and page is a
+positive integer. Each call returns at most 100 numeric `application_id`/`job_id`
+pairs, `site_id`, and a boolean `done`, or a fixed `WP_Error`. It returns no names,
+email addresses, answers, notes or resume identifiers. Errors must stop the
+operation or report retained data; never treat a failed lookup as an empty export.
+
+Both WordPress's corresponding `export_others_personal_data` or
+`erase_others_personal_data` capability and Free's granular application capability
+are required. The final registered extension-access and query services enforce
+author scope and record access. A board-wide authorized privacy operator may also
+receive references for applications whose job has been deleted. This exception
+is exclusive to personal-data handling; ordinary candidate review still denies
+missing-job access. Owner-scoped users never acquire orphan or foreign records.
+
+The returned references authorize only the matching privacy operation on the
+extension's associated records. They do not authorize job mutation, candidate
+review, moderation or billing actions. Callers must use WordPress's verified
+privacy request flow (or equivalent authorization/nonce/identity checks), must
+re-check site/user context on each page, and must not log the requested identity or
+exported content. Register an extension eraser before Free's eraser if it needs
+these references: deleting Free applications removes the identity lookup. Keep
+using `llamahire_application_erased` plus bounded orphan reconciliation to recover
+missed or failed extension cleanup. Pro must not delete Free records itself.

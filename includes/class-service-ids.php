@@ -14,6 +14,7 @@ final class Service_IDs {
 	const CANDIDATE_DATA         = 'llamahire.candidate_data';
 	const SCHEMA_BUILDER         = 'llamahire.schema_builder';
 	const EXTENSION_ACCESS       = 'llamahire.extension_access';
+	const APPLICATION_PRIVACY    = 'llamahire.application_privacy';
 	const JOB_LIFECYCLE          = 'llamahire.job_lifecycle';
 
 	private function __construct() {}
