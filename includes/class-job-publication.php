@@ -289,7 +289,7 @@ final class Job_Publication {
 		if ( ! in_array( $request->get_method(), array( 'GET', 'HEAD' ), true ) || ! preg_match( '#^/wp/v2/llamahire_job/([0-9]+)/?$#D', $request->get_route(), $matches ) ) { return $response; }
 		$post = get_post( (int) $matches[1] );
 		if ( ! $post || Jobs::POST_TYPE !== $post->post_type || ( 'edit' === $request->get_param( 'context' ) && current_user_can( 'edit_post', $post->ID ) ) ) { return $response; }
-		return 'publish' === $post->post_status && ! self::available( $post->ID ) ? new \WP_Error( 'rest_post_invalid_id', __( 'Invalid post ID.' ), array( 'status' => 404 ) ) : $response;
+		return 'publish' === $post->post_status && ! self::available( $post->ID ) ? new \WP_Error( 'rest_post_invalid_id', __( 'Invalid post ID.', 'llamahire' ), array( 'status' => 404 ) ) : $response;
 	}
 
 	/** Keep the canonical expiry available if an extension is later disabled. */
