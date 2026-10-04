@@ -45,6 +45,8 @@ foreach ( $sites as $site_id ) {
 		foreach ( array( 'reporting_enabled', 'reactivated', 'site_snapshot' ) as $event ) {
 			wp_schedule_single_event( time() + HOUR_IN_SECONDS, \LlamaHire\Telemetry::HOOK, array( $event ) );
 		}
+		wp_schedule_single_event( time() + HOUR_IN_SECONDS, 'llamahire_reconcile_listing', array( 987654 ) );
+		add_option( 'llamahire_listing_lock_987654', 'fixture', '', false );
 		update_option( 'llamahire_telemetry_installation_id', wp_generate_uuid4(), false );
 		update_option( 'llamahire_telemetry_registered', true, false );
 		set_transient( 'llamahire_telemetry_retry_after', true, DAY_IN_SECONDS );
@@ -78,7 +80,12 @@ foreach ( $sites as $site_id ) {
 		global $wpdb;
 		$applications_table = $wpdb->prefix . 'llamahire_applications';
 		$audit_table        = $wpdb->prefix . 'llamahire_audit_log';
+		$assert( ! wp_next_scheduled( 'llamahire_reconcile_listing', array( 987654 ) ) && false === get_option( 'llamahire_listing_lock_987654' ), 'Listing retries and leases removed on uninstall.' );
 		$notes_table        = $wpdb->prefix . 'llamahire_application_notes';
+		foreach ( array( 'states', 'periods' ) as $kind ) {
+			$table = $wpdb->prefix . 'llamahire_listing_' . $kind;
+			$assert( null === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ), 'Listing publication table removed on explicit uninstall.' );
+		}
 		$assert( null === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $applications_table ) ) ), 'The applications table is removed from site ' . $site_id );
 		$assert( null === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $audit_table ) ) ), 'The audit table is removed from site ' . $site_id );
 		$assert( null === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $notes_table ) ) ), 'The notes table is removed from site ' . $site_id );

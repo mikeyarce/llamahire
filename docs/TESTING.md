@@ -342,3 +342,18 @@ The minimum-WordPress browser job covers these journeys on 6.5/PHP 7.4.
 The build bundles the React JSX helper and the official data selector helper
 that this core version lacks. Its adapter retains WordPress's shared data
 registry and preferences rather than creating a second store.
+
+### Listing publication contract (alpha.17)
+
+Run `npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/job-publication.php`
+for actual WordPress moderation, scheduling, immutable expiry, renewal, ownership,
+query/REST/schema visibility, concurrent lease and failed-commit recovery checks.
+`bash scripts/test-atomic-sqlite.sh` also runs these assertions on SQLite and creates
+a temporary multisite network for interrupted migration recovery and identical-ID
+site isolation. All fixtures are fictional and the network is discarded afterward.
+
+`npx playwright test tests/e2e/job-publication.spec.js` covers native WordPress Quick
+Edit moderation and anonymous availability in approval-first and payment-first
+orders. The local provider fixture supplies verified eligibility only; the test
+uses the real moderation UI, public job page and JobPosting output. Clean an
+interrupted run with `npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/e2e/publication-fixtures.php cleanup`.

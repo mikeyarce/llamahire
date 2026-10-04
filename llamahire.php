@@ -15,8 +15,8 @@
 defined( 'ABSPATH' ) || exit;
 
 define( 'LLAMAHIRE_VERSION', '0.1.0' );
-define( 'LLAMAHIRE_API_VERSION', '1.0.0-alpha.16' );
-define( 'LLAMAHIRE_SCHEMA_VERSION', '12' );
+define( 'LLAMAHIRE_API_VERSION', '1.0.0-alpha.17' );
+define( 'LLAMAHIRE_SCHEMA_VERSION', '13' );
 define( 'LLAMAHIRE_CAPABILITIES_VERSION', '7' );
 // Public PostHog ingestion token. Events still require a site's explicit opt-in.
 define( 'LLAMAHIRE_POSTHOG_PROJECT_TOKEN', 'phc_yPt8yzcqcxvMHYfDGwipeDR5uehGk9VfvUjEujCYuEj' );

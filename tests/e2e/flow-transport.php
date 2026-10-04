@@ -63,3 +63,15 @@ add_action( 'llamahire_ready', static function () {
 		require_once WP_PLUGIN_DIR . '/llamahire/tests/support/application-extension-provider.php';
 	}
 } );
+
+// A local, read-only policy fixture exercises the public publication contract.
+add_filter( 'llamahire_listing_policies', static function ( $providers ) {
+	$providers['browser_publication'] = new class implements \LlamaHire\Contracts\Listing_Policy {
+		public function evaluate( array $context ) {
+			$fixture = get_option( 'llamahire_e2e_flows', array() );
+			if ( empty( $fixture['publication'] ) || (int) $fixture['jobs']['draft'] !== $context['job_id'] ) { return null; }
+			return array( 'eligible' => ! empty( $fixture['publication_paid'] ), 'period_required' => true, 'period' => array( 'id' => $fixture['publication'], 'predecessor' => '', 'days' => 30 ) );
+		}
+	};
+	return $providers;
+} );

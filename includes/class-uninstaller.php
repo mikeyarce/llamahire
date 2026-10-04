@@ -203,7 +203,7 @@ final class Uninstaller {
 	 */
 	private static function drop_tables() {
 		global $wpdb;
-		foreach ( array( self::NOTES_TABLE, self::APPLICATIONS_TABLE, self::AUDIT_TABLE ) as $suffix ) {
+		foreach ( array( self::NOTES_TABLE, self::APPLICATIONS_TABLE, self::AUDIT_TABLE, 'llamahire_listing_states', 'llamahire_listing_periods' ) as $suffix ) {
 			$table = $wpdb->prefix . $suffix;
 			$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name is built only from the trusted WordPress prefix and a fixed plugin-owned suffix.
 		}
@@ -219,6 +219,8 @@ final class Uninstaller {
 
 		global $wpdb;
 		delete_transient( 'llamahire_telemetry_retry_after' );
+		$listing_locks = $wpdb->esc_like( 'llamahire_listing_lock_' ) . '%';
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE option_name LIKE %s', $wpdb->options, $listing_locks ) );
 		$cursor_like = $wpdb->esc_like( 'llamahire_migration_cursor_' ) . '%';
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $cursor_like ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Explicit uninstall cleanup for plugin-owned migration cursors.
 		$lock_like = $wpdb->esc_like( Rate_Limiter::LOCK_PREFIX ) . '%';

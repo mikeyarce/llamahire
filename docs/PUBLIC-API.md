@@ -1,6 +1,6 @@
 # LlamaHire Free public API
 
-API version: `1.0.0-alpha.16` (unreleased extension-contract work)
+API version: `1.0.0-alpha.17` (unreleased extension-contract work)
 Plugin version introduced: `0.1.0`
 Status: experimental until API 1.0
 
@@ -86,6 +86,7 @@ Use constants rather than copying identifier strings:
 | `Service_IDs::RESUME_STORAGE` | `Contracts\Resume_Storage` | Free |
 | `Service_IDs::SCHEMA_BUILDER` | `Contracts\Schema_Builder` | Free |
 | `Service_IDs::EXTENSION_ACCESS` | `Contracts\Extension_Access` | Free |
+| `Service_IDs::JOB_LIFECYCLE` | `Contracts\Job_Lifecycle` | Free |
 
 ### Extension context and authorization
 
@@ -120,9 +121,9 @@ check does not replace the separate nonce check for a request. Pro commerce
 capabilities alone do not authorize candidate data. Default authorization binds
 its final registered repository before the service container locks.
 
-These contract slices do not provide publication gates, form extension
-hooks, durable answer coordination, or recruiter-detail rendering extensions.
-Those remain required under Pro ticket #2 before a compatible Pro feature release.
+Alpha.15–17 add atomic submissions, form/review providers and listing publication
+coordination, documented below. Pro must explicitly validate each required API
+version before enabling the corresponding feature.
 
 ### Employer job summaries
 
@@ -183,9 +184,9 @@ add_filter(
 );
 ```
 
-This slice does not implement Stripe, centralized publication gates, immutable
-paid periods, or the other outstanding contracts in Pro #2. Pro's compatibility
-guard must not accept alpha.14 until its required contracts and tests are ready.
+The summary hook does not implement Stripe or grant publication eligibility.
+Alpha.17 adds the separate publication/period contract below. Pro's compatibility
+guard must accept a version only when its required contracts and tests are ready.
 The submitted 0.1.0 artifact is unchanged.
 
 ### Application repository
@@ -500,3 +501,127 @@ New same-page forms use `candidate_name` for the core name input to avoid
 WordPress's reserved `name` query variable. The submission handler still accepts
 legacy `name` fields from cached admin-post forms. Core form markup and input
 names remain renderer internals, not extension contracts.
+
+## Listing publication and immutable periods (alpha.17, unreleased)
+
+Free owns moderation approval, actual WordPress publication, canonical expiry and
+public job availability. A payment extension owns products, orders, verification,
+refunds and its entitlement ledger. No payment provider is bundled with Free.
+Schema 13 adds current-site approval state and immutable period history; extensions
+must use the service rather than query those tables.
+
+Register `Contracts\Listing_Policy` objects on `llamahire_listing_policies` before
+any job operation, normally in `llamahire_ready`. The filter receives an associative
+provider map and `{site_id, mode}`. At most ten providers are allowed, with unique
+names matching `[a-z][a-z0-9_-]{0,63}`. The map is frozen per site for the request.
+Register the provider even when its own storage or gateway is unavailable, so
+failures hold publication rather than silently removing the gate.
+
+`evaluate(array $context)` must read verified local state only. Do not make network
+requests, change records, send notifications or recursively call publication APIs.
+Return null for an unmanaged job (for example company mode), or exactly:
+
+```php
+array(
+    'eligible'        => true,
+    'period_required' => true,
+    'period'          => array(
+        'id'          => $usage_uuid,
+        'predecessor' => '', // Previous usage UUID for a renewal; empty initially.
+        'days'        => 30,
+    ),
+)
+```
+
+Booleans must be booleans; days must be an integer from 1 to 3650. IDs are lowercase
+UUIDs. Free prefixes them with the provider name. An ineligible decision may have a
+null period. A policy requiring no period must return `period_required => false`
+and `period => null`. All managed policies must allow publication; at most one may
+require a period. Unknown keys, malformed data, provider exceptions and conflicting
+period providers fail closed. Switching site context selects a separate provider
+map, storage and publication lease, even for identical job IDs.
+
+Obtain `Service_IDs::JOB_LIFECYCLE` after Free is ready:
+
+- `context($job_id)` returns null for a missing job or a fixed `WP_Error` on storage
+  failure. Otherwise it returns `site_id`, `job_id`, `owner_id`, `mode`, `status`,
+  `approved`, `actor_id`, `closed`, `deadline`, `listing_expires`, `publish_at` (UTC)
+  and `period` (current internal-format period array or null). There is no job text,
+  candidate data, contact address or billing payload in this context.
+- `approve($job_id)` requires the current user's `publish_llamahire_jobs` and
+  `edit_post` permissions. It only handles managed jobs in draft, pending, future
+  or published status. An approved draft first becomes pending. Approval binds the
+  saved content, terms, metadata and owner; it does not approve a future revision.
+  It then reconciles. **A held error may mean approval was saved successfully but
+  payment, scheduling or another requirement is still pending.** Read `context`
+  to distinguish approval from publication. Unmanaged jobs are rejected unchanged;
+  use ordinary WordPress moderation for those jobs.
+- `reconcile($job_id)` is safe for a background worker and cannot grant moderation.
+  It returns true when the managed job is available (or when no policy manages it),
+  otherwise a fixed `WP_Error`. Persist verified payment state first, then call it.
+  Drafts, future dates, closed jobs, elapsed deadlines and unapproved revisions
+  remain unavailable. Revoked published jobs move to pending. A concurrent caller
+  receives a held result and can retry.
+- `suspend($job_id)` moves an existing published job to pending without deleting
+  candidate/job data or removing saved approval. Policy must remain ineligible
+  until the condition is resolved; suspending alone is not a permanent revocation.
+- `period($job_id, $period_key = '')` returns the current period, a named historical
+  period, null when absent or a storage error. Keys are `provider:uuid`. Results
+  contain `site_id`, integer `job_id`, `owner_id`, `days`, `period_key`,
+  `previous_key`, UTC `started_at` and local-calendar `expires` (`Y-m-d`).
+
+These are trusted server-side services, not HTTP handlers. Except for `approve`,
+callers must enforce their own request capability, ownership and nonce checks.
+Payment callback authentication is the provider's responsibility. IDs are scoped
+to the current WordPress site; switching blogs requires authorization again.
+
+Native editor/REST/frontend status saves for an existing job capture an authorized
+publish/schedule intent, then approve the saved job after its metadata is saved.
+Create a draft first when using `wp_insert_post` programmatically: a new job passed
+straight to `publish` has no existing ID to authorize and is held pending. Core's
+scheduled publisher and `wp_publish_post` also pass the gate; they cannot create
+approval. A scheduled listing's period starts when publication actually occurs,
+not when payment or approval arrives.
+
+The first successful publication commits one immutable period and Free's saved
+expiry together. Its expiry is the publication date in the site's timezone plus
+`days` calendar days; it remains available through that local end date. An earlier
+application deadline still closes applications/schema first. Closing, reopening,
+editing, suspending and repeated callbacks do not restart duration. A renewal must
+use a new usage UUID naming the current predecessor, after expiry. A new owner
+cannot inherit the previous owner's period; separately verified entitlement and
+fresh approval are required. Old usage keys cannot replace newer periods.
+
+The transaction requires transactional Free tables (InnoDB or the supported SQLite
+integration). A bounded, site-local lease serializes publication attempts. If the
+period commit fails, no expiry/period is retained, publication mail is suppressed,
+the job is held and a numeric per-job retry is scheduled. Reads recheck policy and
+committed usage, so an intermediate WordPress status write alone cannot expose the
+listing. Providers should reconcile durably queued events until success; a failed
+caller or expired lease can require another attempt.
+
+`llamahire_listing_period_started($period)` runs after a new period commits, with
+`site_id` added. It is an advisory hook, not a payment receipt or transactional
+outbox: callbacks must not throw and must reconcile idempotently from `period()`
+if interrupted. No hook runs for a replay of an already-current period.
+
+Public filtered job queries, ID/parent-ID queries, singular REST reads, application
+forms, submissions and JobPosting output consult availability. Authorized admin
+queries and explicit previews remain usable. Pagination totals may temporarily
+include a revoked published row until reconciliation makes it pending. Trusted
+code bypassing WordPress filters, direct SQL or third-party full-page caches is
+outside this guarantee; integrations must invalidate their page caches when their
+eligibility changes. Native metadata writes/deletes cannot replace managed paid
+expiry. With no policy (including Pro deactivated), Free resumes baseline behavior
+using the last saved expiry; it cannot enforce a disabled provider's refund state.
+
+The history contains owner/operator IDs and dates, never billing or candidate
+payloads. It is preserved on ordinary job deletion/deactivation and removed by
+explicit Free data-removing uninstall. Providers own privacy/retention of their
+separate commerce records.
+
+Validation: `tests/job-publication.php` covers moderation/payment order, core cron,
+content/ownership changes, expiry/schema parity, replay/renewal, query/REST guards,
+leases and database fault recovery. `tests/listing-multisite.php` covers interrupted
+migration recovery and identical IDs on separate sites. `tests/e2e/job-publication.spec.js`
+exercises native moderation and anonymous pages in both payment/approval orders.

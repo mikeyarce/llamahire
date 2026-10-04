@@ -113,9 +113,10 @@ final class Employer_Notifications {
 	}
 
 	public static function status_changed( $new_status, $old_status, $post ) {
-		if ( ! $post || Jobs::POST_TYPE !== $post->post_type || $new_status === $old_status || ! in_array( $new_status, array( 'publish', 'draft', 'trash' ), true ) || ! current_user_can( 'edit_others_llamahire_jobs' ) ) {
+		if ( ! $post || Jobs::POST_TYPE !== $post->post_type || $new_status === $old_status || ! in_array( $new_status, array( 'publish', 'draft', 'trash' ), true ) || ( ! current_user_can( 'edit_others_llamahire_jobs' ) && ( 'publish' !== $new_status || ! Job_Publication::confirmed_publication( $post->ID ) ) ) ) {
 			return;
 		}
+		if ( 'publish' === $new_status && ! Job_Publication::may_notify( $post->ID ) ) { return; }
 		$user = get_userdata( $post->post_author );
 		if ( ! $user || ! in_array( Capabilities::EMPLOYER_ROLE, (array) $user->roles, true ) ) {
 			return;
