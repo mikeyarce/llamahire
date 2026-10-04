@@ -1,6 +1,6 @@
 # LlamaHire Free public API
 
-API version: `1.0.0-alpha.13` (unreleased extension-contract work)
+API version: `1.0.0-alpha.14` (unreleased extension-contract work)
 Plugin version introduced: `0.1.0`
 Status: experimental until API 1.0
 
@@ -120,9 +120,73 @@ check does not replace the separate nonce check for a request. Pro commerce
 capabilities alone do not authorize candidate data. Default authorization binds
 its final registered repository before the service container locks.
 
-This first contract slice does not provide publication gates, form extension
+These contract slices do not provide publication gates, form extension
 hooks, durable answer coordination, or recruiter-detail rendering extensions.
 Those remain required under Pro ticket #2 before a compatible Pro feature release.
+
+### Employer job summaries
+
+Added in unreleased API alpha.14. The `llamahire_employer_job_summaries` filter
+adds payment or other extension status beside Free's existing publication status
+in the server-rendered My Jobs view. No extension means no additional markup.
+This filter does not authorize checkout, grant an entitlement, publish a job, or
+replace moderation, renewal, or availability checks.
+
+Arguments:
+
+1. `array $items`: initially empty; append entries without replacing other extensions.
+2. `array $context`: authorized `site_id`, `mode`, `job_id`, and `owner_id`, obtained
+   through the final registered `EXTENSION_ACCESS` service for the current user.
+
+Free calls the filter only for a manageable job in `job_board` mode. Anonymous,
+foreign-job and company-mode requests do not call it. Extensions must still check
+their own granular commerce permissions and scope lookups to that site/job/owner;
+Free ownership alone does not authorize every kind of billing information.
+The hook supplies no application records, candidate data, secrets, or raw provider
+payloads. Do not put any of those in its returned presentation data either.
+
+Each entry has a required string `label` (80 characters), optional string `detail`
+(240 characters), and optional `action` with string `label` (80 characters) and
+`url` (at most 2,048 bytes). Free processes only the first three entries, skips
+malformed entries, truncates text by Unicode characters, and escapes all text as
+plain text. Extra keys are ignored. Actions require an absolute HTTP(S) URL with
+no embedded username/password or whitespace/control characters; invalid actions
+are omitted while their status remains visible. Relative and protocol-relative
+URLs are not accepted. The callback must translate its own user-facing strings.
+
+Action links navigate to an extension-owned review/resume page. A GET link must
+not charge, grant entitlement, or perform another mutation: that destination must
+independently validate current ownership/capabilities and require a nonce-protected
+POST for state changes. Payment confirmation still requires provider evidence.
+Prefer local review URLs; do not include secrets or provider payloads in links.
+The callback may run repeatedly, must be read-only, and should use bounded local
+reads rather than synchronous provider requests. It must return an array, not
+print HTML. The markup and CSS selectors remain private renderer details.
+
+```php
+add_filter(
+	'llamahire_employer_job_summaries',
+	static function ( $items, $context ) {
+		// An extension checks its commerce capability and reads its own scoped data.
+		$items[] = array(
+			'label'  => __( 'Awaiting payment', 'example-extension' ),
+			'detail' => __( 'Review the listing price before checkout.', 'example-extension' ),
+			'action' => array(
+				'label' => __( 'Review payment', 'example-extension' ),
+				'url'   => add_query_arg( 'job', $context['job_id'], home_url( '/payment-review/' ) ),
+			),
+		);
+		return $items;
+	},
+	10,
+	2
+);
+```
+
+This slice does not implement Stripe, centralized publication gates, immutable
+paid periods, or the other outstanding contracts in Pro #2. Pro's compatibility
+guard must not accept alpha.14 until its required contracts and tests are ready.
+The submitted 0.1.0 artifact is unchanged.
 
 ### Application repository
 

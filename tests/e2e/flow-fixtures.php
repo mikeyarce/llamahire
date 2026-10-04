@@ -19,6 +19,12 @@ $fixture_action   = $args[0] ?? 'setup';
 $repo     = \LlamaHire\Plugin::instance()->services()->get( \LlamaHire\Service_IDs::APPLICATION_REPOSITORY );
 $transport = 'llamahire-e2e-transport.php';
 
+if ( 'summaries' === $fixture_action ) {
+	if ( ! $registry ) { WP_CLI::error( 'Summary fixture requires an owned flow registry.' ); }
+	$registry['summaries'] = 'on' === ( $args[1] ?? '' );
+	update_option( $option, $registry, false );
+	return;
+}
 if ( 'access' === $fixture_action ) {
 	// Generate nonces for the attacking browser's real session. This ensures
 	// permission tests reach ownership checks rather than merely failing a nonce.

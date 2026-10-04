@@ -660,10 +660,11 @@ final class Employer_Portal {
 				<div class="llamahire-my-jobs-table"><table>
 					<thead><tr><th><?php esc_html_e( 'Job', 'llamahire' ); ?></th><th><?php esc_html_e( 'Status', 'llamahire' ); ?></th><th><?php esc_html_e( 'Actions', 'llamahire' ); ?></th></tr></thead>
 					<tbody>
+						<?php $extensions = new Employer_Job_Extensions( Plugin::instance()->services()->get( Service_IDs::EXTENSION_ACCESS ) ); ?>
 						<?php foreach ( $jobs as $job ) : $meta = Jobs::get_meta( $job->ID ); ?>
 							<tr>
 								<td><?php echo esc_html( $job->post_title ); ?></td>
-								<td><strong><?php echo esc_html( self::job_status_label( $job, $meta ) ); ?></strong><?php $detail = self::job_status_detail( $job, $meta ); if ( $detail ) : ?><small class="llamahire-employer-portal__status-detail"><?php echo esc_html( $detail ); ?></small><?php endif; ?></td>
+								<td><strong><?php echo esc_html( self::job_status_label( $job, $meta ) ); ?></strong><?php $detail = self::job_status_detail( $job, $meta ); if ( $detail ) : ?><small class="llamahire-employer-portal__status-detail"><?php echo esc_html( $detail ); ?></small><?php endif; ?><?php $extensions->render( $job->ID ); ?></td>
 								<td><?php self::render_job_actions( $job, $meta, $submit_url, (int) ( $application_counts[ $job->ID ] ?? 0 ) ); ?></td>
 							</tr>
 						<?php endforeach; ?>
