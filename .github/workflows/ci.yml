@@ -156,6 +156,7 @@ jobs:
           npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/atomic-submissions.php
           npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/application-extension-boundaries.php
           npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/job-publication.php
+          npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/publication-fixtures.php
           npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/application-privacy.php
       - name: Stop WordPress
         if: always()

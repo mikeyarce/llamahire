@@ -25,6 +25,27 @@ final class Fixtures_Command {
 	const META   = '_llamahire_fixture_owner';
 
 	/**
+	 * Simulate elapsed listing time for a registered fictional job.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <job-id>
+	 * : Registered fixture job with an active listing period.
+	 *
+	 * [--yes]
+	 * : Confirm development-only expiry simulation.
+	 *
+	 * @subcommand expire-listing
+	 */
+	public function expire_listing( $args, $assoc_args ) {
+		require_once __DIR__ . '/class-publication-fixture.php';
+		$id = isset( $args[0] ) && is_string( $args[0] ) && preg_match( '/^[1-9][0-9]*$/D', $args[0] ) && (string) (int) $args[0] === $args[0] ? (int) $args[0] : 0;
+		$result = Publication_Fixture::expire( $id, true === \WP_CLI\Utils\get_flag_value( $assoc_args, 'yes', false ) );
+		if ( is_wp_error( $result ) ) { \WP_CLI::error( $result->get_error_message() ); }
+		\WP_CLI::success( 'Fictional listing period expired; use a new period for renewal.' );
+	}
+
+	/**
 	 * Generate a complete demo hiring dataset.
 	 *
 	 * ## OPTIONS
