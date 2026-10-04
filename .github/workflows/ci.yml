@@ -269,6 +269,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Prepare archived Debian dependencies for PHP 7.4
+        run: docker build -f .github/php74.Dockerfile -t wordpress:php7.4 .github
       - name: Start minimum supported WordPress
         env:
           WP_ENV_CORE: WordPress/WordPress#6.5
