@@ -13,6 +13,7 @@ final class Service_IDs {
 	const RESUME_STORAGE         = 'llamahire.resume_storage';
 	const CANDIDATE_DATA         = 'llamahire.candidate_data';
 	const SCHEMA_BUILDER         = 'llamahire.schema_builder';
+	const EXTENSION_ACCESS       = 'llamahire.extension_access';
 
 	private function __construct() {}
 }

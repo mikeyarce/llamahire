@@ -6,8 +6,8 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 }
 
 // This helper installs a test transport, so restrict it to the disposable site.
-if ( 'http://localhost:8897' !== untrailingslashit( home_url() ) ) {
-	WP_CLI::error( 'Flow fixtures require the isolated wp-env site on port 8897.' );
+if ( '/var/www/html/' !== ABSPATH || 'localhost' !== wp_parse_url( home_url(), PHP_URL_HOST ) || ! in_array( wp_get_environment_type(), array( 'local', 'development' ), true ) ) {
+	WP_CLI::error( 'Flow fixtures require the isolated local Docker wp-env site.' );
 }
 
 require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -22,12 +22,17 @@ $transport = 'llamahire-e2e-transport.php';
 if ( 'access' === $fixture_action ) {
 	// Generate nonces for the attacking browser's real session. This ensures
 	// permission tests reach ownership checks rather than merely failing a nonce.
-	wp_set_current_user( $registry['users']['other'] );
+	$access_user = 'owner' === ( $args[2] ?? '' ) ? 'owner' : 'other';
+	wp_set_current_user( $registry['users'][ $access_user ] );
 	$_COOKIE[ LOGGED_IN_COOKIE ] = rawurldecode( $args[1] ); // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Reproduce the isolated browser session in CLI only.
 	echo wp_json_encode( array(
 		'resume' => \LlamaHire\Applications::resume_url( $registry['candidate'] ),
 		'export' => html_entity_decode( wp_nonce_url( admin_url( 'admin-post.php?action=llamahire_export' ), 'llamahire_export' ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, 'UTF-8' ),
-		'valid_session' => WP_Session_Tokens::get_instance( $registry['users']['other'] )->verify( wp_get_session_token() ),
+		'valid_session' => WP_Session_Tokens::get_instance( $registry['users'][ $access_user ] )->verify( wp_get_session_token() ),
+		'rest_nonce' => wp_create_nonce( 'wp_rest' ),
+		'contract_allowed' => \LlamaHire\Plugin::instance()->services()->get( \LlamaHire\Service_IDs::EXTENSION_ACCESS )->can_access_application( $registry['candidate'], \LlamaHire\Capabilities::VIEW_APPLICATIONS ),
+		'invalid_identity_denied' => null === \LlamaHire\Plugin::instance()->services()->get( \LlamaHire\Service_IDs::EXTENSION_ACCESS )->application_scope( \LlamaHire\Capabilities::VIEW_APPLICATIONS, -get_current_user_id() ),
+		'job_context' => \LlamaHire\Plugin::instance()->services()->get( \LlamaHire\Service_IDs::EXTENSION_ACCESS )->job_context( $registry['jobs']['open'] ),
 		'erase_nonce' => wp_create_nonce( 'llamahire_erase_application_' . $registry['candidate'] ),
 	) );
 	return;

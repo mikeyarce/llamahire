@@ -177,7 +177,7 @@ final class REST_API {
 		$repository = Plugin::instance()->services()->get( Service_IDs::APPLICATION_REPOSITORY );
 		$records    = array();
 		foreach ( $application_ids as $application_id ) {
-			if ( ! Ownership::user_can_access_application( $application_id, Capabilities::MANAGE_APPLICATIONS ) ) {
+			if ( ! Plugin::instance()->services()->get( Service_IDs::EXTENSION_ACCESS )->can_access_application( $application_id, Capabilities::MANAGE_APPLICATIONS ) ) {
 				return new \WP_Error( 'llamahire_bulk_status_forbidden', __( 'One or more selected applications cannot be updated by this account.', 'llamahire' ), array( 'status' => 403 ) );
 			}
 			$record = $repository->find( $application_id );
@@ -248,7 +248,7 @@ final class REST_API {
 			static function ( $event ) {
 				$actor = $event->actor_user_id ? get_userdata( $event->actor_user_id ) : null;
 				$job_edit_url = get_edit_post_link( $event->job_id, 'raw' );
-				$application_url = 'application' === $event->subject_type && Ownership::user_can_access_application( $event->application_id, Capabilities::VIEW_APPLICATIONS )
+				$application_url = 'application' === $event->subject_type && Plugin::instance()->services()->get( Service_IDs::EXTENSION_ACCESS )->can_access_application( $event->application_id, Capabilities::VIEW_APPLICATIONS )
 					? Admin::applications_url( array( 'application' => (int) $event->application_id ) )
 					: '';
 				$target_url = $application_url ?: $job_edit_url;
@@ -292,7 +292,7 @@ final class REST_API {
 
 	private static function application_permission( \WP_REST_Request $request, $capability ) {
 		$id = absint( $request['id'] );
-		if ( $id && Ownership::user_can_access_application( $id, $capability ) ) {
+		if ( $id && Plugin::instance()->services()->get( Service_IDs::EXTENSION_ACCESS )->can_access_application( $id, $capability ) ) {
 			return true;
 		}
 		return new \WP_Error( 'llamahire_application_not_found', __( 'Application not found.', 'llamahire' ), array( 'status' => 404 ) );

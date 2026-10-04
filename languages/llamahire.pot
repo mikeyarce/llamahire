@@ -20,7 +20,6 @@ msgid "LlamaHire – Job Board & Careers"
 msgstr ""
 
 #. Plugin URI of the plugin
-#. Author URI of the plugin
 #: llamahire.php
 msgid "https://llamahire.com/"
 msgstr ""
@@ -42,6 +41,11 @@ msgstr ""
 #: includes/class-settings.php:341
 #: includes/class-settings.php:581
 msgid "LlamaHire"
+msgstr ""
+
+#. Author URI of the plugin
+#: llamahire.php
+msgid "https://mikeyarce.com/"
 msgstr ""
 
 #: includes/class-admin-workspaces.php:31
