@@ -20,3 +20,4 @@ PHP
 "${CLI[@]}" core install --url=http://localhost --title=AtomicSQLiteFixture --admin_user=fixture --admin_password=Fictional-local-fixture-42 --admin_email=fixture@example.test --skip-email
 "${CLI[@]}" plugin activate llamahire
 "${CLI[@]}" eval-file wp-content/plugins/llamahire/tests/atomic-submissions.php
+"${CLI[@]}" eval-file wp-content/plugins/llamahire/tests/application-extension-boundaries.php

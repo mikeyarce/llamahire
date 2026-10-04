@@ -1,6 +1,6 @@
 # LlamaHire Free public API
 
-API version: `1.0.0-alpha.15` (unreleased extension-contract work)
+API version: `1.0.0-alpha.16` (unreleased extension-contract work)
 Plugin version introduced: `0.1.0`
 Status: experimental until API 1.0
 
@@ -427,3 +427,76 @@ separate required slices of Pro issue #2. No compatible Free release is claimed.
 `tests/atomic-submissions.php` covers write/exception/commit failure rollback,
 missing storage, reentry, successful retry, and both duplicate policies against
 MySQL and the isolated SQLite runner `scripts/test-atomic-sqlite.sh`.
+
+
+## Application field and review providers (alpha.16, unreleased)
+
+`llamahire_application_extensions( array $providers, array $context )` registers
+up to ten named `Contracts\Application_Extension` instances. Names match
+`[a-z][a-z0-9_]{0,39}`. The provider set is frozen per current-site job during a
+request. Context contains numeric `site_id`, `job_id`, `owner_id` and normalized
+`site_mode` (`company` or `job_board`). Invalid registration fails closed during
+submission. Providers are trusted plugin code, not browser-controlled callbacks.
+
+- `render($context, $input, $errors)` returns escaped form markup. Use input names
+  under `llamahire_extensions[provider_name]`; never replace Free's core inputs.
+  Include server-verifiable version/context tokens. Rendering follows Free's
+  availability and internal-apply checks, so closed and external-apply jobs never
+  display these fields. The Application Form block uses the same renderer.
+- `prepare($context, $input)` validates the provider's unslashed, bounded input.
+  Return an array of persistence data or a `WP_Error` whose machine codes identify
+  fields and whose messages contain fixed, candidate-safe text. Providers own
+  type validation, stale-version policy and signed-token checks; Free rejects
+  unknown provider namespaces and bounds the combined input/prepared payload to
+  128 KiB. Answer values must not appear in error messages.
+- `tables()` and `persist($application_id, $context, $prepared)` follow the atomic
+  repository restrictions above. Free stores uploads after validation, commits
+  required writes before notifications/success, and deletes new uploads on error
+  or deduplication. Extensions must not send notifications themselves. Core
+  duplicate policy preserves the existing application and original answers.
+- `review($application_id)` returns null to omit a section, or
+  `{title: string, fields: [{label: string, value: string, type?: "url"}]}`.
+  Free checks granular candidate-view capability and ownership before invoking
+  providers. It bounds each section to ten fields, titles/labels to 200 Unicode
+  characters and values to 2,048. Values remain plaintext; only valid absolute
+  HTTP/HTTPS URLs become links. Malformed/throwing providers show a safe
+  unavailable state. An empty fields array produces a clear no-answers state.
+
+Review sections appear in the admin quick view, standalone detail page, candidate
+dashboard drawer and frontend employer review. Authorized detail REST responses
+include the normalized `extensions` map. Public jobs, list responses, CSV columns,
+notification templates and telemetry do not receive these values.
+
+New forms POST to their current singular page (or the canonical job page when
+rendered outside a singular page), so an embedded block retains its error form. Validation or extension storage failure
+returns an uncached HTTP 422 response with request-local form errors and validated
+core fields; no answers go into redirects, cookies, sessions or browser storage.
+Providers should render stable elements, with IDs unique to the current job, with `data-llamahire-field-error` and an
+`id`, referenced by their controls' `aria-describedby`. Progressive enhancement
+copies only plain error text into those elements and preserves entered fields;
+without JavaScript the full form is rendered again. File uploads must be
+reattached after a full-page validation failure. Cached legacy admin-post forms
+remain supported, with a safe redirect to fresh questions on extension errors.
+
+With no provider active, Free retains its ordinary submission behavior. Required
+extension storage fails closed if a replaced repository lacks the optional atomic
+contract. Current consumers must explicitly support this experimental API; no
+compatible released Free artifact is claimed here.
+
+Coverage: `ApplicationExtensionReviewTest` checks bounds and safe URL mapping;
+`application-extensions.spec.js` exercises the real browser-to-database contract,
+including the block, JS/no-JS, validation, rollback before notification, retry,
+duplicates, closed/external apply, employer ownership and both admin detail UIs.
+
+A provider may return `null` from `prepare()` only when it requires no extension
+write for this job. Free omits that provider from transaction tables and writes.
+If every provider opts out, the ordinary repository path remains available,
+including replacement repositories without atomic-extension support. This lets
+an extension retain historical review after its job form is removed without
+requiring an extension write for new applications. The trusted provider must
+reject stale/nonempty inputs itself; clients cannot request this opt-out.
+
+New same-page forms use `candidate_name` for the core name input to avoid
+WordPress's reserved `name` query variable. The submission handler still accepts
+legacy `name` fields from cached admin-post forms. Core form markup and input
+names remain renderer internals, not extension contracts.

@@ -349,6 +349,7 @@ final class REST_API {
 				'private_notes' => $notes,
 				'resume'       => $resume,
 				'cover_letter' => trim( (string) $application->cover_letter ),
+				'extensions'   => Application_Extensions::review( $id ),
 				'activity'     => $activity,
 				'activity_url' => Admin::applications_url( array( 'application' => $id ) ) . '#llamahire-application-activity',
 				'detail_url'   => Admin::applications_url( array( 'application' => $id ) ),

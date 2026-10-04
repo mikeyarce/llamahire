@@ -9,6 +9,7 @@ final class Applications {
 	const MAX_EMAIL_LENGTH = 190;
 	const MAX_PHONE_LENGTH = 50;
 	const MAX_COVER_LETTER_LENGTH = 10000;
+	private static $retry_values = array();
 
 	public static function workflow_statuses() {
 		return array(
@@ -31,6 +32,7 @@ final class Applications {
 	}
 
 	public static function register() {
+		add_action( 'template_redirect', array( __CLASS__, 'maybe_submit' ) );
 		add_action( 'admin_post_nopriv_llamahire_apply', array( __CLASS__, 'submit' ) );
 		add_action( 'admin_post_llamahire_apply', array( __CLASS__, 'submit' ) );
 		add_action( 'admin_post_llamahire_resume', array( __CLASS__, 'download_resume' ) );
@@ -50,6 +52,24 @@ final class Applications {
 		return $wpdb->prefix . 'llamahire_applications';
 	}
 
+	/** Same-page POSTs retain validation errors without putting candidate values in URLs. */
+	public static function maybe_submit() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- submit() checks the site-bound application nonce.
+		if ( isset( $_POST['action'] ) && 'llamahire_apply' === $_POST['action'] ) { self::submit(); }
+	}
+
+	/** Request-local validated core fields, available only for the failed job submission. */
+	public static function retry_values( $job_id ) {
+		return get_current_blog_id() === ( self::$retry_values['site_id'] ?? 0 ) && (int) $job_id === ( self::$retry_values['job_id'] ?? 0 ) ? self::$retry_values : array();
+	}
+
+	private static function extension_failure( $job_id, array $values ) {
+		if ( is_admin() ) { self::redirect( $job_id, 'extension_invalid' ); }
+		self::$retry_values = array_merge( $values, array( 'job_id' => (int) $job_id, 'site_id' => get_current_blog_id() ) );
+		nocache_headers();
+		status_header( 422 );
+	}
+
 	public static function submit() {
 		$job_id = absint( $_POST['job_id'] ?? 0 );
 		$nonce  = sanitize_text_field( wp_unslash( $_POST['llamahire_nonce'] ?? '' ) );
@@ -66,7 +86,7 @@ final class Applications {
 			self::redirect( $job_id, 'success' );
 		}
 
-		$name   = sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) );
+		$name   = sanitize_text_field( wp_unslash( $_POST['candidate_name'] ?? $_POST['name'] ?? '' ) );
 		$email  = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
 		$phone  = self::sanitize_phone( wp_unslash( $_POST['phone'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_phone() allowlists phone characters and normalizes whitespace.
 		$letter = sanitize_textarea_field( wp_unslash( $_POST['cover_letter'] ?? '' ) );
@@ -99,6 +119,12 @@ final class Applications {
 			self::redirect( $job_id, 'success' );
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Namespaced values are bounded and validated by the registered provider.
+		$extensions = Application_Extensions::prepare( $job_id, wp_unslash( $_POST['llamahire_extensions'] ?? array() ) );
+		if ( is_wp_error( $extensions ) ) {
+			self::extension_failure( $job_id, compact( 'name', 'email', 'phone', 'letter', 'submission_key' ) );
+			return;
+		}
 		$storage = Plugin::instance()->services()->get( Service_IDs::RESUME_STORAGE );
 		$resume  = $storage->store_upload( $file, $job_id );
 		if ( is_wp_error( $resume ) ) {
@@ -116,10 +142,14 @@ final class Applications {
 			'status'       => 'new',
 			'submission_key' => $submission_key,
 		);
-		$creation       = $repository->create_once( $application );
+		$creation       = Application_Extensions::create( $application, $extensions );
 		if ( is_wp_error( $creation ) ) {
 			if ( $resume['token'] ) {
 				$storage->delete( $resume['token'] );
+			}
+			if ( $extensions ) {
+				self::extension_failure( $job_id, compact( 'name', 'email', 'phone', 'letter', 'submission_key' ) );
+				return;
 			}
 			self::redirect( $job_id, 'error' );
 		}

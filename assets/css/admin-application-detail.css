@@ -333,3 +333,6 @@
 		flex-direction: column;
 	}
 }
+
+.llamahire-application-extra dt { font-weight: 600; }
+.llamahire-application-extra dd { margin: 0 0 1em; white-space: pre-wrap; overflow-wrap: anywhere; }

@@ -36,7 +36,7 @@ msgstr ""
 #: includes/class-admin-workspaces.php:276
 #: includes/class-admin.php:265
 #: includes/class-admin.php:356
-#: includes/class-applications.php:283
+#: includes/class-applications.php:313
 #: includes/class-blocks.php:32
 #: includes/class-settings.php:341
 #: includes/class-settings.php:581
@@ -246,7 +246,7 @@ msgid "Applications"
 msgstr ""
 
 #: includes/class-admin-workspaces.php:147
-#: includes/class-applications.php:17
+#: includes/class-applications.php:18
 #: src/admin-applications.js:16
 msgid "Interviewing"
 msgstr ""
@@ -290,7 +290,7 @@ msgid "Add your first job"
 msgstr ""
 
 #: includes/class-admin-workspaces.php:172
-#: includes/class-admin-workspaces.php:420
+#: includes/class-admin-workspaces.php:421
 msgid "Recent activity"
 msgstr ""
 
@@ -299,8 +299,8 @@ msgid "Operational changes across your workspace."
 msgstr ""
 
 #: includes/class-admin-workspaces.php:172
-#: includes/class-admin.php:466
-#: includes/class-employer-applications.php:176
+#: includes/class-admin.php:467
+#: includes/class-employer-applications.php:177
 #: src/admin-applications.js:601
 msgid "View all activity"
 msgstr ""
@@ -416,8 +416,8 @@ msgstr ""
 
 #: includes/class-admin-workspaces.php:285
 #: includes/class-employer-applications.php:100
-#: src/admin-applications.js:1264
-#: src/admin-applications.js:1279
+#: src/admin-applications.js:1276
+#: src/admin-applications.js:1291
 msgid "Search candidates"
 msgstr ""
 
@@ -479,14 +479,14 @@ msgstr ""
 
 #: includes/class-admin-workspaces.php:339
 #: includes/class-blocks.php:299
-#: includes/class-employer-applications.php:187
+#: includes/class-employer-applications.php:188
 #: includes/class-employer-portal.php:758
 msgid "Previous"
 msgstr ""
 
 #: includes/class-admin-workspaces.php:340
 #: includes/class-blocks.php:300
-#: includes/class-employer-applications.php:187
+#: includes/class-employer-applications.php:188
 #: includes/class-employer-portal.php:759
 msgid "Next"
 msgstr ""
@@ -554,11 +554,11 @@ msgstr ""
 
 #: includes/class-admin-workspaces.php:410
 #: includes/class-admin.php:449
-#: includes/class-blocks.php:829
+#: includes/class-blocks.php:833
 #: includes/class-privacy.php:116
 #: includes/class-settings.php:449
 #: src/admin-applications.js:666
-#: src/admin-applications.js:736
+#: src/admin-applications.js:748
 msgid "Cover letter"
 msgstr ""
 
@@ -571,132 +571,132 @@ msgstr ""
 msgid "No cover letter provided."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:413
+#: includes/class-admin-workspaces.php:414
 msgid "Team notes"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:413
-#: includes/class-admin.php:457
+#: includes/class-admin-workspaces.php:414
+#: includes/class-admin.php:458
 msgid "View earlier notes"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:413
-#: includes/class-admin.php:458
-#: includes/class-employer-applications.php:174
-#: src/admin-applications.js:727
+#: includes/class-admin-workspaces.php:414
+#: includes/class-admin.php:459
+#: includes/class-employer-applications.php:175
+#: src/admin-applications.js:739
 msgid "No private notes yet."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:416
-#: includes/class-admin.php:454
-#: src/admin-applications.js:691
+#: includes/class-admin-workspaces.php:417
+#: includes/class-admin.php:455
+#: src/admin-applications.js:703
 msgid "Add private note"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:416
+#: includes/class-admin-workspaces.php:417
 msgid "Interview feedback, next steps, or context for the team…"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:417
-#: includes/class-admin.php:454
-#: includes/class-employer-applications.php:174
-#: src/admin-applications.js:709
+#: includes/class-admin-workspaces.php:418
+#: includes/class-admin.php:455
+#: includes/class-employer-applications.php:175
+#: src/admin-applications.js:721
 msgid "Add note"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:419
-#: includes/class-admin.php:462
+#: includes/class-admin-workspaces.php:420
+#: includes/class-admin.php:463
 msgid "Contact info"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:420
+#: includes/class-admin-workspaces.php:421
 msgid "No recorded changes yet."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:421
+#: includes/class-admin-workspaces.php:422
 #: src/admin-applications.js:550
 msgid "View full application"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:422
+#: includes/class-admin-workspaces.php:423
 msgid "Move candidate"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:422
-#: includes/class-admin-workspaces.php:462
+#: includes/class-admin-workspaces.php:423
+#: includes/class-admin-workspaces.php:463
 msgid "Reject candidate"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:429
+#: includes/class-admin-workspaces.php:430
 msgid "New stage"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:429
+#: includes/class-admin-workspaces.php:430
 msgid "Update"
 msgstr ""
 
 #. translators: %s: Candidate name.
-#: includes/class-admin-workspaces.php:442
+#: includes/class-admin-workspaces.php:443
 #, php-format
 msgid "Reject %s?"
 msgstr ""
 
 #. translators: 1: Candidate name. 2: Job title.
-#: includes/class-admin-workspaces.php:447
+#: includes/class-admin-workspaces.php:448
 #, php-format
 msgid "%1$s will be moved to Rejected for %2$s. You can change their stage later."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:457
+#: includes/class-admin-workspaces.php:458
 msgid "Close rejection confirmation"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:461
+#: includes/class-admin-workspaces.php:462
 #: src/admin-applications.js:382
 msgid "Cancel"
 msgstr ""
 
-#: includes/class-admin-workspaces.php:477
+#: includes/class-admin-workspaces.php:478
 msgid "Move candidates here when you are ready to make an offer."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:480
+#: includes/class-admin-workspaces.php:481
 msgid "Successful hires will appear here."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:482
+#: includes/class-admin-workspaces.php:483
 msgid "Drag a candidate here when they are ready."
 msgstr ""
 
-#: includes/class-admin-workspaces.php:487
+#: includes/class-admin-workspaces.php:488
 msgid "No "
 msgstr ""
 
-#: includes/class-admin-workspaces.php:488
+#: includes/class-admin-workspaces.php:489
 msgid "Nothing needs action here right now."
 msgstr ""
 
 #. translators: %s: Job closing date.
-#: includes/class-admin-workspaces.php:542
-#: includes/class-admin-workspaces.php:601
+#: includes/class-admin-workspaces.php:543
+#: includes/class-admin-workspaces.php:602
 #, php-format
 msgid "Closes %s"
 msgstr ""
 
 #. translators: %d: New candidates for this job.
-#: includes/class-admin-workspaces.php:546
+#: includes/class-admin-workspaces.php:547
 #, php-format
 msgid "%d new candidate"
 msgid_plural "%d new candidates"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-admin-workspaces.php:548
+#: includes/class-admin-workspaces.php:549
 msgid "No applications yet"
 msgstr ""
 
 #. translators: %s: formatted listing-expiration date.
-#: includes/class-admin-workspaces.php:604
+#: includes/class-admin-workspaces.php:605
 #, php-format
 msgid "Listing ends %s"
 msgstr ""
@@ -734,7 +734,7 @@ msgstr ""
 
 #: includes/class-admin.php:149
 #: includes/class-admin.php:266
-#: includes/class-admin.php:466
+#: includes/class-admin.php:467
 msgid "Activity"
 msgstr ""
 
@@ -764,7 +764,7 @@ msgid "The application and its private resume were permanently erased."
 msgstr ""
 
 #: includes/class-admin.php:363
-#: src/admin-applications.js:1181
+#: src/admin-applications.js:1193
 msgid "Loading applications…"
 msgstr ""
 
@@ -780,7 +780,7 @@ msgstr ""
 
 #: includes/class-admin.php:411
 #: includes/class-admin.php:414
-#: includes/class-admin.php:604
+#: includes/class-admin.php:605
 #: includes/class-application-notes.php:44
 #: includes/class-employer-applications.php:31
 #: includes/class-employer-applications.php:35
@@ -825,7 +825,7 @@ msgid "The candidate-data change could not be completed. No application record w
 msgstr ""
 
 #: includes/class-admin.php:445
-#: includes/class-blocks.php:828
+#: includes/class-blocks.php:832
 #: includes/class-settings.php:448
 msgid "Resume"
 msgstr ""
@@ -834,34 +834,35 @@ msgstr ""
 msgid "Download resume"
 msgstr ""
 
-#: includes/class-admin.php:453
-#: includes/class-employer-applications.php:174
-#: src/admin-applications.js:760
+#: includes/class-admin.php:454
+#: includes/class-employer-applications.php:175
+#: src/admin-applications.js:772
 msgid "Private notes"
 msgstr ""
 
-#: includes/class-admin.php:461
+#: includes/class-admin.php:462
 msgid "Application details"
 msgstr ""
 
-#: includes/class-admin.php:462
-#: includes/class-blocks.php:826
+#: includes/class-admin.php:463
+#: includes/class-blocks.php:830
 msgid "Email"
 msgstr ""
 
-#: includes/class-admin.php:462
-#: includes/class-blocks.php:827
+#: includes/class-admin.php:463
+#: includes/class-blocks.php:831
 #: includes/class-privacy.php:115
 #: includes/class-settings.php:447
 msgid "Phone"
 msgstr ""
 
-#: includes/class-admin.php:463
+#: includes/class-admin.php:464
 #: includes/class-privacy.php:108
 msgid "Application status"
 msgstr ""
 
-#: includes/class-admin.php:463
+#: includes/class-admin.php:464
+#: includes/class-application-extensions.php:129
 #: includes/class-employer-applications.php:102
 #: includes/class-employer-applications.php:156
 #: includes/class-employer-applications.php:169
@@ -870,154 +871,154 @@ msgstr ""
 #: src/admin-applications.js:260
 #: src/admin-applications.js:567
 #: src/admin-applications.js:572
-#: src/admin-applications.js:790
+#: src/admin-applications.js:802
 msgid "Status"
 msgstr ""
 
-#: includes/class-admin.php:463
+#: includes/class-admin.php:464
 #: includes/class-employer-applications.php:169
 #: src/admin-applications.js:585
 msgid "Save status"
 msgstr ""
 
-#: includes/class-admin.php:463
 #: includes/class-admin.php:464
+#: includes/class-admin.php:465
 msgid "Status:"
 msgstr ""
 
-#: includes/class-admin.php:464
+#: includes/class-admin.php:465
 msgid "Email delivery"
 msgstr ""
 
-#: includes/class-admin.php:464
+#: includes/class-admin.php:465
 msgid "Attempts:"
 msgstr ""
 
-#: includes/class-admin.php:464
+#: includes/class-admin.php:465
 msgid "Retry missing emails"
 msgstr ""
 
-#: includes/class-admin.php:466
+#: includes/class-admin.php:467
 #: includes/class-application-notes.php:106
 #: includes/class-rest-api.php:274
 #: includes/class-rest-api.php:338
 msgid "System"
 msgstr ""
 
-#: includes/class-admin.php:466
+#: includes/class-admin.php:467
 #: includes/class-employer-applications.php:170
 #: src/admin-activity.js:328
 #: src/admin-applications.js:605
 msgid "No activity recorded yet."
 msgstr ""
 
-#: includes/class-admin.php:471
+#: includes/class-admin.php:472
 msgid "Manage candidate data"
 msgstr ""
 
-#: includes/class-admin.php:478
-#: includes/class-admin.php:484
+#: includes/class-admin.php:479
+#: includes/class-admin.php:485
 msgid "Replace resume"
 msgstr ""
 
-#: includes/class-admin.php:478
+#: includes/class-admin.php:479
 msgid "Add resume"
 msgstr ""
 
-#: includes/class-admin.php:479
+#: includes/class-admin.php:480
 msgid "Upload a new resume to replace the current one. This change cannot be undone."
 msgstr ""
 
-#: includes/class-admin.php:479
+#: includes/class-admin.php:480
 msgid "Upload a resume for this application."
 msgstr ""
 
-#: includes/class-admin.php:480
+#: includes/class-admin.php:481
 msgid "Select replacement resume"
 msgstr ""
 
-#: includes/class-admin.php:480
+#: includes/class-admin.php:481
 msgid "Select resume"
 msgstr ""
 
-#: includes/class-admin.php:482
+#: includes/class-admin.php:483
 msgid "PDF or DOCX"
 msgstr ""
 
-#: includes/class-admin.php:484
+#: includes/class-admin.php:485
 msgid "Upload resume"
 msgstr ""
 
-#: includes/class-admin.php:492
-#: includes/class-admin.php:496
+#: includes/class-admin.php:493
+#: includes/class-admin.php:497
 msgid "Delete resume"
 msgstr ""
 
-#: includes/class-admin.php:493
+#: includes/class-admin.php:494
 msgid "Permanently delete the current resume. This action cannot be undone."
 msgstr ""
 
-#: includes/class-admin.php:494
+#: includes/class-admin.php:495
 msgid "I understand the current resume will be permanently deleted."
 msgstr ""
 
-#: includes/class-admin.php:504
-#: includes/class-admin.php:508
+#: includes/class-admin.php:505
+#: includes/class-admin.php:509
 msgid "Erase application"
 msgstr ""
 
-#: includes/class-admin.php:505
+#: includes/class-admin.php:506
 msgid "Permanently delete the application, notes, notification history, and private resume. This action cannot be undone."
 msgstr ""
 
-#: includes/class-admin.php:506
+#: includes/class-admin.php:507
 msgid "I understand this permanently deletes the application, notes, notification history, and private resume."
 msgstr ""
 
-#: includes/class-admin.php:519
-#: includes/class-admin.php:537
+#: includes/class-admin.php:520
+#: includes/class-admin.php:538
 msgid "You cannot update applications."
 msgstr ""
 
-#: includes/class-admin.php:586
+#: includes/class-admin.php:587
 msgid "You cannot erase candidate data."
 msgstr ""
 
-#: includes/class-admin.php:599
+#: includes/class-admin.php:600
 msgid "You cannot retry application notifications."
 msgstr ""
 
-#: includes/class-admin.php:619
+#: includes/class-admin.php:620
 msgid "You cannot export applications."
 msgstr ""
 
-#: includes/class-admin.php:646
+#: includes/class-admin.php:647
 #: includes/class-employer-applications.php:61
 msgid "You cannot access candidate applications."
 msgstr ""
 
-#: includes/class-admin.php:650
+#: includes/class-admin.php:651
 msgid "Publication and hiring"
 msgstr ""
 
-#: includes/class-admin.php:656
+#: includes/class-admin.php:657
 msgid "Unknown"
 msgstr ""
 
-#: includes/class-admin.php:658
+#: includes/class-admin.php:659
 msgid "Not accepting applications"
 msgstr ""
 
-#: includes/class-admin.php:660
+#: includes/class-admin.php:661
 msgid "Accepting applications"
 msgstr ""
 
-#: includes/class-admin.php:660
+#: includes/class-admin.php:661
 msgid "Closed to applications"
 msgstr ""
 
 #. translators: %s: Number of applications for a job.
-#: includes/class-admin.php:666
+#: includes/class-admin.php:667
 #: includes/class-employer-portal.php:805
 #, php-format
 msgid "%s application"
@@ -1025,47 +1026,47 @@ msgid_plural "%s applications"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-admin.php:679
+#: includes/class-admin.php:680
 msgid "This job listing cannot be moderated."
 msgstr ""
 
-#: includes/class-admin.php:687
+#: includes/class-admin.php:688
 msgid "Choose a valid moderation action."
 msgstr ""
 
-#: includes/class-admin.php:695
+#: includes/class-admin.php:696
 msgid "The moderation decision could not be saved. Please try again."
 msgstr ""
 
-#: includes/class-admin.php:712
+#: includes/class-admin.php:713
 msgid "The job was approved and published."
 msgstr ""
 
-#: includes/class-admin.php:713
+#: includes/class-admin.php:714
 msgid "The job was returned to the employer as a draft for changes."
 msgstr ""
 
-#: includes/class-admin.php:714
+#: includes/class-admin.php:715
 msgid "The job was declined and moved to the trash."
 msgstr ""
 
-#: includes/class-admin.php:727
+#: includes/class-admin.php:728
 msgid "This job is awaiting your review"
 msgstr ""
 
-#: includes/class-admin.php:727
+#: includes/class-admin.php:728
 msgid "Review the listing details, then choose an explicit moderation outcome."
 msgstr ""
 
-#: includes/class-admin.php:739
+#: includes/class-admin.php:740
 msgid "Approve and publish"
 msgstr ""
 
-#: includes/class-admin.php:740
+#: includes/class-admin.php:741
 msgid "Request changes"
 msgstr ""
 
-#: includes/class-admin.php:741
+#: includes/class-admin.php:742
 msgid "Decline"
 msgstr ""
 
@@ -1090,13 +1091,35 @@ msgstr ""
 #: includes/class-anti-spam.php:88
 #: includes/class-anti-spam.php:91
 #: includes/class-anti-spam.php:94
-#: includes/class-blocks.php:796
+#: includes/class-blocks.php:800
 #: includes/class-employer-registration.php:265
 msgid "Complete the spam protection check and try again."
 msgstr ""
 
 #: includes/class-anti-spam.php:84
 msgid "Spam protection is temporarily unavailable. Please try again."
+msgstr ""
+
+#: includes/class-application-extensions.php:129
+msgid "Additional answers"
+msgstr ""
+
+#: includes/class-application-extensions.php:129
+msgid "Additional answers are temporarily unavailable."
+msgstr ""
+
+#: includes/class-application-extensions.php:160
+#: src/admin-applications.js:689
+msgid "No additional answers were submitted."
+msgstr ""
+
+#: includes/class-application-extensions.php:163
+#: src/admin-applications.js:693
+msgid "Not provided"
+msgstr ""
+
+#: includes/class-application-extensions.php:173
+msgid "Check the additional application questions and try again. If the problem continues, contact the employer."
 msgstr ""
 
 #: includes/class-application-notes.php:34
@@ -1115,64 +1138,64 @@ msgstr ""
 msgid "Former user"
 msgstr ""
 
-#: includes/class-applications.php:15
+#: includes/class-applications.php:16
 #: src/admin-applications.js:14
 msgid "New"
 msgstr ""
 
-#: includes/class-applications.php:16
+#: includes/class-applications.php:17
 #: src/admin-applications.js:15
 msgid "Reviewing"
 msgstr ""
 
-#: includes/class-applications.php:18
+#: includes/class-applications.php:19
 #: src/admin-applications.js:17
 msgid "Offer"
 msgstr ""
 
-#: includes/class-applications.php:19
+#: includes/class-applications.php:20
 #: src/admin-applications.js:19
 msgid "Hired"
 msgstr ""
 
-#: includes/class-applications.php:20
+#: includes/class-applications.php:21
 #: src/admin-applications.js:18
 msgid "Rejected"
 msgstr ""
 
-#: includes/class-applications.php:249
+#: includes/class-applications.php:279
 msgid "You cannot access this resume."
 msgstr ""
 
-#: includes/class-applications.php:261
+#: includes/class-applications.php:291
 msgid "LlamaHire private resume storage"
 msgstr ""
 
-#: includes/class-applications.php:271
+#: includes/class-applications.php:301
 msgid "Resume storage uses WordPress VIP Access-Controlled Files, and direct requests to the private resume path are denied."
 msgstr ""
 
-#: includes/class-applications.php:272
+#: includes/class-applications.php:302
 msgid "Resume storage is writable and located outside the public WordPress web root."
 msgstr ""
 
-#: includes/class-applications.php:274
+#: includes/class-applications.php:304
 msgid "Resume storage is writable, but direct file access is not confirmed as protected."
 msgstr ""
 
-#: includes/class-applications.php:277
+#: includes/class-applications.php:307
 msgid "The VIP resume storage driver is selected, but Access-Controlled Files is not active in this environment."
 msgstr ""
 
-#: includes/class-applications.php:278
+#: includes/class-applications.php:308
 msgid "WordPress cannot write to the configured private resume directory."
 msgstr ""
 
-#: includes/class-applications.php:281
+#: includes/class-applications.php:311
 msgid "Resumes use protected private storage"
 msgstr ""
 
-#: includes/class-applications.php:281
+#: includes/class-applications.php:311
 msgid "Resume storage needs attention"
 msgstr ""
 
@@ -1354,7 +1377,7 @@ msgstr ""
 #: includes/class-blocks.php:154
 #: includes/class-blocks.php:777
 #: includes/class-blocks.php:781
-#: includes/class-blocks.php:814
+#: includes/class-blocks.php:818
 msgid "Apply for this role"
 msgstr ""
 
@@ -1566,62 +1589,66 @@ msgstr ""
 msgid "Apply by email"
 msgstr ""
 
-#: includes/class-blocks.php:787
-#: includes/class-blocks.php:788
-msgid "Thanks! Your application has been received."
-msgstr ""
-
-#: includes/class-blocks.php:789
-msgid "Please complete all required fields and provide a valid email address."
-msgstr ""
-
 #: includes/class-blocks.php:790
-msgid "Not a valid phone number."
+msgid "Check the additional questions below. Your application has not been sent. Reattach your resume before trying again."
 msgstr ""
 
 #: includes/class-blocks.php:791
-msgid "One or more fields are too long. Shorten your response and try again."
-msgstr ""
-
 #: includes/class-blocks.php:792
-msgid "Your resume must be smaller than 5 MB."
+msgid "Thanks! Your application has been received."
 msgstr ""
 
 #: includes/class-blocks.php:793
-msgid "Please upload a PDF or DOCX resume."
+msgid "Please complete all required fields and provide a valid email address."
 msgstr ""
 
 #: includes/class-blocks.php:794
-msgid "Resume uploads are temporarily unavailable. Please contact the employer."
+msgid "Not a valid phone number."
 msgstr ""
 
 #: includes/class-blocks.php:795
-msgid "Too many applications were submitted recently. Please wait and try again."
+msgid "One or more fields are too long. Shorten your response and try again."
+msgstr ""
+
+#: includes/class-blocks.php:796
+msgid "Your resume must be smaller than 5 MB."
 msgstr ""
 
 #: includes/class-blocks.php:797
-msgid "We could not save your application. Please try again."
+msgid "Please upload a PDF or DOCX resume."
 msgstr ""
 
 #: includes/class-blocks.php:798
+msgid "Resume uploads are temporarily unavailable. Please contact the employer."
+msgstr ""
+
+#: includes/class-blocks.php:799
+msgid "Too many applications were submitted recently. Please wait and try again."
+msgstr ""
+
+#: includes/class-blocks.php:801
+msgid "We could not save your application. Please try again."
+msgstr ""
+
+#: includes/class-blocks.php:802
 msgid "This application link is no longer valid."
 msgstr ""
 
 #. translators: %s: Hiring organization name.
-#: includes/class-blocks.php:804
+#: includes/class-blocks.php:808
 #, php-format
 msgid "Your application will be shared with %s for hiring review."
 msgstr ""
 
-#: includes/class-blocks.php:825
+#: includes/class-blocks.php:829
 msgid "Name"
 msgstr ""
 
-#: includes/class-blocks.php:825
-#: includes/class-blocks.php:826
-#: includes/class-blocks.php:827
-#: includes/class-blocks.php:828
 #: includes/class-blocks.php:829
+#: includes/class-blocks.php:830
+#: includes/class-blocks.php:831
+#: includes/class-blocks.php:832
+#: includes/class-blocks.php:833
 #: includes/class-setup.php:186
 #: includes/class-setup.php:200
 #: includes/class-setup.php:212
@@ -1631,72 +1658,72 @@ msgstr ""
 msgid "(required)"
 msgstr ""
 
-#: includes/class-blocks.php:825
+#: includes/class-blocks.php:829
 msgid "Enter your full name"
 msgstr ""
 
-#: includes/class-blocks.php:826
+#: includes/class-blocks.php:830
 msgid "Enter your email address"
 msgstr ""
 
-#: includes/class-blocks.php:827
+#: includes/class-blocks.php:831
 msgid "Enter your phone number"
 msgstr ""
 
-#: includes/class-blocks.php:828
+#: includes/class-blocks.php:832
 msgid "Drag and drop a file here or"
 msgstr ""
 
-#: includes/class-blocks.php:828
+#: includes/class-blocks.php:832
 msgid "choose a file"
 msgstr ""
 
-#: includes/class-blocks.php:828
+#: includes/class-blocks.php:832
 msgid "PDF or DOCX. Maximum 5 MB."
 msgstr ""
 
-#: includes/class-blocks.php:829
+#: includes/class-blocks.php:833
 msgid "Tell us why you are a great fit"
 msgstr ""
 
-#: includes/class-blocks.php:834
+#: includes/class-blocks.php:839
 #: includes/class-settings.php:157
 msgid "Your information will be used by the employer to evaluate your application."
 msgstr ""
 
 #. translators: %s: privacy policy URL.
-#: includes/class-blocks.php:838
+#: includes/class-blocks.php:843
 #, php-format
 msgid "<a href=\"%s\">Read our privacy policy.</a>"
 msgstr ""
 
 #. translators: %s: configured number of retention days.
-#: includes/class-blocks.php:845
+#: includes/class-blocks.php:850
 #, php-format
 msgid "Application records are scheduled for deletion from this site after %s days."
 msgstr ""
 
-#: includes/class-blocks.php:852
+#: includes/class-blocks.php:857
 msgid "Uploading resume…"
 msgstr ""
 
-#: includes/class-blocks.php:853
+#: includes/class-blocks.php:858
 msgid "Submitting application…"
 msgstr ""
 
-#: includes/class-blocks.php:854
+#: includes/class-blocks.php:859
 msgid "Upload complete. Processing application…"
 msgstr ""
 
-#: includes/class-blocks.php:855
+#: includes/class-blocks.php:860
 msgid "We could not submit your application. Check your connection and try again."
 msgstr ""
 
-#: includes/class-blocks.php:857
+#: includes/class-blocks.php:862
 msgid "Resume upload progress"
 msgstr ""
 
-#: includes/class-blocks.php:861
+#: includes/class-blocks.php:866
 msgid "Submit application"
 msgstr ""
 
@@ -1834,7 +1861,7 @@ msgstr ""
 #: assets/js/blocks.js:210
 #: src/admin-activity.js:194
 #: src/admin-applications.js:246
-#: src/admin-applications.js:789
+#: src/admin-applications.js:801
 msgid "Job"
 msgstr ""
 
@@ -1859,13 +1886,13 @@ msgstr ""
 
 #: includes/class-employer-applications.php:156
 #: src/admin-applications.js:222
-#: src/admin-applications.js:844
+#: src/admin-applications.js:856
 msgid "Candidate"
 msgstr ""
 
 #: includes/class-employer-applications.php:156
 #: src/admin-applications.js:286
-#: src/admin-applications.js:792
+#: src/admin-applications.js:804
 msgid "Received"
 msgstr ""
 
@@ -1896,7 +1923,7 @@ msgstr ""
 msgid "No files or cover letter were provided."
 msgstr ""
 
-#: includes/class-employer-applications.php:189
+#: includes/class-employer-applications.php:190
 msgid "Application pages"
 msgstr ""
 
@@ -2377,7 +2404,7 @@ msgid "No matching jobs"
 msgstr ""
 
 #: includes/class-employer-portal.php:661
-#: src/admin-applications.js:860
+#: src/admin-applications.js:872
 msgid "Actions"
 msgstr ""
 
@@ -4588,7 +4615,7 @@ msgid "Partial"
 msgstr ""
 
 #: src/admin-applications.js:272
-#: src/admin-applications.js:791
+#: src/admin-applications.js:803
 msgid "Email status"
 msgstr ""
 
@@ -4639,7 +4666,7 @@ msgid "Quick view for %s"
 msgstr ""
 
 #: src/admin-applications.js:548
-#: src/admin-applications.js:923
+#: src/admin-applications.js:935
 msgid "Close quick view"
 msgstr ""
 
@@ -4676,96 +4703,96 @@ msgstr ""
 msgid "No application materials were provided."
 msgstr ""
 
-#: src/admin-applications.js:687
+#: src/admin-applications.js:699
 msgid "Notes"
 msgstr ""
 
-#: src/admin-applications.js:697
+#: src/admin-applications.js:709
 msgid "Add a private note…"
 msgstr ""
 
-#: src/admin-applications.js:708
+#: src/admin-applications.js:720
 msgid "Adding…"
 msgstr ""
 
-#: src/admin-applications.js:715
+#: src/admin-applications.js:727
 msgid "Latest note"
 msgstr ""
 
-#: src/admin-applications.js:723
+#: src/admin-applications.js:735
 msgid "View all notes"
 msgstr ""
 
-#: src/admin-applications.js:747
+#: src/admin-applications.js:759
 msgid "Activity history"
 msgstr ""
 
-#: src/admin-applications.js:838
+#: src/admin-applications.js:850
 msgid "Deselect all"
 msgstr ""
 
-#: src/admin-applications.js:838
+#: src/admin-applications.js:850
 msgid "Select all"
 msgstr ""
 
-#: src/admin-applications.js:924
-#: src/admin-applications.js:1193
+#: src/admin-applications.js:936
+#: src/admin-applications.js:1205
 msgid "Quick view"
 msgstr ""
 
-#: src/admin-applications.js:961
-#: src/admin-applications.js:1269
+#: src/admin-applications.js:973
+#: src/admin-applications.js:1281
 msgid "No applications match this view."
 msgstr ""
 
-#: src/admin-applications.js:963
-#: src/admin-applications.js:1270
+#: src/admin-applications.js:975
+#: src/admin-applications.js:1282
 msgid "No applications yet."
 msgstr ""
 
-#: src/admin-applications.js:1085
+#: src/admin-applications.js:1097
 msgid "Applications could not be loaded."
 msgstr ""
 
 #. translators: 1: Number of updated candidates. 2: Destination status.
-#: src/admin-applications.js:1130
+#: src/admin-applications.js:1142
 #, js-format
 msgid "%1$d candidate moved to %2$s."
 msgid_plural "%1$d candidates moved to %2$s."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/admin-applications.js:1139
+#: src/admin-applications.js:1151
 msgid "The selected candidates were already in that status."
 msgstr ""
 
 #. translators: %s: Number of matching applications.
-#: src/admin-applications.js:1184
+#: src/admin-applications.js:1196
 #, js-format
 msgid "%s matching applications"
 msgstr ""
 
-#: src/admin-applications.js:1201
+#: src/admin-applications.js:1213
 msgid "Change status"
 msgstr ""
 
 #. translators: %d: Number of selected candidates.
-#: src/admin-applications.js:1205
+#: src/admin-applications.js:1217
 #, js-format
 msgid "Change status for %d candidate"
 msgid_plural "Change status for %d candidates"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/admin-applications.js:1230
+#: src/admin-applications.js:1242
 msgid "Export filtered CSV"
 msgstr ""
 
-#: src/admin-applications.js:1231
+#: src/admin-applications.js:1243
 msgid "Export CSV"
 msgstr ""
 
-#: src/admin-applications.js:1245
+#: src/admin-applications.js:1257
 msgid "Dismiss this notice."
 msgstr ""
 

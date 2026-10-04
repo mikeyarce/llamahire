@@ -340,14 +340,15 @@ test.describe.serial( 'complete hiring workflow', () => {
 
 		await page.goto( '/jobs/llamahire-e2e-job/' );
 		await expect( page.getByRole( 'alert' ) ).toHaveCount( 0 );
-		await page.locator( 'input[name="name"]' ).fill( 'Browser Test Candidate' );
+		await page.locator( 'input[name="candidate_name"]' ).fill( 'Browser Test Candidate' );
 		await page.locator( 'input[name="email"]' ).fill( candidateEmail );
 		await page.locator( 'input[name="phone"]' ).fill( '555-0199' );
 		await page.locator( 'textarea[name="cover_letter"]' ).fill( '=CI formula safety check' );
 		await page.locator( 'input[name="resume"]' ).setInputFiles( path.resolve( 'tests/fixture-resume.pdf' ) );
 		let interruptNextSubmission = true;
-		await page.route( '**/wp-admin/admin-post.php', async ( route ) => {
-			if ( interruptNextSubmission ) {
+		const submissionAction = await page.locator( '[data-llamahire-application-form]' ).getAttribute( 'action' );
+		await page.route( submissionAction, async ( route ) => {
+			if ( interruptNextSubmission && route.request().method() === 'POST' ) {
 				interruptNextSubmission = false;
 				await new Promise( ( resolve ) => setTimeout( resolve, 750 ) );
 				await route.abort( 'failed' );
@@ -378,12 +379,12 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await page.locator( 'input[name="phone"]' ).evaluate( ( field ) => field.removeAttribute( 'required' ) );
 		await submitApplication.click();
 		await expect( page.getByRole( 'alert' ) ).toContainText( 'Please complete all required fields' );
-		await expect( page.locator( 'input[name="name"]' ) ).toHaveValue( 'Browser Test Candidate' );
+		await expect( page.locator( 'input[name="candidate_name"]' ) ).toHaveValue( 'Browser Test Candidate' );
 		await expect( page.locator( 'input[name="email"]' ) ).toHaveValue( candidateEmail );
 		await expect( page.locator( 'textarea[name="cover_letter"]' ) ).toHaveValue( '=CI formula safety check' );
 		await expect( page.locator( 'input[name="resume"]' ) ).toHaveValue( '' );
 		expect( await page.evaluate( () => Object.keys( window.sessionStorage ).filter( ( key ) => key.indexOf( 'llamahire-application:' ) === 0 ) ) ).toEqual( [] );
-		await page.unroute( '**/wp-admin/admin-post.php' );
+		await page.unroute( submissionAction );
 
 		await page.locator( 'input[name="phone"]' ).fill( '555-0199' );
 		await page.locator( 'input[name="resume"]' ).setInputFiles( path.resolve( 'tests/fixture-resume.pdf' ) );
@@ -391,7 +392,7 @@ test.describe.serial( 'complete hiring workflow', () => {
 		await expect( page.getByRole( 'status' ) ).toContainText( 'Thanks! Your application has been received.' );
 
 		await page.goto( '/jobs/llamahire-e2e-job/' );
-		await page.locator( 'input[name="name"]' ).fill( 'Duplicate Browser Candidate' );
+		await page.locator( 'input[name="candidate_name"]' ).fill( 'Duplicate Browser Candidate' );
 		await page.locator( 'input[name="email"]' ).fill( candidateEmail.toUpperCase() );
 		await page.locator( 'input[name="phone"]' ).fill( '555-0101' );
 		await page.locator( 'textarea[name="cover_letter"]' ).fill( 'This repeat submission must not replace the original.' );
@@ -404,7 +405,7 @@ test.describe.serial( 'complete hiring workflow', () => {
 	test( '@critical @candidate @applications candidate submits the core application flow', async ( { page } ) => {
 		await page.goto( '/jobs/llamahire-e2e-job/' );
 		await expect( page.getByRole( 'heading', { name: 'LlamaHire Browser Test Role' } ) ).toBeVisible();
-		await page.locator( 'input[name="name"]' ).fill( 'Critical Flow Candidate' );
+		await page.locator( 'input[name="candidate_name"]' ).fill( 'Critical Flow Candidate' );
 		await page.locator( 'input[name="email"]' ).fill( 'critical-browser@example.test' );
 		await page.locator( 'input[name="phone"]' ).fill( '555-0123' );
 		await page.locator( 'textarea[name="cover_letter"]' ).fill( 'Fast release-path application.' );
@@ -825,7 +826,7 @@ test.describe.serial( 'complete hiring workflow', () => {
 
 		await page.context().clearCookies();
 		await page.goto( '/jobs/employer-browser-test-role/' );
-		await page.locator( 'input[name="name"]' ).fill( 'Employer Portal Candidate' );
+		await page.locator( 'input[name="candidate_name"]' ).fill( 'Employer Portal Candidate' );
 		await page.locator( 'input[name="email"]' ).fill( 'employer-portal-browser@example.test' );
 		await page.locator( 'input[name="phone"]' ).fill( '555-0188' );
 		await page.locator( 'textarea[name="cover_letter"]' ).fill( 'Frontend employer application review.' );
