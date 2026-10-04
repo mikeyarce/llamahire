@@ -4,13 +4,62 @@ namespace LlamaHire\Services;
 use LlamaHire\Applications;
 use LlamaHire\Application_Notes;
 use LlamaHire\Audit_Log;
-use LlamaHire\Contracts\Application_Repository as Application_Repository_Contract;
+use LlamaHire\Contracts\Atomic_Application_Repository as Application_Repository_Contract;
 
 defined( 'ABSPATH' ) || exit;
 
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- This repository is the persistence boundary for LlamaHire's private custom table; caching candidate records would risk stale sensitive data.
 
 final class Application_Repository implements Application_Repository_Contract {
+	/** Prevent callback re-entry from committing the outer submission. */
+	private $writing_extension = false;
+
+	/** Commit required local extension data before acknowledging a new application. */
+	public function create_with_extension( array $application, callable $persist, array $tables ) {
+		global $wpdb;
+		$error = new \WP_Error( 'llamahire_extension_storage_failed', __( 'The application could not be saved. Please try again.', 'llamahire' ) );
+		if ( $this->writing_extension || ! $tables || count( $tables ) > 10 ) {
+			return $error;
+		}
+		$previous = $wpdb->suppress_errors( true );
+		$started = false;
+		$this->writing_extension = true;
+		try {
+			foreach ( array_merge( array( Applications::table() ), $tables ) as $table ) {
+				if ( ! is_string( $table ) || strlen( $table ) > 64 || ! preg_match( '/^[a-zA-Z0-9_]+$/D', $table ) || 0 !== strpos( $table, $wpdb->prefix ) ) {
+					return $error;
+				}
+				// SQLite Database Integration reports InnoDB-compatible table semantics.
+				$metadata = $wpdb->get_row( $wpdb->prepare( 'SHOW TABLE STATUS LIKE %s', $wpdb->esc_like( $table ) ) );
+				if ( ! $metadata || $metadata->Name !== $table || 'innodb' !== strtolower( (string) $metadata->Engine ) ) {
+					return $error;
+				}
+			}
+			if ( false === $wpdb->query( 'START TRANSACTION' ) ) {
+				return $error;
+			}
+			$started = true;
+			$result = $this->create_once( $application );
+			if ( is_wp_error( $result ) || ( $result['created'] && true !== $persist( (int) $result['id'] ) ) ) {
+				return $error;
+			}
+			if ( false === $wpdb->query( 'COMMIT' ) ) {
+				return $error;
+			}
+			$started = false;
+			return $result;
+		} catch ( \Throwable $exception ) {
+			// Provider/database exceptions can contain candidate values; never expose them.
+			return $error;
+		} finally {
+			if ( $started ) {
+				$wpdb->query( 'ROLLBACK' );
+			}
+			$this->writing_extension = false;
+			$wpdb->suppress_errors( $previous );
+		}
+	}
+
 	public function create( array $application ) {
 		$result = $this->create_once( $application );
 		return is_wp_error( $result ) ? $result : $result['id'];
