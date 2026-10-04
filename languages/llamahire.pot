@@ -223,8 +223,8 @@ msgstr ""
 
 #: includes/class-admin-workspaces.php:137
 #: includes/class-admin.php:67
-#: includes/class-employer-portal.php:696
-#: includes/class-employer-portal.php:775
+#: includes/class-employer-portal.php:697
+#: includes/class-employer-portal.php:776
 msgid "Awaiting review"
 msgstr ""
 
@@ -480,14 +480,14 @@ msgstr ""
 #: includes/class-admin-workspaces.php:339
 #: includes/class-blocks.php:299
 #: includes/class-employer-applications.php:187
-#: includes/class-employer-portal.php:757
+#: includes/class-employer-portal.php:758
 msgid "Previous"
 msgstr ""
 
 #: includes/class-admin-workspaces.php:340
 #: includes/class-blocks.php:300
 #: includes/class-employer-applications.php:187
-#: includes/class-employer-portal.php:758
+#: includes/class-employer-portal.php:759
 msgid "Next"
 msgstr ""
 
@@ -710,15 +710,15 @@ msgid "Closing soon"
 msgstr ""
 
 #: includes/class-admin.php:88
-#: includes/class-employer-portal.php:698
-#: includes/class-employer-portal.php:768
+#: includes/class-employer-portal.php:699
+#: includes/class-employer-portal.php:769
 #: includes/class-jobs.php:596
 msgid "Closed"
 msgstr ""
 
 #: includes/class-admin.php:89
-#: includes/class-employer-portal.php:699
-#: includes/class-employer-portal.php:771
+#: includes/class-employer-portal.php:700
+#: includes/class-employer-portal.php:772
 #: includes/class-jobs.php:598
 msgid "Expired"
 msgstr ""
@@ -1018,7 +1018,7 @@ msgstr ""
 
 #. translators: %s: Number of applications for a job.
 #: includes/class-admin.php:666
-#: includes/class-employer-portal.php:804
+#: includes/class-employer-portal.php:805
 #, php-format
 msgid "%s application"
 msgid_plural "%s applications"
@@ -1843,7 +1843,7 @@ msgid "All jobs"
 msgstr ""
 
 #: includes/class-employer-applications.php:102
-#: includes/class-employer-portal.php:694
+#: includes/class-employer-portal.php:695
 msgid "All statuses"
 msgstr ""
 
@@ -1884,7 +1884,7 @@ msgstr ""
 
 #: includes/class-employer-applications.php:173
 #: includes/class-employer-portal.php:149
-#: includes/class-employer-portal.php:810
+#: includes/class-employer-portal.php:811
 msgid "Preview"
 msgstr ""
 
@@ -2281,37 +2281,37 @@ msgid "Remove the current company logo from this listing"
 msgstr ""
 
 #: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:912
+#: includes/class-employer-portal.php:913
 #: assets/js/job-editor.js:192
 msgid "Notification email"
 msgstr ""
 
 #: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:919
+#: includes/class-employer-portal.php:920
 msgid "Candidate notifications from the LlamaHire form will be sent to this inbox."
 msgstr ""
 
 #: includes/class-employer-portal.php:589
 #: includes/class-employer-portal.php:590
-#: includes/class-employer-portal.php:912
+#: includes/class-employer-portal.php:913
 #: assets/js/job-editor.js:188
 #: assets/js/job-editor.js:192
 msgid "Application email"
 msgstr ""
 
 #: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:919
+#: includes/class-employer-portal.php:920
 msgid "Candidates will apply by email to this address."
 msgstr ""
 
 #: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:910
+#: includes/class-employer-portal.php:911
 #: assets/js/job-editor.js:192
 msgid "Application website URL"
 msgstr ""
 
 #: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:917
+#: includes/class-employer-portal.php:918
 msgid "Candidates will be sent to this website to apply."
 msgstr ""
 
@@ -2381,54 +2381,54 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
-#: includes/class-employer-portal.php:674
+#: includes/class-employer-portal.php:675
 msgid "No jobs match those filters. Try another search or clear the filters."
 msgstr ""
 
-#: includes/class-employer-portal.php:674
+#: includes/class-employer-portal.php:675
 msgid "You have not created any job listings yet."
 msgstr ""
 
-#: includes/class-employer-portal.php:695
-#: includes/class-employer-portal.php:776
+#: includes/class-employer-portal.php:696
+#: includes/class-employer-portal.php:777
 #: assets/js/job-editor.js:145
 msgid "Published"
 msgstr ""
 
-#: includes/class-employer-portal.php:697
-#: includes/class-employer-portal.php:774
+#: includes/class-employer-portal.php:698
+#: includes/class-employer-portal.php:775
 msgid "Draft"
 msgstr ""
 
-#: includes/class-employer-portal.php:762
+#: includes/class-employer-portal.php:763
 msgid "My Jobs pages"
 msgstr ""
 
 #. translators: %s: formatted date.
-#: includes/class-employer-portal.php:790
+#: includes/class-employer-portal.php:791
 #, php-format
 msgid "Applications closed %s"
 msgstr ""
 
 #. translators: %s: formatted date.
-#: includes/class-employer-portal.php:790
+#: includes/class-employer-portal.php:791
 #, php-format
 msgid "Listing expired %s"
 msgstr ""
 
 #. translators: %s: formatted date.
-#: includes/class-employer-portal.php:793
+#: includes/class-employer-portal.php:794
 #, php-format
 msgid "Applications close %s"
 msgstr ""
 
 #. translators: %s: formatted date.
-#: includes/class-employer-portal.php:793
+#: includes/class-employer-portal.php:794
 #, php-format
 msgid "Listing expires %s"
 msgstr ""
 
-#: includes/class-employer-portal.php:809
+#: includes/class-employer-portal.php:810
 #: includes/class-setup.php:246
 #: includes/class-setup.php:247
 #: includes/class-setup.php:248
@@ -2436,53 +2436,53 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
-#: includes/class-employer-portal.php:813
+#: includes/class-employer-portal.php:814
 msgid "Renew"
 msgstr ""
 
-#: includes/class-employer-portal.php:816
+#: includes/class-employer-portal.php:817
 msgid "Relist"
 msgstr ""
 
-#: includes/class-employer-portal.php:818
+#: includes/class-employer-portal.php:819
 #: includes/class-jobs.php:571
 msgid "Duplicate"
 msgstr ""
 
-#: includes/class-employer-portal.php:820
+#: includes/class-employer-portal.php:821
 msgid "Close"
 msgstr ""
 
-#: includes/class-employer-portal.php:822
+#: includes/class-employer-portal.php:823
 msgid "Delete"
 msgstr ""
 
-#: includes/class-employer-portal.php:822
+#: includes/class-employer-portal.php:823
 msgid "Delete this listing?"
 msgstr ""
 
-#: includes/class-employer-portal.php:822
+#: includes/class-employer-portal.php:823
 msgid "Move this listing to the trash and remove it from My Jobs."
 msgstr ""
 
-#: includes/class-employer-portal.php:822
+#: includes/class-employer-portal.php:823
 msgid "Confirm delete"
 msgstr ""
 
 #. translators: 1: active listing count, 2: maximum active listings.
-#: includes/class-employer-portal.php:894
+#: includes/class-employer-portal.php:895
 #, php-format
 msgid "%1$d of %2$d active listings used."
 msgstr ""
 
 #. translators: %s: formatted listing-expiration date.
-#: includes/class-employer-portal.php:898
+#: includes/class-employer-portal.php:899
 #, php-format
 msgid "This listing expires on %s."
 msgstr ""
 
 #. translators: %d: default listing duration in days.
-#: includes/class-employer-portal.php:901
+#: includes/class-employer-portal.php:902
 #, php-format
 msgid "New submissions remain active for %d day after submission."
 msgid_plural "New submissions remain active for %d days after submission."
