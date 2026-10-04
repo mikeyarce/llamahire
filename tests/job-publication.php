@@ -45,6 +45,9 @@ try {
 	wp_update_post( array( 'ID' => $job, 'post_status' => 'publish' ) );
 	$assert( 'pending' === get_post_status( $job ) && $lifecycle->context( $job )['approved'], 'Approval was not retained independently of payment.' );
 	$assert( null === $lifecycle->period( $job ) && '' === Jobs::get_meta( $job )['listing_expires'] && 0 === $mails, 'Unpaid approval started a period or notified publication.' );
+	$assert( ! $lifecycle->context( $job )['owner_eligible'], 'A role alone established verified employer enrollment.' );
+	update_user_meta( $owner, \LlamaHire\Employer_Registration::STATUS_META, \LlamaHire\Employer_Registration::STATUS_APPROVED );
+	$assert( $lifecycle->context( $job )['owner_eligible'], 'Verified approved employer enrollment was not exposed.' );
 	$provider->jobs[ $site ][ $job ]['eligible'] = true;
 	wp_set_current_user( 0 );
 	$assert( true === $lifecycle->reconcile( $job ), 'Verified payment did not publish an approved job.' );

@@ -2694,7 +2694,7 @@ msgstr ""
 msgid "Currently open job listings."
 msgstr ""
 
-#: includes/class-job-publication.php:323
+#: includes/class-job-publication.php:328
 msgid "This listing is waiting for its publication requirements."
 msgstr ""
 

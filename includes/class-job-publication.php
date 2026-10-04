@@ -55,6 +55,11 @@ final class Job_Publication {
 		return hash( 'sha256', wp_json_encode( array( (int) $post->post_author, $post->post_title, $post->post_content, $post->post_excerpt, $meta, $terms ) ) );
 	}
 
+	/** Enrollment state belongs to Free; extensions receive only its eligibility result. */
+	private static function owner_eligible( $owner_id ) {
+		return $owner_id > 0 && user_can( $owner_id, 'edit_llamahire_jobs' ) && Employer_Registration::STATUS_APPROVED === get_user_meta( $owner_id, Employer_Registration::STATUS_META, true );
+	}
+
 	public static function context( $job_id ) {
 		$id = Listing_Rules::id( $job_id );
 		$post = $id ? get_post( $id ) : null;
@@ -65,7 +70,7 @@ final class Job_Publication {
 		$meta = Jobs::get_meta( $id );
 		$hash = self::fingerprint( $post );
 		$approved = $state && (int) $state['owner_id'] === (int) $post->post_author && '' !== $hash && '' !== $state['approval_hash'] && hash_equals( $state['approval_hash'], $hash ) && in_array( $post->post_status, array( 'pending', 'future', 'publish' ), true );
-		return array( 'site_id' => get_current_blog_id(), 'job_id' => $id, 'owner_id' => (int) $post->post_author, 'mode' => Settings::site_mode(), 'status' => $post->post_status, 'approved' => (bool) $approved, 'actor_id' => get_current_user_id(), 'closed' => '1' === $meta['closed'], 'deadline' => $meta['deadline'], 'listing_expires' => $meta['listing_expires'], 'publish_at' => $post->post_date_gmt, 'period' => $period );
+		return array( 'site_id' => get_current_blog_id(), 'job_id' => $id, 'owner_id' => (int) $post->post_author, 'owner_eligible' => self::owner_eligible( (int) $post->post_author ), 'mode' => Settings::site_mode(), 'status' => $post->post_status, 'approved' => (bool) $approved, 'actor_id' => get_current_user_id(), 'closed' => '1' === $meta['closed'], 'deadline' => $meta['deadline'], 'listing_expires' => $meta['listing_expires'], 'publish_at' => $post->post_date_gmt, 'period' => $period );
 	}
 
 	private static function decision( array $context ) {
@@ -128,7 +133,7 @@ final class Job_Publication {
 		if ( Jobs::POST_TYPE !== $data['post_type'] || ! self::providers() ) { return $data; }
 		$id = absint( $postarr['ID'] ?? 0 );
 		if ( isset( self::$changing[ self::key( $id ) ] ) ) { return $data; }
-		$context = $id ? self::context( $id ) : array( 'site_id' => get_current_blog_id(), 'job_id' => 0, 'owner_id' => (int) $data['post_author'], 'mode' => Settings::site_mode(), 'status' => 'draft', 'approved' => false, 'actor_id' => get_current_user_id(), 'closed' => false, 'deadline' => '', 'listing_expires' => '', 'publish_at' => '', 'period' => null );
+		$context = $id ? self::context( $id ) : array( 'site_id' => get_current_blog_id(), 'job_id' => 0, 'owner_id' => (int) $data['post_author'], 'owner_eligible' => self::owner_eligible( (int) $data['post_author'] ), 'mode' => Settings::site_mode(), 'status' => 'draft', 'approved' => false, 'actor_id' => get_current_user_id(), 'closed' => false, 'deadline' => '', 'listing_expires' => '', 'publish_at' => '', 'period' => null );
 		$decision = $context && ! is_wp_error( $context ) ? self::decision( $context ) : self::held();
 		if ( ! is_wp_error( $decision ) && ! $decision['managed'] ) { return $data; }
 		unset( self::$intents[ self::key( $id ) ] );

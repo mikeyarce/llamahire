@@ -545,9 +545,12 @@ Obtain `Service_IDs::JOB_LIFECYCLE` after Free is ready:
 
 - `context($job_id)` returns null for a missing job or a fixed `WP_Error` on storage
   failure. Otherwise it returns `site_id`, `job_id`, `owner_id`, `mode`, `status`,
-  `approved`, `actor_id`, `closed`, `deadline`, `listing_expires`, `publish_at` (UTC)
+  `owner_eligible`, `approved`, `actor_id`, `closed`, `deadline`, `listing_expires`, `publish_at` (UTC)
   and `period` (current internal-format period array or null). There is no job text,
   candidate data, contact address or billing payload in this context.
+  `owner_eligible` requires Free's verified/approved employer enrollment and the
+  job-edit capability; a role name or operator account alone does not establish
+  enrollment. Paid-listing policies must require it for employer purchases.
 - `approve($job_id)` requires the current user's `publish_llamahire_jobs` and
   `edit_post` permissions. It only handles managed jobs in draft, pending, future
   or published status. An approved draft first becomes pending. Approval binds the
