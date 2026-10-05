@@ -509,6 +509,26 @@ try {
 	$assert( 'LlamaHire Test Employer' === ( $schema['hiringOrganization']['name'] ?? '' ) && $job_meta['job_identifier'] === ( $schema['identifier']['value'] ?? '' ), 'Schema builder emits the hiring organization and stable identifier' );
 	$assert( false === isset( $schema['jobLocationType'] ), 'Hybrid jobs are not incorrectly marked as fully remote' );
 	$assert( false !== strpos( $schema['validThrough'] ?? '', $job_meta['deadline'] ), 'Schema expiry uses the visible application deadline' );
+	$original_schema_query = $GLOBALS['wp_query'];
+	$schema_payload = '</script><script>alert("schema")</script><!-- café & \'quoted\'';
+	$schema_filter = static function ( $data ) use ( $schema_payload ) {
+		$data['title'] = $schema_payload;
+		return $data;
+	};
+	add_filter( 'llamahire_job_posting_schema', $schema_filter );
+	try {
+		$GLOBALS['wp_query'] = new WP_Query( array( 'post_type' => \LlamaHire\Jobs::POST_TYPE, 'p' => $job_id ) );
+		ob_start();
+		\LlamaHire\SEO::schema();
+		$schema_output = ob_get_clean();
+	} finally {
+		$GLOBALS['wp_query'] = $original_schema_query;
+		remove_filter( 'llamahire_job_posting_schema', $schema_filter );
+	}
+	$schema_json = preg_replace( '/^\s*<script type="application\/ld\+json">(.*)<\/script>\s*$/s', '$1', $schema_output );
+	$decoded_schema = json_decode( $schema_json, true );
+	$assert( 1 === substr_count( strtolower( $schema_output ), '</script>' ) && false === strpos( $schema_json, '<' ), 'Rendered JSON-LD cannot inject a script terminator or HTML comment opener' );
+	$assert( JSON_ERROR_NONE === json_last_error() && $schema_payload === ( $decoded_schema['title'] ?? null ) && $schema['description'] === ( $decoded_schema['description'] ?? null ) && $schema['@context'] === ( $decoded_schema['@context'] ?? null ), 'Safe JSON-LD encoding preserves Unicode, quotes, URLs, and description HTML when decoded' );
 	$admin_ids = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
 	$original_user_id = get_current_user_id();
 	wp_set_current_user( 0 );

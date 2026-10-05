@@ -13,7 +13,7 @@ final class SEO {
 		if ( ! is_singular( Jobs::POST_TYPE ) ) { return; }
 		$data = Plugin::instance()->services()->get( Service_IDs::SCHEMA_BUILDER )->build( get_queried_object_id() );
 		if ( ! $data ) { return; }
-		echo "\n<script type=\"application/ld+json\">" . wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput
+		echo "\n<script type=\"application/ld+json\">" . wp_json_encode( $data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) . "</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON hex encoding prevents values from breaking out of the script element.
 	}
 
 	public static function title( $parts ) {
