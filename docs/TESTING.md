@@ -369,3 +369,28 @@ behavior. It runs in the PHP/WordPress contract matrix and disposable SQLite sui
 misbehavior, full-batch pagination and safe database errors. These are trusted
 server-side references for extension-owned exports/erasures; Pro's WordPress
 privacy browser journey validates its own export mapping and cleanup separately.
+
+### Simulating listing expiry for extension renewal tests
+
+On a `local` or `development` site with a generated fixture dataset:
+
+```sh
+wp llamahire fixtures expire-listing <job-id> --yes
+```
+
+The job must belong to the current site's registered fixture dataset, retain its
+fixture ownership marker, and have a canonical listing period owned by its
+current author. The command deliberately moves only that fictional period's
+start/expiry into the past and updates the saved expiry mirrors atomically. It
+preserves its period identity and duration, making a real new-period renewal
+possible without waiting days or letting another plugin edit Free storage. It
+requires confirmation, refuses staging/production and unrelated jobs, respects
+the publication lease, and rolls back storage failures. It is a development
+fixture command, excluded from release ZIPs; never use it as a production expiry
+or billing operation.
+
+`tests/publication-fixtures.php` verifies confirmation/ownership/lease rejection,
+failed-commit rollback, real CLI dispatch, expired availability and new-period
+renewal with historical identity retained. Required MySQL and SQLite contract
+jobs run it. Extension suites may invoke this documented CLI interface against
+registered fictional jobs; they must not manipulate Free's private period tables.
