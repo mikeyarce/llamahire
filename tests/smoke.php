@@ -48,7 +48,7 @@ $original_current_user_id = get_current_user_id();
 require_once LLAMAHIRE_PATH . 'includes/class-uninstaller.php';
 
 try {
-	$assert( defined( 'LLAMAHIRE_API_VERSION' ) && '1.0.0-alpha.17' === LLAMAHIRE_API_VERSION, 'Public API version is declared' );
+	$assert( defined( 'LLAMAHIRE_API_VERSION' ) && '1.0.0-alpha.18' === LLAMAHIRE_API_VERSION, 'Public API version is declared' );
 	$assert( 1 === did_action( 'llamahire_ready' ), 'Public ready action fired once' );
 	$services = \LlamaHire\Plugin::instance()->services();
 	$assert( $services instanceof \LlamaHire\Contracts\Service_Container, 'Public service container is available' );
@@ -66,6 +66,7 @@ try {
 	$assert( $services->get( \LlamaHire\Service_IDs::CANDIDATE_DATA ) instanceof \LlamaHire\Contracts\Candidate_Data_Lifecycle, 'Candidate-data lifecycle satisfies its public contract' );
 	$assert( $services->get( \LlamaHire\Service_IDs::SCHEMA_BUILDER ) instanceof \LlamaHire\Contracts\Schema_Builder, 'Schema builder satisfies its public contract' );
 	$assert( $services->get( \LlamaHire\Service_IDs::EXTENSION_ACCESS ) instanceof \LlamaHire\Contracts\Extension_Access, 'Extension access satisfies its public contract' );
+	$assert( $services->get( \LlamaHire\Service_IDs::APPLICATION_PRIVACY ) instanceof \LlamaHire\Contracts\Application_Privacy, 'Application privacy references satisfy their public contract' );
 	$locked = false;
 	try {
 		$services->set( 'llamahire.smoke_test', new stdClass() );

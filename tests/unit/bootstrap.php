@@ -27,3 +27,13 @@ function esc_url_raw( $value, $protocols = null ) { return $value; }
 require_once $root . '/includes/class-employer-job-extensions.php';
 
 require_once $root . '/includes/class-application-extensions.php';
+
+// Privacy adapter boundaries; real WordPress verifies capability mapping and queries.
+function current_user_can( $capability ) { return user_can( get_current_user_id(), $capability ); }
+function is_email( $value ) { return filter_var( $value, FILTER_VALIDATE_EMAIL ); }
+class WP_Error {
+	private $code;
+	public function __construct( $code, $message = '' ) { $this->code = $code; }
+	public function get_error_code() { return $this->code; }
+}
+foreach ( array( 'contracts/interface-service-container.php', 'contracts/interface-application-query.php', 'contracts/interface-application-privacy.php', 'class-service-ids.php', 'class-service-container.php', 'services/class-application-privacy.php' ) as $file ) { require_once $root . '/includes/' . $file; }

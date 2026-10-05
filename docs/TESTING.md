@@ -357,3 +357,15 @@ Edit moderation and anonymous availability in approval-first and payment-first
 orders. The local provider fixture supplies verified eligibility only; the test
 uses the real moderation UI, public job page and JobPosting output. Clean an
 interrupted run with `npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/e2e/publication-fixtures.php cleanup`.
+
+
+### Extension privacy references (API alpha.18)
+
+`tests/application-privacy.php` exercises real granular/core privacy capabilities,
+owner and board-wide scope, exact email identity, deleted-job references without
+normal review access, numeric-only responses, read-failure handling and read-only
+behavior. It runs in the PHP/WordPress contract matrix and disposable SQLite suite.
+`ApplicationPrivacyTest` covers malformed input, scope denial, custom query
+misbehavior, full-batch pagination and safe database errors. These are trusted
+server-side references for extension-owned exports/erasures; Pro's WordPress
+privacy browser journey validates its own export mapping and cleanup separately.

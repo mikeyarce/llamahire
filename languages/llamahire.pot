@@ -4081,6 +4081,10 @@ msgstr ""
 msgid "Displays open LlamaHire jobs in the current department."
 msgstr ""
 
+#: includes/services/class-application-privacy.php:54
+msgid "Application privacy references are unavailable for this request."
+msgstr ""
+
 #: includes/services/class-application-repository.php:20
 msgid "The application could not be saved. Please try again."
 msgstr ""

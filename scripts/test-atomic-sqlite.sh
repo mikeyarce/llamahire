@@ -22,6 +22,7 @@ PHP
 "${CLI[@]}" eval-file wp-content/plugins/llamahire/tests/atomic-submissions.php
 "${CLI[@]}" eval-file wp-content/plugins/llamahire/tests/application-extension-boundaries.php
 "${CLI[@]}" eval-file wp-content/plugins/llamahire/tests/job-publication.php
+"${CLI[@]}" eval-file wp-content/plugins/llamahire/tests/application-privacy.php
 "${CLI[@]}" core multisite-convert --title=PublicationNetworkFixture
 "${CLI[@]}" eval-file wp-content/plugins/llamahire/tests/listing-multisite.php
 "${CLI[@]}" eval-file wp-content/plugins/llamahire/tests/uninstall-multisite.php
