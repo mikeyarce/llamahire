@@ -507,7 +507,7 @@ final class Jobs {
 	public static function is_open( $post_id ) {
 		$meta = self::get_meta( $post_id );
 		$today = current_time( 'Y-m-d' );
-		return '1' !== $meta['closed'] && ( empty( $meta['deadline'] ) || $meta['deadline'] >= $today ) && ( empty( $meta['listing_expires'] ) || $meta['listing_expires'] >= $today );
+		return '1' !== $meta['closed'] && ( empty( $meta['deadline'] ) || $meta['deadline'] >= $today ) && ( empty( $meta['listing_expires'] ) || $meta['listing_expires'] >= $today ) && Job_Publication::available( $post_id );
 	}
 
 	public static function listing_expires_soon( $post_id, $days = 7 ) {

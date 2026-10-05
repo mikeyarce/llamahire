@@ -1968,32 +1968,32 @@ msgid ""
 "Review listing: %4$s"
 msgstr ""
 
-#: includes/class-employer-notifications.php:124
+#: includes/class-employer-notifications.php:125
 msgid "Your job listing was approved"
 msgstr ""
 
-#: includes/class-employer-notifications.php:124
+#: includes/class-employer-notifications.php:125
 msgid "approved and published"
 msgstr ""
 
-#: includes/class-employer-notifications.php:125
+#: includes/class-employer-notifications.php:126
 msgid "Your job listing needs changes"
 msgstr ""
 
-#: includes/class-employer-notifications.php:125
+#: includes/class-employer-notifications.php:126
 msgid "returned to draft for changes"
 msgstr ""
 
-#: includes/class-employer-notifications.php:126
+#: includes/class-employer-notifications.php:127
 msgid "Your job listing was declined"
 msgstr ""
 
-#: includes/class-employer-notifications.php:126
+#: includes/class-employer-notifications.php:127
 msgid "declined by the job-board operator"
 msgstr ""
 
 #. translators: 1: job title, 2: moderation result, 3: employer dashboard URL.
-#: includes/class-employer-notifications.php:132
+#: includes/class-employer-notifications.php:133
 #, php-format
 msgid ""
 "Your listing “%1$s” was %2$s.\n"
@@ -2694,6 +2694,14 @@ msgstr ""
 msgid "Currently open job listings."
 msgstr ""
 
+#: includes/class-job-publication.php:292
+msgid "Invalid post ID."
+msgstr ""
+
+#: includes/class-job-publication.php:328
+msgid "This listing is waiting for its publication requirements."
+msgstr ""
+
 #: includes/class-jobs.php:24
 #: includes/class-setup.php:113
 #: includes/class-setup.php:235
@@ -2789,7 +2797,11 @@ msgstr ""
 msgid "WordPress could not duplicate this job. Please try again."
 msgstr ""
 
-#: includes/class-migrations.php:472
+#: includes/class-listing-store.php:142
+msgid "Listing publication is temporarily unavailable. Try again later."
+msgstr ""
+
+#: includes/class-migrations.php:507
 msgid "LlamaHire could not update its application database. Candidate submissions may be unavailable until the database permissions or migration lock are resolved."
 msgstr ""
 

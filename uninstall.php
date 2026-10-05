@@ -27,6 +27,7 @@ $llamahire_uninstall_current_site = static function () use ( $llamahire_remove_d
 	wp_clear_scheduled_hook( 'llamahire_send_expiring_listing_notices' );
 	wp_clear_scheduled_hook( 'llamahire_geocode_job' );
 	wp_clear_scheduled_hook( 'llamahire_continue_migrations' );
+	wp_unschedule_hook( 'llamahire_reconcile_listing' );
 
 	if ( $llamahire_remove_data ) {
 		\LlamaHire\Uninstaller::remove_data();

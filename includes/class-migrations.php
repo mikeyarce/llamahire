@@ -165,6 +165,11 @@ final class Migrations {
 					return false;
 				}
 				update_option( self::OPTION, '12', false );
+				$current = 12;
+			}
+			if ( $current < 13 ) {
+				if ( ! self::migration_13_listing_publication() ) { return false; }
+				update_option( self::OPTION, '13', false );
 			}
 			delete_option( 'llamahire_db_version' );
 			wp_clear_scheduled_hook( self::CONTINUE_HOOK );
@@ -173,6 +178,36 @@ final class Migrations {
 		}
 
 		return (int) get_option( self::OPTION, 0 ) >= (int) LLAMAHIRE_SCHEMA_VERSION;
+	}
+
+	/** Keep approval and immutable usage separate from provider billing records. */
+	private static function migration_13_listing_publication() {
+		global $wpdb;
+		$previous = $wpdb->suppress_errors();
+		try {
+			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+			$charset = $wpdb->get_charset_collate();
+			$definitions = array(
+				'states' => "job_id bigint(20) unsigned NOT NULL,\nowner_id bigint(20) unsigned NOT NULL,\napproval_hash varchar(64) NOT NULL DEFAULT '',\napproved_by bigint(20) unsigned NOT NULL DEFAULT 0,\napproved_at datetime DEFAULT NULL,\ncurrent_period varchar(101) NOT NULL DEFAULT '',\nrevision bigint(20) unsigned NOT NULL DEFAULT 1,\nPRIMARY KEY  (job_id)",
+				'periods' => "period_key varchar(101) NOT NULL,\nprevious_key varchar(101) NOT NULL DEFAULT '',\njob_id bigint(20) unsigned NOT NULL,\nowner_id bigint(20) unsigned NOT NULL,\ndays smallint unsigned NOT NULL,\nstarted_at datetime NOT NULL,\nexpires date NOT NULL,\nPRIMARY KEY  (period_key),\nKEY job_id (job_id),\nKEY owner_id (owner_id)",
+			);
+			foreach ( $definitions as $kind => $columns ) {
+				$table = $wpdb->prefix . 'llamahire_listing_' . $kind;
+				dbDelta( "CREATE TABLE {$table} (\n{$columns}\n) ENGINE=InnoDB {$charset};" );
+				$installed = $wpdb->get_col( $wpdb->prepare( 'SHOW COLUMNS FROM %i', $table ) );
+				$expected = array();
+				foreach ( explode( "\n", $columns ) as $column ) {
+					if ( ! preg_match( '/^(PRIMARY|KEY) /', $column ) ) { $expected[] = strtok( $column, ' ' ); }
+				}
+				$primary = $wpdb->get_results( $wpdb->prepare( 'SHOW INDEX FROM %i WHERE Key_name = %s', $table, 'PRIMARY' ), ARRAY_A );
+				if ( array_diff( $expected, (array) $installed ) || array( strtok( $columns, ' ' ) ) !== array_column( (array) $primary, 'Column_name' ) ) { return false; }
+			}
+			return true;
+		} catch ( \Throwable $error ) {
+			return false;
+		} finally {
+			$wpdb->suppress_errors( $previous );
+		}
 	}
 
 	private static function migration_1_create_applications_table() {

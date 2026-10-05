@@ -28,6 +28,7 @@ final class Activator {
 					wp_clear_scheduled_hook( Employer_Notifications::EXPIRING_HOOK );
 					wp_clear_scheduled_hook( Geocoding::HOOK );
 					wp_clear_scheduled_hook( Migrations::CONTINUE_HOOK );
+					wp_unschedule_hook( 'llamahire_reconcile_listing' );
 					delete_option( 'rewrite_rules' );
 				}
 			);
@@ -40,6 +41,7 @@ final class Activator {
 		wp_clear_scheduled_hook( Employer_Notifications::EXPIRING_HOOK );
 		wp_clear_scheduled_hook( Geocoding::HOOK );
 		wp_clear_scheduled_hook( Migrations::CONTINUE_HOOK );
+		wp_unschedule_hook( 'llamahire_reconcile_listing' );
 		delete_option( 'rewrite_rules' );
 	}
 

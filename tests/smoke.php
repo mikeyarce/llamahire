@@ -48,7 +48,7 @@ $original_current_user_id = get_current_user_id();
 require_once LLAMAHIRE_PATH . 'includes/class-uninstaller.php';
 
 try {
-	$assert( defined( 'LLAMAHIRE_API_VERSION' ) && '1.0.0-alpha.16' === LLAMAHIRE_API_VERSION, 'Public API version is declared' );
+	$assert( defined( 'LLAMAHIRE_API_VERSION' ) && '1.0.0-alpha.17' === LLAMAHIRE_API_VERSION, 'Public API version is declared' );
 	$assert( 1 === did_action( 'llamahire_ready' ), 'Public ready action fired once' );
 	$services = \LlamaHire\Plugin::instance()->services();
 	$assert( $services instanceof \LlamaHire\Contracts\Service_Container, 'Public service container is available' );
