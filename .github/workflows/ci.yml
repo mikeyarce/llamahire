@@ -151,6 +151,8 @@ jobs:
         run: npm run env:start
       - name: Run contract smoke suite
         run: npm run test:smoke
+      - name: Required extension persistence and rollback
+        run: npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/atomic-submissions.php
       - name: Stop WordPress
         if: always()
         continue-on-error: true
@@ -244,3 +246,11 @@ jobs:
         if: always()
         continue-on-error: true
         run: npm run env:stop
+
+  atomic-sqlite:
+    name: SQLite atomic submission contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify rollback, retries and duplicates with SQLite
+        run: bash scripts/test-atomic-sqlite.sh

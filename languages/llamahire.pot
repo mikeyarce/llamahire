@@ -786,8 +786,8 @@ msgstr ""
 #: includes/class-employer-applications.php:35
 #: includes/class-rest-api.php:298
 #: includes/class-rest-api.php:304
-#: includes/services/class-application-repository.php:139
-#: includes/services/class-application-repository.php:184
+#: includes/services/class-application-repository.php:188
+#: includes/services/class-application-repository.php:233
 #: includes/services/class-candidate-data-lifecycle.php:59
 #: includes/services/class-candidate-data-lifecycle.php:74
 #: includes/services/class-candidate-data-lifecycle.php:97
@@ -4042,15 +4042,19 @@ msgstr ""
 msgid "Displays open LlamaHire jobs in the current department."
 msgstr ""
 
-#: includes/services/class-application-repository.php:51
+#: includes/services/class-application-repository.php:20
+msgid "The application could not be saved. Please try again."
+msgstr ""
+
+#: includes/services/class-application-repository.php:100
 msgid "The application is missing required data."
 msgstr ""
 
-#: includes/services/class-application-repository.php:108
+#: includes/services/class-application-repository.php:157
 msgid "The application could not be stored."
 msgstr ""
 
-#: includes/services/class-application-repository.php:142
+#: includes/services/class-application-repository.php:191
 msgid "The application status is invalid."
 msgstr ""
 

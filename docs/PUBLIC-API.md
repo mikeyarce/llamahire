@@ -1,6 +1,6 @@
 # LlamaHire Free public API
 
-API version: `1.0.0-alpha.14` (unreleased extension-contract work)
+API version: `1.0.0-alpha.15` (unreleased extension-contract work)
 Plugin version introduced: `0.1.0`
 Status: experimental until API 1.0
 
@@ -390,3 +390,40 @@ wp eval-file wp-content/plugins/llamahire/tests/smoke.php
 ```
 
 The future private Pro repository must run its own compatibility suite against Free `main`, the latest Free release, and the oldest supported Free release.
+
+
+## Atomic application extension storage (alpha.15, unreleased)
+
+The default application repository additionally implements
+`Contracts\Atomic_Application_Repository`. Its
+`create_with_extension(array $application, callable $persist, array $tables)`
+commits the core record and required extension writes on the same WordPress
+database connection. The writer receives only the new numeric application ID;
+return exactly `true` after all required writes succeed. Errors, exceptions,
+missing/nontransactional tables and failed commit attempts return a fixed,
+candidate-safe `WP_Error`. A failed write rolls back both records. Existing
+submission-key and job/email duplicates return the original `create_once()`
+result and never invoke the writer, preserving the original answers.
+
+Declare up to ten current-site extension table names. The default driver requires
+InnoDB-compatible transaction semantics (including WordPress SQLite Database
+Integration). It does not migrate legacy MyISAM tables automatically. Custom
+repository drivers may implement this optional interface; callers must fail
+closed when required durable extension storage is unavailable.
+
+Call outside an existing transaction. Writers may only use the current `$wpdb`
+connection and declared tables: no DDL, transaction control, network requests,
+cache writes, notifications, or other irreversible side effects. Nested calls on
+the same repository are rejected. Store uploads first, delete newly stored files
+on a storage failure or duplicate result, and send notifications only after a
+successful result with `created=true`. A crash after commit can leave Free's
+existing notification state pending for operator recovery; it must not lead to a
+second application or overwritten answers. The callback is trusted plugin code,
+not a request-controlled callable.
+
+This is a persistence primitive, not yet candidate-facing form integration. The
+rendering, bounded validation, stale-version and authorized review contracts are
+separate required slices of Pro issue #2. No compatible Free release is claimed.
+`tests/atomic-submissions.php` covers write/exception/commit failure rollback,
+missing storage, reentry, successful retry, and both duplicate policies against
+MySQL and the isolated SQLite runner `scripts/test-atomic-sqlite.sh`.
