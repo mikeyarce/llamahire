@@ -36,7 +36,7 @@ async function saveSettings( page ) {
 
 async function apply( page, url, email, resume = false ) {
 	await page.goto( url );
-	await page.locator( 'input[name="name"]' ).fill( 'Flow Submitted Candidate' );
+	await page.locator( 'input[name="candidate_name"]' ).fill( 'Flow Submitted Candidate' );
 	await page.locator( 'input[name="email"]' ).fill( email );
 	if ( resume ) { await page.locator( 'input[name="resume"]' ).setInputFiles( path.resolve( 'tests/fixture-resume.pdf' ) ); }
 	await page.getByRole( 'button', { name: 'Submit application', exact: true } ).press( 'Enter' );
@@ -469,7 +469,7 @@ test.describe( '@flows independent user journeys', () => {
 			await page.context().clearCookies();
 			await page.goto( f.urls.open );
 			await expect( page.locator( widget ) ).toHaveCount( 1 );
-			await page.locator( '[name="name"]' ).fill( 'Spam Fixture' );
+			await page.locator( '[name="candidate_name"]' ).fill( 'Spam Fixture' );
 			await page.locator( '[name="email"]' ).fill( f.registration_email );
 			await page.locator( '[data-llamahire-application-form]' ).evaluate( ( form, field ) => { const input = document.createElement( 'input' ); input.type = 'hidden'; input.name = field; input.value = 'invalid-fixture-token'; form.append( input ); }, tokenField );
 			await page.getByRole( 'button', { name: 'Submit application' } ).press( 'Enter' );

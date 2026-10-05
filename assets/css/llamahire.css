@@ -196,3 +196,7 @@
 
 .llamahire-employer-portal__extension-summary { margin-block-start: .5rem; overflow-wrap: anywhere; }
 .llamahire-employer-portal__extension-summary>a { display: inline-flex; align-items: center; min-height: 44px; }
+
+/* Historical extension answers stay readable within either review surface. */
+.llamahire-application-extra dt { font-weight: 600; }
+.llamahire-application-extra dd { margin: 0 0 1em; white-space: pre-wrap; overflow-wrap: anywhere; }

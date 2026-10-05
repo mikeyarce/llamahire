@@ -85,6 +85,24 @@
 			}
 
 			xhr.addEventListener( 'load', function () {
+				if ( xhr.status === 422 ) {
+					var invalidDocument = new window.DOMParser().parseFromString( xhr.responseText, 'text/html' );
+					var invalidNotice = invalidDocument.querySelector( '[data-llamahire-application] .llamahire-notice' );
+					invalidDocument.querySelectorAll( '[data-llamahire-field-error][id]' ).forEach( function ( source ) {
+						var target = document.getElementById( source.id );
+						if ( target && form.contains( target ) ) {
+							target.textContent = source.textContent;
+							form.querySelectorAll( '[aria-describedby]' ).forEach( function ( field ) {
+								if ( field.getAttribute( 'aria-describedby' ).split( /\s+/ ).indexOf( source.id ) !== -1 ) {
+									field.setAttribute( 'aria-invalid', source.textContent.trim() ? 'true' : 'false' );
+								}
+							} );
+						}
+					} );
+					recover( invalidNotice ? invalidNotice.textContent.trim() : '', false );
+					return;
+				}
+
 				if ( xhr.status >= 200 && xhr.status < 400 && xhr.responseURL ) {
 					var responseUrl = new window.URL( xhr.responseURL, window.location.href );
 					var result = responseUrl.searchParams.get( 'application' ) || '';

@@ -22,6 +22,8 @@ foreach ( array( 'contracts/interface-application-repository.php', 'contracts/in
 function apply_filters( $hook, $value, ...$args ) {
 	return isset( $GLOBALS['unit_filters'][ $hook ] ) ? $GLOBALS['unit_filters'][ $hook ]( $value, ...$args ) : $value;
 }
-function wp_parse_url( $value ) { return parse_url( $value ); }
+function wp_parse_url( $value, $component = -1 ) { return parse_url( $value, $component ); }
 function esc_url_raw( $value, $protocols = null ) { return $value; }
 require_once $root . '/includes/class-employer-job-extensions.php';
+
+require_once $root . '/includes/class-application-extensions.php';

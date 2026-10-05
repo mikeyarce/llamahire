@@ -152,7 +152,9 @@ jobs:
       - name: Run contract smoke suite
         run: npm run test:smoke
       - name: Required extension persistence and rollback
-        run: npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/atomic-submissions.php
+        run: |
+          npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/atomic-submissions.php
+          npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/application-extension-boundaries.php
       - name: Stop WordPress
         if: always()
         continue-on-error: true
@@ -254,3 +256,33 @@ jobs:
       - uses: actions/checkout@v5
       - name: Verify rollback, retries and duplicates with SQLite
         run: bash scripts/test-atomic-sqlite.sh
+
+  extensions-minimum:
+    name: Application extension browser / WordPress 6.5
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Prepare archived Debian dependencies for PHP 7.4
+        run: docker build -f .github/php74.Dockerfile -t wordpress:php7.4 .github
+      - name: Start minimum supported WordPress
+        env:
+          WP_ENV_CORE: WordPress/WordPress#6.5
+          WP_ENV_PHP_VERSION: '7.4'
+        run: npm run env:start
+      - name: Verify submissions and admin quick view
+        run: npx playwright test tests/e2e/application-extensions.spec.js
+      - name: Clean disposable fixtures
+        if: always()
+        continue-on-error: true
+        run: npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/e2e/application-extension-fixtures.php cleanup
+      - name: Stop WordPress
+        if: always()
+        continue-on-error: true
+        run: npm run env:stop

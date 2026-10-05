@@ -215,7 +215,7 @@ The GitHub Actions workflow runs:
 - A WP-CLI fixture lifecycle that verifies complete generation, ownership markers, safe resumes, status coverage, option restoration, and preservation of unrelated content.
 - The complete Chromium workflow on latest WordPress/PHP 8.3.
 
-The `WordPress/WordPress#master` development mirror tracks WordPress trunk. That forward-looking job is informational and allowed to fail so upstream changes are visible without blocking a release. All declared supported versions are blocking. Browser traces, screenshots, video, and the HTML report are retained when a test fails.
+The `WordPress/WordPress#master` development mirror tracks WordPress trunk. That forward-looking job is informational and allowed to fail so upstream changes are visible without blocking a release. All declared supported versions are blocking. Automatic browser traces, screenshots, video and DOM error snapshots are disabled to keep candidate values out of failure artifacts. CI retains assertion diagnostics and the HTML report. Use a deliberately reviewed synthetic-only dataset for separate manual visual QA. Set `PLAYWRIGHT_EXECUTABLE_PATH` explicitly when a cloud environment supplies system Chromium; CI uses the pinned Playwright browser.
 
 The browser suites verify:
 
@@ -312,3 +312,33 @@ It uses the existing isolated flow fixtures and disables browser recordings.
 Run it with `npm run test:e2e -- tests/e2e/employer-summaries.spec.js`; run
 `composer test:unit` and `npm run test:smoke` for the other layers. Payment,
 publication gates, paid expiry and durable custom answers remain separate work.
+
+
+## Required application extension contracts
+
+API alpha.16 adds provider form/validation/atomic-storage and historical review
+slots. Focused checks:
+
+```sh
+composer test:unit
+npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/atomic-submissions.php
+npm run wp-env -- run cli wp eval-file wp-content/plugins/llamahire/tests/application-extension-boundaries.php
+npx playwright test tests/e2e/application-extensions.spec.js
+bash scripts/test-atomic-sqlite.sh
+```
+
+`ApplicationExtensionReviewTest` covers bounded plaintext and safe URL mapping.
+The real database tests cover atomic failure/retry/duplicate behavior, input
+budgets, unknown namespaces, exception redaction, authorization before provider
+reads and HTML escaping. Both MySQL and isolated SQLite run those assertions.
+The browser journeys cover the Application Form block and normal job form,
+JavaScript enabled/disabled, errors linked to controls, required-write rollback
+before notifications, retry, immutable duplicates, closed/external jobs, employer
+ownership, admin quick view and standalone detail. The fixture changes only the
+owned disposable flow registry and restores it after each test. No candidate
+values enter fixture output or automatic browser artifacts.
+
+The minimum-WordPress browser job covers these journeys on 6.5/PHP 7.4.
+The build bundles the React JSX helper and the official data selector helper
+that this core version lacks. Its adapter retains WordPress's shared data
+registry and preferences rather than creating a second store.

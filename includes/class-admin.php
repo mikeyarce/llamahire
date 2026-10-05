@@ -449,6 +449,7 @@ final class Admin {
 					<h3><?php esc_html_e( 'Cover letter', 'llamahire' ); ?></h3>
 					<p class="llamahire-application-detail__cover-letter"><?php echo esc_html( $row->cover_letter ?: __( 'No cover letter provided.', 'llamahire' ) ); ?></p>
 				</section>
+				<?php echo Application_Extensions::render_review( $id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the shared authorized detail renderer. ?>
 				<section class="llamahire-application-detail__section llamahire-application-detail__notes" aria-labelledby="llamahire-private-notes-title">
 					<h2 id="llamahire-private-notes-title"><?php esc_html_e( 'Private notes', 'llamahire' ); ?></h2>
 					<?php if ( current_user_can( Capabilities::MANAGE_APPLICATIONS ) ) : ?><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="llamahire_add_application_note"><input type="hidden" name="application" value="<?php echo esc_attr( $id ); ?>"><?php wp_nonce_field( 'llamahire_add_note_' . $id ); ?><p><label for="notes"><strong><?php esc_html_e( 'Add private note', 'llamahire' ); ?></strong></label><textarea id="notes" name="note" rows="4" maxlength="<?php echo esc_attr( Application_Notes::MAX_LENGTH ); ?>" required></textarea></p><p class="llamahire-application-detail__form-actions"><button class="button button-primary"><?php esc_html_e( 'Add note', 'llamahire' ); ?></button></p></form><?php endif; ?>

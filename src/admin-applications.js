@@ -683,6 +683,18 @@ function ApplicationReview( { item, onClose, onUpdated } ) {
 							</p>
 						) }
 					</section>
+					{ Object.entries( detail.extensions || {} ).map( ( [ key, section ] ) => (
+						<section key={ key } className="llamahire-application-extra">
+							<h3>{ section.title }</h3>
+							{ ! section.fields.length && <p>{ __( 'No additional answers were submitted.', 'llamahire' ) }</p> }
+							<dl>{ section.fields.map( ( field, index ) => (
+								<div key={ index }>
+									<dt>{ field.label }</dt>
+									<dd>{ field.url ? <a href={ field.url } rel="nofollow noopener noreferrer">{ field.value }</a> : ( field.value || __( 'Not provided', 'llamahire' ) ) }</dd>
+								</div>
+							) ) }</dl>
+						</section>
+					) ) }
 					<section className="llamahire-inline-review__notes">
 						<h3>{ __( 'Notes', 'llamahire' ) }</h3>
 						{ config.canManage ? (

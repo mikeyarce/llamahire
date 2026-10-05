@@ -55,3 +55,11 @@ add_filter(
 	10,
 	2
 );
+
+// Opt-in application extension contract fixture. Not included in release archives.
+add_action( 'llamahire_ready', static function () {
+	$registry = get_option( 'llamahire_e2e_flows', array() );
+	if ( ! empty( $registry['application_extensions'] ) ) {
+		require_once WP_PLUGIN_DIR . '/llamahire/tests/support/application-extension-provider.php';
+	}
+} );
