@@ -138,7 +138,7 @@ final class Employer_Portal {
 			return $content;
 		}
 		$settings   = Settings::get();
-		$edit_url   = Settings::public_page( $settings['submit_job_page_id'] ) ? add_query_arg( 'job_id', $job_id, get_permalink( $settings['submit_job_page_id'] ) ) : '';
+		$edit_url   = Settings::public_page( $settings['submit_job_page_id'] ) ? self::job_editor_url( get_permalink( $settings['submit_job_page_id'] ), array( 'job_id' => $job_id ) ) : '';
 		$my_jobs_url = Settings::public_page( $settings['my_jobs_page_id'] ) ? get_permalink( $settings['my_jobs_page_id'] ) : home_url( '/' );
 		ob_start();
 		?>
@@ -488,15 +488,21 @@ final class Employer_Portal {
 	private static function job_editor_redirect( $job_id, array $args = array() ) {
 		$settings = Settings::get();
 		$url = Settings::public_page( $settings['submit_job_page_id'] ) ? get_permalink( $settings['submit_job_page_id'] ) : home_url( '/' );
-		wp_safe_redirect( add_query_arg( array_merge( array( 'job_id' => absint( $job_id ) ), $args ), $url ) );
+		wp_safe_redirect( self::job_editor_url( $url, array_merge( array( 'job_id' => absint( $job_id ) ), $args ) ) );
 		exit;
 	}
 
 	private static function redirect( array $args ) {
 		$settings = Settings::get();
 		$url = Settings::public_page( $settings['submit_job_page_id'] ) ? get_permalink( $settings['submit_job_page_id'] ) : self::current_url();
-		wp_safe_redirect( add_query_arg( $args, remove_query_arg( array( 'job_error', 'job_submitted', 'job_draft_saved', 'job_closed', 'job_relisting', 'job_duplicated' ), $url ) ) );
+		wp_safe_redirect( self::job_editor_url( remove_query_arg( array( 'job_error', 'job_submitted', 'job_draft_saved', 'job_closed', 'job_relisting', 'job_duplicated', 'llamahire_editor_nonce' ), $url ), $args ) );
 		exit;
+	}
+
+	/** Sign editor selection and redirect notices for the current user and job. */
+	private static function job_editor_url( $url, array $args ) {
+		$args['llamahire_editor_nonce'] = wp_create_nonce( 'llamahire_job_editor_' . absint( $args['job_id'] ?? 0 ) );
+		return add_query_arg( $args, $url );
 	}
 
 	private static function access_message() {
@@ -514,15 +520,21 @@ final class Employer_Portal {
 		if ( ! is_user_logged_in() || ! current_user_can( 'edit_llamahire_jobs' ) ) {
 			return self::access_message();
 		}
-		$job_id = absint( $_GET['job_id'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only portal selection; ownership is checked below.
+		$job_id = absint( $_GET['job_id'] ?? 0 );
+		if ( $job_id || isset( $_GET['job_error'] ) || isset( $_GET['job_relisting'] ) || isset( $_GET['job_duplicated'] ) ) {
+			$nonce = sanitize_text_field( wp_unslash( $_GET['llamahire_editor_nonce'] ?? '' ) );
+			if ( ! wp_verify_nonce( $nonce, 'llamahire_job_editor_' . $job_id ) ) {
+				return '<p class="llamahire-notice">' . esc_html__( 'Job listing not found.', 'llamahire' ) . '</p>';
+			}
+		}
 		if ( $job_id && ! Ownership::user_can_manage_job( $job_id ) ) {
 			return '<p class="llamahire-notice">' . esc_html__( 'Job listing not found.', 'llamahire' ) . '</p>';
 		}
 		$post = $job_id ? get_post( $job_id ) : null;
 		$meta = $job_id ? Jobs::get_meta( $job_id ) : self::latest_employer_defaults();
-		$error = sanitize_key( wp_unslash( $_GET['job_error'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only redirect notice code.
-		$relisting = ! empty( $_GET['job_relisting'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only redirect notice code.
-		$duplicated = ! empty( $_GET['job_duplicated'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only redirect notice code.
+		$error = sanitize_key( wp_unslash( $_GET['job_error'] ?? '' ) );
+		$relisting = ! empty( $_GET['job_relisting'] );
+		$duplicated = ! empty( $_GET['job_duplicated'] );
 		$errors = array(
 			'title'    => __( 'Add a job title before saving this draft.', 'llamahire' ),
 			'required' => __( 'Complete the job description, company, and application destination before previewing or submitting.', 'llamahire' ),
@@ -799,7 +811,7 @@ final class Employer_Portal {
 	}
 
 	private static function render_job_actions( $job, array $meta, $submit_url, $application_count = 0 ) {
-		$edit_url = add_query_arg( 'job_id', $job->ID, $submit_url );
+		$edit_url = self::job_editor_url( $submit_url, array( 'job_id' => $job->ID ) );
 		$application_count_label = sprintf(
 			/* translators: %s: Number of applications for a job. */
 			_n( '%s application', '%s applications', $application_count, 'llamahire' ),

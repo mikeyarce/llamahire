@@ -629,20 +629,6 @@ function ApplicationReview( { item, onClose, onUpdated } ) {
 											<small>{ detail.resume.type }</small>
 										</span>
 										<span className="llamahire-materials-list__actions">
-											{ detail.resume.preview_url && (
-												<a
-													href={ detail.resume.preview_url }
-													target="_blank"
-													rel="noopener noreferrer"
-													aria-label={ sprintf(
-														/* translators: %s: File name. */
-														__( 'View %s', 'llamahire' ),
-														detail.resume.name
-													) }
-												>
-													{ __( 'View', 'llamahire' ) }
-												</a>
-											) }
 											<a
 												href={ detail.resume.download_url }
 												aria-label={ sprintf(

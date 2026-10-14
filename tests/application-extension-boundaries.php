@@ -4,11 +4,12 @@ if ( '/var/www/html/' !== ABSPATH || 'local' !== wp_get_environment_type() ) { t
 $assert = static function ( $condition, $code ) { if ( ! $condition ) { throw new RuntimeException( $code ); } };
 $provider = new class implements \LlamaHire\Contracts\Application_Extension {
 	public $prepares = 0;
+	public $input = array();
 	public $reviews = 0;
 	public $throws = false;
 	public $omit = false;
-	public function render( array $context, array $input, array $errors ) { return ''; }
-	public function prepare( array $context, array $input ) { $this->prepares++; if ( $this->throws ) { throw new RuntimeException( 'PRIVATE_EXCEPTION_DETAIL' ); } return $this->omit ? null : array( 'accepted' => true ); }
+	public function render( array $context, array $input, array $errors ) { return '<fieldset><legend>Questions</legend><label for="extra">Answer</label><input id="extra" name="llamahire_extensions[fixture][answer]" required aria-describedby="extra-error" aria-invalid="true" onclick="alert(1)"><textarea name="llamahire_extensions[fixture][details]">Details</textarea><select name="llamahire_extensions[fixture][choice]"><option value="yes" selected>Yes</option></select><p id="extra-error" data-llamahire-field-error></p><script>alert(1)</script><form action="https://example.test/"></form></fieldset>'; }
+	public function prepare( array $context, array $input ) { $this->prepares++; $this->input = $input; if ( $this->throws ) { throw new RuntimeException( 'PRIVATE_EXCEPTION_DETAIL' ); } return $this->omit ? null : array( 'accepted' => true ); }
 	public function tables() { return array(); }
 	public function persist( $id, array $context, array $prepared ) { return true; }
 	public function review( $id ) { $this->reviews++; return array( 'title' => 'Boundary answers', 'fields' => array( array( 'label' => 'Historical label', 'value' => '<script>fixture</script>', 'type' => 'url' ) ) ); }
@@ -27,6 +28,12 @@ try {
 	}
 	$assert( 0 === $provider->prepares, 'Malformed payload reached provider validation.' );
 	$assert( array( 'fixture' => array( 'accepted' => true ) ) === \LlamaHire\Application_Extensions::prepare( $job, array( 'fixture' => array() ) ), 'Validated provider output was not preserved.' );
+	\LlamaHire\Application_Extensions::prepare( $job, array( 'fixture' => array( 'answer' => "<b>First</b>\nSecond", 'nested' => array( '<img src=x onerror=alert(1)>safe' ) ) ) );
+	$assert( array( 'answer' => "First\nSecond", 'nested' => array( 'safe' ) ) === $provider->input, 'Unsanitized nested answers reached provider validation.' );
+	wp_update_post( array( 'ID' => $job, 'post_status' => 'publish' ) );
+	$html = \LlamaHire\Blocks::render_form( array( 'jobId' => $job ) );
+	$assert( false === strpos( $html, '<script' ) && false === strpos( $html, 'onclick=' ) && 1 === substr_count( $html, '<form' ), 'Unsafe provider form markup survived output filtering.' );
+	$assert( false !== strpos( $html, '<input' ) && false !== strpos( $html, 'required' ) && false !== strpos( $html, 'aria-describedby=' ) && false !== strpos( $html, 'aria-invalid="true"' ) && false !== strpos( $html, 'data-llamahire-field-error' ) && false !== strpos( $html, '<textarea' ) && false !== strpos( $html, '<select' ) && false !== strpos( $html, 'selected' ), 'Output filtering removed safe or accessible form controls.' );
 	$provider->omit = true;
 	$assert( array() === \LlamaHire\Application_Extensions::prepare( $job, array() ), 'Provider without required data did not preserve ordinary creation.' );
 	$provider->omit = false;

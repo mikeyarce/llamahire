@@ -612,6 +612,11 @@ final class Settings {
 				'echo'             => false,
 			)
 		);
+		$allowed_html = array(
+			'select' => array( 'id' => true, 'name' => true, 'class' => true, 'aria-describedby' => true ),
+			'option' => array( 'value' => true, 'selected' => true ),
+		);
+
 		if ( $describedby ) {
 			$html = str_replace( '<select ', '<select aria-describedby="' . esc_attr( $describedby ) . '" ', $html );
 		}
@@ -619,12 +624,12 @@ final class Settings {
 			?>
 			<div class="llamahire-page-picker" data-llamahire-page-picker data-select-id="<?php echo esc_attr( $id ); ?>" data-label="<?php echo esc_attr( $search_label ); ?>">
 				<div class="llamahire-page-picker__combobox" data-llamahire-page-combobox></div>
-				<div class="llamahire-page-picker__native"><?php echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_dropdown_pages() escapes the select; the injected ID is escaped above. ?></div>
+				<div class="llamahire-page-picker__native"><?php echo wp_kses( $html, $allowed_html ); ?></div>
 			</div>
 			<?php
 			return;
 		}
-		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_dropdown_pages() escapes the select; the injected ID is escaped above.
+		echo wp_kses( $html, $allowed_html );
 	}
 
 	private static function careers_page_status( $page_id ) {

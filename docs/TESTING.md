@@ -59,6 +59,21 @@ npm run env:start
 npm run test:smoke
 ```
 
+Run focused WP Job Manager importer coverage with `npm run test:import:wpjm`.
+It creates and removes synthetic source/destination records in the disposable
+site. See [the migration guide](WPJM-MIGRATION.md) for scope and usage.
+
+Run the supplied WPJM Playground demo snapshot through a fresh SQLite instance:
+
+```sh
+npm run test:import:wpjm:playground
+```
+
+This requires network access, Python 3, and the Playground CLI included with the
+locked npm tooling. It leaves Studio and `wp-env` untouched. Temporary evidence
+paths are printed when it finishes; see the migration guide for the archive
+compatibility adjustment and recorded results.
+
 Verify network-wide uninstall behavior in its dedicated multisite environment:
 
 ```sh
@@ -232,7 +247,7 @@ The browser suites verify:
 11. A candidate can submit a PDF resume, while a later case-insensitive job/email duplicate receives the exact generic success state and consumes the same rate limit without revealing the prior application.
 12. The duplicate preserves the original candidate record and does not trigger another notification attempt.
 13. A recruiter can update status and private notes.
-14. Authorized protected resume download succeeds.
+14. Authorized protected resume downloads preserve the original bytes, use attachment delivery even for legacy `preview=1` links, and reject missing nonces or unauthorized users. Admin and employer views expose download controls without inline previews, and REST review responses omit preview URLs.
 15. CSV export contains the application and neutralizes formula-like content.
 16. A board administrator can enable job-board mode and receives automatically created Submit a Job, My Jobs, and Account pages.
 17. An administrator-approved Employer can save a title-only draft, resume it, choose a physical or remote location path, complete the structured job and company fields, preview the result, and submit it for board moderation. Operators can follow separate dashboard queues for employer accounts and job listings, then approve a pending listing with an explicit moderation action.
@@ -329,8 +344,11 @@ bash scripts/test-atomic-sqlite.sh
 
 `ApplicationExtensionReviewTest` covers bounded plaintext and safe URL mapping.
 The real database tests cover atomic failure/retry/duplicate behavior, input
-budgets, unknown namespaces, exception redaction, authorization before provider
-reads and HTML escaping. Both MySQL and isolated SQLite run those assertions.
+budgets, recursive plaintext sanitization, unknown namespaces, exception
+redaction, authorization before provider reads and HTML escaping, including
+provider form controls and ARIA/data attributes. The smoke suite also covers
+editor nonce/job binding and ownership, and signed redirect notices. Both MySQL
+and isolated SQLite run those assertions.
 The browser journeys cover the Application Form block and normal job form,
 JavaScript enabled/disabled, errors linked to controls, required-write rollback
 before notifications, retry, immutable duplicates, closed/external jobs, employer

@@ -33,6 +33,12 @@ register_deactivation_hook( __FILE__, array( 'LlamaHire\\Activator', 'deactivate
 
 LlamaHire\Plugin::instance()->boot();
 
+// The same-site importer is available in release packages as well as development.
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	require_once LLAMAHIRE_PATH . 'includes/class-wpjm-import-command.php';
+	WP_CLI::add_command( 'llamahire import wpjm', 'LlamaHire\\WPJM_Import_Command' );
+}
+
 // Development fixture commands are intentionally excluded from release ZIPs.
 if ( defined( 'WP_CLI' ) && WP_CLI && file_exists( LLAMAHIRE_PATH . 'tools/class-fixtures-command.php' ) ) {
 	require_once LLAMAHIRE_PATH . 'tools/class-fixtures-command.php';

@@ -33,7 +33,7 @@ interface Resume_Storage {
 	public function has_resume( $application_id );
 
 	/**
-	 * Stream an application's resume and terminate on success.
+	 * Stream an application's resume as a download attachment and terminate on success.
 	 *
 	 * The caller must authorize the request before invoking this method.
 	 *

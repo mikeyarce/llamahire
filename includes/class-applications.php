@@ -73,7 +73,10 @@ final class Applications {
 	public static function submit() {
 		$job_id = absint( $_POST['job_id'] ?? 0 );
 		$nonce  = sanitize_text_field( wp_unslash( $_POST['llamahire_nonce'] ?? '' ) );
-		if ( ! $job_id || ! wp_verify_nonce( $nonce, 'llamahire_apply_' . $job_id ) || Jobs::POST_TYPE !== get_post_type( $job_id ) || 'publish' !== get_post_status( $job_id ) || ! Jobs::is_open( $job_id ) ) {
+		if ( ! wp_verify_nonce( $nonce, 'llamahire_apply_' . $job_id ) ) {
+			self::redirect( $job_id, 'invalid' );
+		}
+		if ( ! $job_id || Jobs::POST_TYPE !== get_post_type( $job_id ) || 'publish' !== get_post_status( $job_id ) || ! Jobs::is_open( $job_id ) ) {
 			self::redirect( $job_id, 'invalid' );
 		}
 		$job_meta = Jobs::get_meta( $job_id );
@@ -88,7 +91,7 @@ final class Applications {
 
 		$name   = sanitize_text_field( wp_unslash( $_POST['candidate_name'] ?? $_POST['name'] ?? '' ) );
 		$email  = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
-		$phone  = self::sanitize_phone( wp_unslash( $_POST['phone'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_phone() allowlists phone characters and normalizes whitespace.
+		$phone  = self::sanitize_phone( sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) ) );
 		$letter = sanitize_textarea_field( wp_unslash( $_POST['cover_letter'] ?? '' ) );
 		$fields = Settings::application_fields();
 		if ( 'hidden' === $fields['phone'] ) {
@@ -119,7 +122,8 @@ final class Applications {
 			self::redirect( $job_id, 'success' );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Namespaced values are bounded and validated by the registered provider.
+		// The adapter bounds and sanitizes values before invoking provider validation.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Application_Extensions::prepare() recursively sanitizes the bounded payload.
 		$extensions = Application_Extensions::prepare( $job_id, wp_unslash( $_POST['llamahire_extensions'] ?? array() ) );
 		if ( is_wp_error( $extensions ) ) {
 			self::extension_failure( $job_id, compact( 'name', 'email', 'phone', 'letter', 'submission_key' ) );
@@ -241,39 +245,22 @@ final class Applications {
 	/**
 	 * Build one ownership-checked private resume URL.
 	 *
-	 * @param int  $application_id Application ID.
-	 * @param bool $preview        Whether to request an inline PDF preview.
+	 * @param int $application_id Application ID.
 	 * @return string
 	 */
-	public static function resume_url( $application_id, $preview = false ) {
+	public static function resume_url( $application_id ) {
 		$application_id = absint( $application_id );
 		$arguments      = array(
 			'action'      => 'llamahire_resume',
 			'application' => $application_id,
 			'_wpnonce'    => wp_create_nonce( 'llamahire_resume_' . $application_id ),
 		);
-		if ( $preview ) {
-			$arguments['preview'] = '1';
-		}
 
 		return add_query_arg( $arguments, admin_url( 'admin-post.php' ) );
 	}
 
-	/**
-	 * Determine whether a saved resume type has a safe native browser preview.
-	 *
-	 * @param string $name Original filename.
-	 * @return bool
-	 */
-	public static function resume_is_previewable( $name ) {
-		$type = wp_check_filetype( (string) $name );
-
-		return 'pdf' === strtolower( (string) $type['ext'] );
-	}
-
 	public static function download_resume() {
 		$id      = absint( $_GET['application'] ?? 0 );
-		$preview = '1' === sanitize_text_field( wp_unslash( $_GET['preview'] ?? '' ) );
 		check_admin_referer( 'llamahire_resume_' . $id );
 		if ( ! Ownership::user_can_access_application( $id, Capabilities::DOWNLOAD_RESUMES ) ) {
 			wp_die( esc_html__( 'You cannot access this resume.', 'llamahire' ), 403 );
@@ -283,7 +270,7 @@ final class Applications {
 			Audit_Log::record( 'application_resume_accessed', $application->job_id, $id );
 		}
 		$storage = Plugin::instance()->services()->get( Service_IDs::RESUME_STORAGE );
-		$result  = $preview && method_exists( $storage, 'preview' ) ? $storage->preview( $id ) : $storage->stream( $id );
+		$result  = $storage->stream( $id );
 		wp_die( esc_html( $result->get_error_message() ), 404 );
 	}
 

@@ -36,6 +36,29 @@ final class Application_Extensions {
 		return self::$providers[ $key ];
 	}
 
+	/** Safe form controls and explanatory markup; no scripts or nested forms. */
+	public static function form_allowed_html() {
+		$allowed = wp_kses_allowed_html( 'post' );
+		$common = array_fill_keys( array( 'id', 'class', 'role', 'aria-label', 'aria-labelledby', 'aria-describedby', 'aria-invalid', 'aria-required', 'aria-hidden', 'aria-live', 'aria-atomic', 'aria-expanded', 'aria-controls', 'aria-disabled', 'data-*' ), true );
+		foreach ( $allowed as $tag => $attributes ) {
+			$allowed[ $tag ] = array_merge( $attributes, $common );
+		}
+		foreach ( array(
+			'fieldset' => array( 'disabled' ),
+			'legend' => array(),
+			'label' => array( 'for' ),
+			'input' => array( 'type', 'name', 'value', 'checked', 'disabled', 'required', 'readonly', 'placeholder', 'maxlength', 'minlength', 'min', 'max', 'step', 'pattern', 'autocomplete', 'inputmode', 'multiple', 'accept' ),
+			'textarea' => array( 'name', 'rows', 'cols', 'disabled', 'required', 'readonly', 'placeholder', 'maxlength', 'minlength', 'autocomplete' ),
+			'select' => array( 'name', 'disabled', 'required', 'multiple', 'size', 'autocomplete' ),
+			'option' => array( 'value', 'selected', 'disabled', 'label' ),
+			'optgroup' => array( 'label', 'disabled' ),
+		) as $tag => $attributes ) {
+			$allowed[ $tag ] = array_merge( $common, array_fill_keys( $attributes, true ) );
+		}
+		unset( $allowed['form'] );
+		return $allowed;
+	}
+
 	/** Render trusted providers in the existing form, using request-local error state. */
 	public static function render( $job_id ) {
 		$providers = self::providers( $job_id );
@@ -60,6 +83,7 @@ final class Application_Extensions {
 		if ( ! $providers ) { return array(); }
 		$json = wp_json_encode( $input );
 		if ( ! is_array( $input ) || false === $json || strlen( $json ) > self::MAX_BYTES || array_diff( array_keys( $input ), array_keys( $providers ) ) ) { return self::failure(); }
+		$input = map_deep( $input, 'sanitize_textarea_field' );
 		self::$input = $input;
 		self::$input_job = (int) $job_id;
 		self::$input_site = get_current_blog_id();

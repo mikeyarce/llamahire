@@ -1,6 +1,7 @@
 const { execFile } = require( 'node:child_process' );
 const { promisify } = require( 'node:util' );
 const path = require( 'node:path' );
+const { readFileSync } = require( 'node:fs' );
 const { test, expect } = require( '@playwright/test' );
 
 const run = promisify( execFile );
@@ -268,6 +269,15 @@ test.describe( '@flows independent user journeys', () => {
 		await expect( page.getByRole( 'row' ).filter( { hasText: 'Flow expired ' } ) ).toContainText( 'Awaiting review' );
 	} );
 
+	test( '@candidate invalid application nonces cannot be bypassed by valid job fields', async ( { page } ) => {
+		const before = ( await fixtures( 'state' ) ).applications.total;
+		for ( const nonce of [ '', 'invalid' ] ) {
+			const response = await page.request.post( '/wp-admin/admin-post.php', { form: { action: 'llamahire_apply', job_id: String( f.jobs.open ), llamahire_nonce: nonce, name: 'Nonce boundary fixture', email: f.registration_email } } );
+			expect( response.url() ).toContain( 'application=invalid' );
+		}
+		expect( ( await fixtures( 'state' ) ).applications.total ).toBe( before );
+	} );
+
 	for ( const key of [ 'draft', 'closed', 'expired', 'deadline' ] ) {
 		test( `@candidate ${ key } jobs expose no form and reject a POST with a valid job nonce`, async ( { page } ) => {
 			await page.goto( f.urls[ key ] );
@@ -345,6 +355,46 @@ test.describe( '@flows independent user journeys', () => {
 		}
 	} );
 
+	test( '@privacy resumes download unchanged and legacy preview links cannot render inline', async ( { page } ) => {
+		await login( page );
+		await page.goto( `${ adminApplications }&application=${ f.candidate }` );
+		await page.getByText( 'Manage candidate data', { exact: true } ).press( 'Enter' );
+		await page.locator( '#llamahire-replacement-resume' ).setInputFiles( path.resolve( 'tests/fixture-resume.pdf' ) );
+		await page.getByRole( 'button', { name: 'Upload resume', exact: true } ).press( 'Enter' );
+		const downloadURL = await page.getByRole( 'link', { name: 'Download resume', exact: true } ).getAttribute( 'href' );
+		await expect( page.getByRole( 'link', { name: 'View resume', exact: true } ) ).toHaveCount( 0 );
+		const expectedBytes = readFileSync( path.resolve( 'tests/fixture-resume.pdf' ) );
+		for ( const url of [ downloadURL, `${ downloadURL }&preview=1` ] ) {
+			const response = await page.request.get( url );
+			expect( response.status() ).toBe( 200 );
+			expect( response.headers()[ 'content-disposition' ] ).toMatch( /^attachment;/ );
+			expect( response.headers()[ 'content-type' ] ).toBe( 'application/pdf' );
+			expect( response.headers()[ 'x-content-type-options' ] ).toBe( 'nosniff' );
+			expect( response.headers()[ 'cache-control' ] ).toContain( 'no-store' );
+			expect( ( await response.body() ).equals( expectedBytes ) ).toBe( true );
+		}
+		const unsigned = new URL( downloadURL );
+		unsigned.searchParams.delete( '_wpnonce' );
+		expect( ( await page.request.get( unsigned.href ) ).status() ).toBe( 403 );
+		await page.goto( adminApplications );
+		await page.locator( `button[data-llamahire-review-trigger="${ f.candidate }"]` ).press( 'Enter' );
+		const actions = page.locator( '.llamahire-materials-list__actions:has(a[href*="action=llamahire_resume"])' );
+		await expect( actions.getByRole( 'link' ) ).toHaveCount( 1 );
+		await expect( actions.getByRole( 'link' ) ).toHaveText( 'Download' );
+		await page.context().clearCookies();
+		await login( page, f.users.owner, password );
+		await page.goto( `${ f.pages.my_jobs }?employer_view=applications&application_id=${ f.candidate }` );
+		await expect( page.getByRole( 'link', { name: 'Download', exact: true } ) ).toBeVisible();
+		await expect( page.getByRole( 'link', { name: 'Preview', exact: true } ) ).toHaveCount( 0 );
+		await page.setViewportSize( { width: 390, height: 844 } );
+		await expect( page.getByRole( 'link', { name: 'Download', exact: true } ) ).toBeVisible();
+		const cookie = ( await page.context().cookies() ).find( item => item.name.startsWith( 'wordpress_logged_in_' ) );
+		const access = await fixtures( 'access', cookie.value, 'owner' );
+		const detail = await page.request.get( `/wp-json/llamahire/v1/applications/${ f.candidate }`, { headers: { 'X-WP-Nonce': access.rest_nonce } } );
+		expect( detail.status() ).toBe( 200 );
+		expect( Object.hasOwn( ( await detail.json() ).resume, 'preview_url' ) ).toBe( false );
+	} );
+
 	test( '@privacy employers see only their own jobs, candidates, resumes and export rows', async ( { page } ) => {
 		await login( page );
 		await page.goto( `${ adminApplications }&application=${ f.candidate }` );
@@ -365,7 +415,7 @@ test.describe( '@flows independent user journeys', () => {
 		const cookie = cookies.find( ( item ) => item.name.startsWith( 'wordpress_logged_in_' ) );
 		const access = await fixtures( 'access', cookie.value );
 		expect( access.valid_session ).toBeTruthy();
-		const resume = await page.request.get( access.resume );
+		const resume = await page.request.get( `${ access.resume }&preview=1` );
 		expect( resume.status() ).toBe( 403 );
 		expect( await resume.text() ).toContain( 'You cannot access this resume.' );
 		const exported = await page.request.get( `${ access.export }&job_ids=${ f.jobs.open }` );

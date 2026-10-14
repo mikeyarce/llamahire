@@ -214,7 +214,7 @@ The bounded query service provides paginated `search()`, grouped `counts()`, bou
 
 ### Recruiter REST endpoints
 
-`GET /llamahire/v1/applications` requires `llamahire_view_applications` and returns the bounded, ownership-scoped recruiter list without notes, cover letters, phone numbers, or resume identifiers. `GET /llamahire/v1/applications/{id}` requires ownership-scoped application-view permission and returns one review record with status, up to 20 append-only private notes, available application materials, and up to 20 privacy-safe activity entries for the bounded history modals. Resume responses expose only the original filename, type, a capability-checked nonce download URL, and—when the saved file is a browser-renderable PDF—a separate nonce preview URL. Preview delivery remains ownership checked, private, non-cacheable, and inline only for validated PDFs; DOCX files continue to download. Storage tokens and paths remain private. `POST /llamahire/v1/applications/{id}` requires ownership-scoped application-management permission and updates only the allow-listed `status` field. `POST /llamahire/v1/applications/{id}/notes` requires the same ownership-scoped management permission and appends one private note of up to 5,000 characters. It never edits or deletes earlier notes. `POST /llamahire/v1/applications/bulk-status` requires `llamahire_manage_applications`, accepts up to 100 numeric `application_ids` plus one allow-listed workflow `status`, and verifies access to every selected record before updating any of them. Status changes preserve private notes and use the repository contract so the normal privacy-safe audit events are recorded.
+`GET /llamahire/v1/applications` requires `llamahire_view_applications` and returns the bounded, ownership-scoped recruiter list without notes, cover letters, phone numbers, or resume identifiers. `GET /llamahire/v1/applications/{id}` requires ownership-scoped application-view permission and returns one review record with status, up to 20 append-only private notes, available application materials, and up to 20 privacy-safe activity entries for the bounded history modals. Resume responses expose only the original filename, type, and a capability-checked nonce download URL. All resumes are delivered as download attachments, with ownership checks and private, non-cacheable responses. Inline previews are unavailable; legacy URLs containing `preview=1` also download the file. Storage tokens and paths remain private. `POST /llamahire/v1/applications/{id}` requires ownership-scoped application-management permission and updates only the allow-listed `status` field. `POST /llamahire/v1/applications/{id}/notes` requires the same ownership-scoped management permission and appends one private note of up to 5,000 characters. It never edits or deletes earlier notes. `POST /llamahire/v1/applications/bulk-status` requires `llamahire_manage_applications`, accepts up to 100 numeric `application_ids` plus one allow-listed workflow `status`, and verifies access to every selected record before updating any of them. Status changes preserve private notes and use the repository contract so the normal privacy-safe audit events are recorded.
 
 WordPress's public job REST responses include candidate-facing structured job metadata. For jobs using LlamaHire's internal application form, the private notification recipient in `application_target` is redacted unless the requester can edit that specific job. Authorized editor responses retain the value, and public external application URLs or email addresses remain available because those are intentionally candidate-facing routes.
 
@@ -442,10 +442,17 @@ submission. Providers are trusted plugin code, not browser-controlled callbacks.
 
 - `render($context, $input, $errors)` returns escaped form markup. Use input names
   under `llamahire_extensions[provider_name]`; never replace Free's core inputs.
-  Include server-verifiable version/context tokens. Rendering follows Free's
+  Free applies `wp_kses()` at output with explanatory post markup and an explicit
+  allowlist for labels, fieldsets, inputs, textareas and select options, including
+  ARIA and data attributes. Scripts, inline event handlers, nested forms and
+  form-action overrides are unsupported. Include server-verifiable version/context
+  tokens. Rendering follows Free's
   availability and internal-apply checks, so closed and external-apply jobs never
   display these fields. The Application Form block uses the same renderer.
 - `prepare($context, $input)` validates the provider's unslashed, bounded input.
+  Free recursively applies `sanitize_textarea_field()` before callbacks and retry
+  rendering, preserving multiline plaintext and array keys. HTML answer content
+  is unsupported; providers must still validate field types and allowed values.
   Return an array of persistence data or a `WP_Error` whose machine codes identify
   fields and whose messages contain fixed, candidate-safe text. Providers own
   type validation, stale-version policy and signed-token checks; Free rejects

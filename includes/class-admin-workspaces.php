@@ -405,7 +405,7 @@ final class Admin_Workspaces {
 			<section class="llamahire-drawer-section llamahire-drawer-materials" aria-labelledby="llamahire-drawer-materials-title">
 				<h3 id="llamahire-drawer-materials-title"><?php esc_html_e( 'Application materials', 'llamahire' ); ?></h3>
 				<?php if ( $candidate->has_resume && current_user_can( Capabilities::DOWNLOAD_RESUMES ) ) : ?>
-					<div class="llamahire-drawer-resume"><strong><?php echo esc_html( $candidate->resume_name ); ?></strong><div><?php if ( Applications::resume_is_previewable( $candidate->resume_name ) ) : ?><a href="<?php echo esc_url( Applications::resume_url( $candidate->id, true ) ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'View resume', 'llamahire' ); ?></a><?php endif; ?><a href="<?php echo esc_url( Applications::resume_url( $candidate->id ) ); ?>"><?php esc_html_e( 'Download', 'llamahire' ); ?></a></div></div>
+					<div class="llamahire-drawer-resume"><strong><?php echo esc_html( $candidate->resume_name ); ?></strong><div><a href="<?php echo esc_url( Applications::resume_url( $candidate->id ) ); ?>"><?php esc_html_e( 'Download', 'llamahire' ); ?></a></div></div>
 				<?php endif; ?>
 				<h4><?php esc_html_e( 'Cover letter', 'llamahire' ); ?></h4>
 				<?php if ( $candidate->cover_letter ) : ?><p class="llamahire-drawer-cover-letter"><?php echo nl2br( esc_html( $cover_letter_preview ) ); ?></p><?php if ( $has_long_cover_letter ) : ?><details class="llamahire-drawer-cover-letter-more"><summary><?php esc_html_e( 'Read full cover letter', 'llamahire' ); ?></summary><p><?php echo nl2br( esc_html( $candidate->cover_letter ) ); ?></p></details><?php endif; ?><?php else : ?><p><?php esc_html_e( 'No cover letter provided.', 'llamahire' ); ?></p><?php endif; ?>

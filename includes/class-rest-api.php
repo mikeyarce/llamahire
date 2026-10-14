@@ -312,7 +312,6 @@ final class REST_API {
 				'name'         => (string) $application->resume_name,
 				'type'         => strtoupper( (string) ( $type['ext'] ?: __( 'File', 'llamahire' ) ) ),
 				'download_url' => $download_url,
-				'preview_url'  => Applications::resume_is_previewable( $application->resume_name ) ? Applications::resume_url( $id, true ) : '',
 			);
 		}
 

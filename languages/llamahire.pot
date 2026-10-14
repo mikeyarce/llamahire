@@ -36,7 +36,7 @@ msgstr ""
 #: includes/class-admin-workspaces.php:276
 #: includes/class-admin.php:265
 #: includes/class-admin.php:356
-#: includes/class-applications.php:313
+#: includes/class-applications.php:301
 #: includes/class-blocks.php:32
 #: includes/class-settings.php:341
 #: includes/class-settings.php:581
@@ -223,8 +223,8 @@ msgstr ""
 
 #: includes/class-admin-workspaces.php:137
 #: includes/class-admin.php:67
-#: includes/class-employer-portal.php:697
-#: includes/class-employer-portal.php:776
+#: includes/class-employer-portal.php:709
+#: includes/class-employer-portal.php:788
 msgid "Awaiting review"
 msgstr ""
 
@@ -241,7 +241,7 @@ msgstr ""
 #: includes/class-admin.php:357
 #: includes/class-admin.php:359
 #: includes/class-employer-applications.php:95
-#: includes/class-employer-portal.php:589
+#: includes/class-employer-portal.php:601
 msgid "Applications"
 msgstr ""
 
@@ -416,13 +416,13 @@ msgstr ""
 
 #: includes/class-admin-workspaces.php:285
 #: includes/class-employer-applications.php:100
-#: src/admin-applications.js:1276
-#: src/admin-applications.js:1291
+#: src/admin-applications.js:1262
+#: src/admin-applications.js:1277
 msgid "Search candidates"
 msgstr ""
 
 #: includes/class-admin-workspaces.php:286
-#: includes/class-employer-portal.php:556
+#: includes/class-employer-portal.php:568
 msgid "Job title"
 msgstr ""
 
@@ -447,7 +447,7 @@ msgstr ""
 #: includes/class-blocks.php:260
 #: includes/class-blocks.php:282
 #: includes/class-employer-applications.php:104
-#: includes/class-employer-portal.php:645
+#: includes/class-employer-portal.php:657
 msgid "Clear filters"
 msgstr ""
 
@@ -480,14 +480,14 @@ msgstr ""
 #: includes/class-admin-workspaces.php:339
 #: includes/class-blocks.php:299
 #: includes/class-employer-applications.php:188
-#: includes/class-employer-portal.php:758
+#: includes/class-employer-portal.php:770
 msgid "Previous"
 msgstr ""
 
 #: includes/class-admin-workspaces.php:340
 #: includes/class-blocks.php:300
 #: includes/class-employer-applications.php:188
-#: includes/class-employer-portal.php:759
+#: includes/class-employer-portal.php:771
 msgid "Next"
 msgstr ""
 
@@ -542,13 +542,8 @@ msgid "Application materials"
 msgstr ""
 
 #: includes/class-admin-workspaces.php:408
-#: includes/class-admin.php:446
-msgid "View resume"
-msgstr ""
-
-#: includes/class-admin-workspaces.php:408
 #: includes/class-employer-applications.php:173
-#: src/admin-applications.js:654
+#: src/admin-applications.js:640
 msgid "Download"
 msgstr ""
 
@@ -557,8 +552,8 @@ msgstr ""
 #: includes/class-blocks.php:833
 #: includes/class-privacy.php:116
 #: includes/class-settings.php:449
-#: src/admin-applications.js:666
-#: src/admin-applications.js:748
+#: src/admin-applications.js:652
+#: src/admin-applications.js:734
 msgid "Cover letter"
 msgstr ""
 
@@ -583,13 +578,13 @@ msgstr ""
 #: includes/class-admin-workspaces.php:414
 #: includes/class-admin.php:459
 #: includes/class-employer-applications.php:175
-#: src/admin-applications.js:739
+#: src/admin-applications.js:725
 msgid "No private notes yet."
 msgstr ""
 
 #: includes/class-admin-workspaces.php:417
 #: includes/class-admin.php:455
-#: src/admin-applications.js:703
+#: src/admin-applications.js:689
 msgid "Add private note"
 msgstr ""
 
@@ -600,7 +595,7 @@ msgstr ""
 #: includes/class-admin-workspaces.php:418
 #: includes/class-admin.php:455
 #: includes/class-employer-applications.php:175
-#: src/admin-applications.js:721
+#: src/admin-applications.js:707
 msgid "Add note"
 msgstr ""
 
@@ -710,15 +705,15 @@ msgid "Closing soon"
 msgstr ""
 
 #: includes/class-admin.php:88
-#: includes/class-employer-portal.php:699
-#: includes/class-employer-portal.php:769
+#: includes/class-employer-portal.php:711
+#: includes/class-employer-portal.php:781
 #: includes/class-jobs.php:596
 msgid "Closed"
 msgstr ""
 
 #: includes/class-admin.php:89
-#: includes/class-employer-portal.php:700
-#: includes/class-employer-portal.php:772
+#: includes/class-employer-portal.php:712
+#: includes/class-employer-portal.php:784
 #: includes/class-jobs.php:598
 msgid "Expired"
 msgstr ""
@@ -764,7 +759,7 @@ msgid "The application and its private resume were permanently erased."
 msgstr ""
 
 #: includes/class-admin.php:363
-#: src/admin-applications.js:1193
+#: src/admin-applications.js:1179
 msgid "Loading applications…"
 msgstr ""
 
@@ -836,7 +831,7 @@ msgstr ""
 
 #: includes/class-admin.php:454
 #: includes/class-employer-applications.php:175
-#: src/admin-applications.js:772
+#: src/admin-applications.js:758
 msgid "Private notes"
 msgstr ""
 
@@ -862,16 +857,16 @@ msgid "Application status"
 msgstr ""
 
 #: includes/class-admin.php:464
-#: includes/class-application-extensions.php:129
+#: includes/class-application-extensions.php:153
 #: includes/class-employer-applications.php:102
 #: includes/class-employer-applications.php:156
 #: includes/class-employer-applications.php:169
-#: includes/class-employer-portal.php:643
-#: includes/class-employer-portal.php:661
+#: includes/class-employer-portal.php:655
+#: includes/class-employer-portal.php:673
 #: src/admin-applications.js:260
 #: src/admin-applications.js:567
 #: src/admin-applications.js:572
-#: src/admin-applications.js:802
+#: src/admin-applications.js:788
 msgid "Status"
 msgstr ""
 
@@ -901,7 +896,7 @@ msgstr ""
 #: includes/class-admin.php:467
 #: includes/class-application-notes.php:106
 #: includes/class-rest-api.php:274
-#: includes/class-rest-api.php:338
+#: includes/class-rest-api.php:337
 msgid "System"
 msgstr ""
 
@@ -1019,7 +1014,7 @@ msgstr ""
 
 #. translators: %s: Number of applications for a job.
 #: includes/class-admin.php:667
-#: includes/class-employer-portal.php:805
+#: includes/class-employer-portal.php:817
 #, php-format
 msgid "%s application"
 msgid_plural "%s applications"
@@ -1100,25 +1095,25 @@ msgstr ""
 msgid "Spam protection is temporarily unavailable. Please try again."
 msgstr ""
 
-#: includes/class-application-extensions.php:129
+#: includes/class-application-extensions.php:153
 msgid "Additional answers"
 msgstr ""
 
-#: includes/class-application-extensions.php:129
+#: includes/class-application-extensions.php:153
 msgid "Additional answers are temporarily unavailable."
 msgstr ""
 
-#: includes/class-application-extensions.php:160
-#: src/admin-applications.js:689
+#: includes/class-application-extensions.php:184
+#: src/admin-applications.js:675
 msgid "No additional answers were submitted."
 msgstr ""
 
-#: includes/class-application-extensions.php:163
-#: src/admin-applications.js:693
+#: includes/class-application-extensions.php:187
+#: src/admin-applications.js:679
 msgid "Not provided"
 msgstr ""
 
-#: includes/class-application-extensions.php:173
+#: includes/class-application-extensions.php:197
 msgid "Check the additional application questions and try again. If the problem continues, contact the employer."
 msgstr ""
 
@@ -1163,39 +1158,39 @@ msgstr ""
 msgid "Rejected"
 msgstr ""
 
-#: includes/class-applications.php:279
+#: includes/class-applications.php:267
 msgid "You cannot access this resume."
 msgstr ""
 
-#: includes/class-applications.php:291
+#: includes/class-applications.php:279
 msgid "LlamaHire private resume storage"
 msgstr ""
 
-#: includes/class-applications.php:301
+#: includes/class-applications.php:289
 msgid "Resume storage uses WordPress VIP Access-Controlled Files, and direct requests to the private resume path are denied."
 msgstr ""
 
-#: includes/class-applications.php:302
+#: includes/class-applications.php:290
 msgid "Resume storage is writable and located outside the public WordPress web root."
 msgstr ""
 
-#: includes/class-applications.php:304
+#: includes/class-applications.php:292
 msgid "Resume storage is writable, but direct file access is not confirmed as protected."
 msgstr ""
 
-#: includes/class-applications.php:307
+#: includes/class-applications.php:295
 msgid "The VIP resume storage driver is selected, but Access-Controlled Files is not active in this environment."
 msgstr ""
 
-#: includes/class-applications.php:308
+#: includes/class-applications.php:296
 msgid "WordPress cannot write to the configured private resume directory."
 msgstr ""
 
-#: includes/class-applications.php:311
+#: includes/class-applications.php:299
 msgid "Resumes use protected private storage"
 msgstr ""
 
-#: includes/class-applications.php:311
+#: includes/class-applications.php:299
 msgid "Resume storage needs attention"
 msgstr ""
 
@@ -1432,7 +1427,7 @@ msgid "Featured"
 msgstr ""
 
 #: includes/class-blocks.php:367
-#: includes/class-employer-portal.php:582
+#: includes/class-employer-portal.php:594
 msgid "Company"
 msgstr ""
 
@@ -1440,14 +1435,14 @@ msgstr ""
 #: includes/class-blocks.php:650
 #: includes/class-blocks.php:660
 #: includes/class-blocks.php:661
-#: includes/class-employer-portal.php:562
+#: includes/class-employer-portal.php:574
 #: assets/js/blocks.js:163
 msgid "Location"
 msgstr ""
 
 #: includes/class-blocks.php:374
 #: includes/class-blocks.php:591
-#: includes/class-employer-portal.php:563
+#: includes/class-employer-portal.php:575
 #: assets/js/blocks.js:164
 #: assets/js/job-editor.js:156
 msgid "Location type"
@@ -1498,7 +1493,7 @@ msgstr ""
 #. translators: %s: comma-separated eligible country codes.
 #: includes/class-blocks.php:488
 #: includes/class-blocks.php:591
-#: includes/class-employer-portal.php:563
+#: includes/class-employer-portal.php:575
 #: includes/class-jobs.php:461
 #: assets/js/blocks.js:158
 msgid "Remote"
@@ -1506,14 +1501,14 @@ msgstr ""
 
 #: includes/class-blocks.php:489
 #: includes/class-blocks.php:591
-#: includes/class-employer-portal.php:563
+#: includes/class-employer-portal.php:575
 #: assets/js/job-editor.js:157
 msgid "Hybrid"
 msgstr ""
 
 #: includes/class-blocks.php:490
 #: includes/class-blocks.php:591
-#: includes/class-employer-portal.php:563
+#: includes/class-employer-portal.php:575
 #: assets/js/job-editor.js:157
 msgid "On-site"
 msgstr ""
@@ -1524,13 +1519,13 @@ msgid "Search jobs"
 msgstr ""
 
 #: includes/class-blocks.php:569
-#: includes/class-employer-portal.php:642
+#: includes/class-employer-portal.php:654
 msgid "Job title or keyword"
 msgstr ""
 
 #: includes/class-blocks.php:570
 #: includes/class-blocks.php:581
-#: includes/class-employer-portal.php:642
+#: includes/class-employer-portal.php:654
 msgid "Search"
 msgstr ""
 
@@ -1543,7 +1538,7 @@ msgid "Search and filter jobs"
 msgstr ""
 
 #: includes/class-blocks.php:576
-#: includes/class-employer-portal.php:644
+#: includes/class-employer-portal.php:656
 msgid "Filter jobs"
 msgstr ""
 
@@ -1738,7 +1733,7 @@ msgid "Hiring Manager"
 msgstr ""
 
 #: includes/class-employer-account.php:44
-#: includes/class-employer-portal.php:625
+#: includes/class-employer-portal.php:637
 msgid "Account"
 msgstr ""
 
@@ -1770,7 +1765,7 @@ msgstr ""
 
 #: includes/class-employer-account.php:111
 #: includes/class-employer-account.php:112
-#: includes/class-employer-portal.php:625
+#: includes/class-employer-portal.php:637
 msgid "Employer account"
 msgstr ""
 
@@ -1789,7 +1784,7 @@ msgid "Contact name"
 msgstr ""
 
 #: includes/class-employer-account.php:119
-#: includes/class-employer-portal.php:583
+#: includes/class-employer-portal.php:595
 #: includes/class-employer-registration.php:281
 msgid "Company name"
 msgstr ""
@@ -1855,13 +1850,13 @@ msgstr ""
 #. translators: %d is the numeric WordPress job post ID.
 #: includes/class-employer-applications.php:101
 #: includes/class-employer-applications.php:156
-#: includes/class-employer-portal.php:661
+#: includes/class-employer-portal.php:673
 #: includes/class-jobs.php:25
 #: includes/class-privacy.php:105
 #: assets/js/blocks.js:210
 #: src/admin-activity.js:194
 #: src/admin-applications.js:246
-#: src/admin-applications.js:801
+#: src/admin-applications.js:787
 msgid "Job"
 msgstr ""
 
@@ -1870,7 +1865,7 @@ msgid "All jobs"
 msgstr ""
 
 #: includes/class-employer-applications.php:102
-#: includes/class-employer-portal.php:695
+#: includes/class-employer-portal.php:707
 msgid "All statuses"
 msgstr ""
 
@@ -1886,13 +1881,13 @@ msgstr ""
 
 #: includes/class-employer-applications.php:156
 #: src/admin-applications.js:222
-#: src/admin-applications.js:856
+#: src/admin-applications.js:842
 msgid "Candidate"
 msgstr ""
 
 #: includes/class-employer-applications.php:156
 #: src/admin-applications.js:286
-#: src/admin-applications.js:804
+#: src/admin-applications.js:790
 msgid "Received"
 msgstr ""
 
@@ -1907,12 +1902,6 @@ msgstr ""
 
 #: includes/class-employer-applications.php:173
 msgid "Files and materials"
-msgstr ""
-
-#: includes/class-employer-applications.php:173
-#: includes/class-employer-portal.php:149
-#: includes/class-employer-portal.php:811
-msgid "Preview"
 msgstr ""
 
 #: includes/class-employer-applications.php:173
@@ -2017,6 +2006,11 @@ msgstr ""
 msgid "Job preview"
 msgstr ""
 
+#: includes/class-employer-portal.php:149
+#: includes/class-employer-portal.php:823
+msgid "Preview"
+msgstr ""
+
 #: includes/class-employer-portal.php:150
 msgid "Review your job listing"
 msgstr ""
@@ -2026,7 +2020,7 @@ msgid "This is how your listing will appear to candidates. It is still a draft a
 msgstr ""
 
 #: includes/class-employer-portal.php:154
-#: includes/class-employer-portal.php:593
+#: includes/class-employer-portal.php:605
 msgid "Submit for review"
 msgstr ""
 
@@ -2079,383 +2073,384 @@ msgid "The job listing could not be deleted."
 msgstr ""
 
 #. translators: 1: sign-in URL, 2: employer-registration URL.
-#: includes/class-employer-portal.php:505
+#: includes/class-employer-portal.php:511
 #, php-format
 msgid "Please <a href=\"%1$s\">sign in</a> or <a href=\"%2$s\">register as an employer</a> to manage job listings."
 msgstr ""
 
-#: includes/class-employer-portal.php:507
+#: includes/class-employer-portal.php:513
 msgid "Your account cannot manage job listings. Contact the job-board operator."
 msgstr ""
 
-#: includes/class-employer-portal.php:519
+#: includes/class-employer-portal.php:527
+#: includes/class-employer-portal.php:531
 msgid "Job listing not found."
 msgstr ""
 
-#: includes/class-employer-portal.php:527
+#: includes/class-employer-portal.php:539
 msgid "Add a job title before saving this draft."
 msgstr ""
 
-#: includes/class-employer-portal.php:528
+#: includes/class-employer-portal.php:540
 msgid "Complete the job description, company, and application destination before previewing or submitting."
 msgstr ""
 
-#: includes/class-employer-portal.php:529
+#: includes/class-employer-portal.php:541
 msgid "Enter a valid application or notification email address."
 msgstr ""
 
-#: includes/class-employer-portal.php:530
+#: includes/class-employer-portal.php:542
 msgid "Enter a complete application website URL beginning with http:// or https://."
 msgstr ""
 
-#: includes/class-employer-portal.php:531
+#: includes/class-employer-portal.php:543
 msgid "Add a city and country for an on-site or hybrid job, or eligible applicant countries for a remote job."
 msgstr ""
 
-#: includes/class-employer-portal.php:532
+#: includes/class-employer-portal.php:544
 msgid "Enter a positive salary range with the maximum not lower than the minimum."
 msgstr ""
 
-#: includes/class-employer-portal.php:533
+#: includes/class-employer-portal.php:545
 msgid "Enter today or a future application deadline in the displayed date format."
 msgstr ""
 
-#: includes/class-employer-portal.php:534
+#: includes/class-employer-portal.php:546
 msgid "Upload a valid JPG, PNG, GIF, or WebP logo smaller than 2 MB."
 msgstr ""
 
-#: includes/class-employer-portal.php:535
+#: includes/class-employer-portal.php:547
 msgid "The job listing could not be saved. Please try again."
 msgstr ""
 
-#: includes/class-employer-portal.php:536
+#: includes/class-employer-portal.php:548
 msgid "You have reached this job board’s active-listing limit. Save this job as a draft, or close an active listing before submitting it for review."
 msgstr ""
 
-#: includes/class-employer-portal.php:548
+#: includes/class-employer-portal.php:560
 msgid "Edit job listing"
 msgstr ""
 
-#: includes/class-employer-portal.php:548
-#: includes/class-employer-portal.php:640
+#: includes/class-employer-portal.php:560
+#: includes/class-employer-portal.php:652
 msgid "Create job listing"
 msgstr ""
 
-#: includes/class-employer-portal.php:549
+#: includes/class-employer-portal.php:561
 msgid "Save an incomplete draft at any time. Preview and submission check every required public job detail."
 msgstr ""
 
-#: includes/class-employer-portal.php:550
+#: includes/class-employer-portal.php:562
 msgid "This expired listing is now a draft. Review its dates and details, then submit it for moderation when ready."
 msgstr ""
 
-#: includes/class-employer-portal.php:550
+#: includes/class-employer-portal.php:562
 msgid "A fresh draft was created without the original deadline, expiration, reference, or featured status."
 msgstr ""
 
-#: includes/class-employer-portal.php:555
+#: includes/class-employer-portal.php:567
 msgid "Role"
 msgstr ""
 
-#: includes/class-employer-portal.php:557
+#: includes/class-employer-portal.php:569
 msgid "Short summary"
 msgstr ""
 
-#: includes/class-employer-portal.php:557
+#: includes/class-employer-portal.php:569
 msgid "A concise introduction used on job cards and near the job title."
 msgstr ""
 
-#: includes/class-employer-portal.php:558
+#: includes/class-employer-portal.php:570
 msgid "Job description"
 msgstr ""
 
-#: includes/class-employer-portal.php:559
+#: includes/class-employer-portal.php:571
 #: assets/js/job-editor.js:151
 msgid "Employment type"
 msgstr ""
 
-#: includes/class-employer-portal.php:559
+#: includes/class-employer-portal.php:571
 #: assets/js/job-editor.js:40
 msgid "Select a job type"
 msgstr ""
 
-#: includes/class-employer-portal.php:559
+#: includes/class-employer-portal.php:571
 msgid "Create job types in the Jobs menu before assigning an employment type."
 msgstr ""
 
-#: includes/class-employer-portal.php:560
+#: includes/class-employer-portal.php:572
 msgid "Job categories are managed by the job-board operator and shared across employers."
 msgstr ""
 
-#: includes/class-employer-portal.php:562
-#: includes/class-employer-portal.php:564
+#: includes/class-employer-portal.php:574
+#: includes/class-employer-portal.php:576
 msgid "Add the place where employees will work. City and country are required."
 msgstr ""
 
-#: includes/class-employer-portal.php:562
-#: includes/class-employer-portal.php:564
+#: includes/class-employer-portal.php:574
+#: includes/class-employer-portal.php:576
 msgid "Add the countries where candidates are eligible to work remotely."
 msgstr ""
 
-#: includes/class-employer-portal.php:566
+#: includes/class-employer-portal.php:578
 msgid "City"
 msgstr ""
 
-#: includes/class-employer-portal.php:567
+#: includes/class-employer-portal.php:579
 #: assets/js/job-editor.js:121
 msgid "State, province, or region"
 msgstr ""
 
-#: includes/class-employer-portal.php:568
+#: includes/class-employer-portal.php:580
 msgid "Country"
 msgstr ""
 
-#: includes/class-employer-portal.php:569
+#: includes/class-employer-portal.php:581
 #: assets/js/job-editor.js:119
 msgid "Street address"
 msgstr ""
 
-#: includes/class-employer-portal.php:570
+#: includes/class-employer-portal.php:582
 #: assets/js/job-editor.js:122
 msgid "Postal code"
 msgstr ""
 
-#: includes/class-employer-portal.php:573
+#: includes/class-employer-portal.php:585
 #: assets/js/job-editor.js:113
 msgid "Eligible applicant countries"
 msgstr ""
 
-#: includes/class-employer-portal.php:573
+#: includes/class-employer-portal.php:585
 msgid "Enter two-letter country codes separated by commas."
 msgstr ""
 
-#: includes/class-employer-portal.php:576
+#: includes/class-employer-portal.php:588
 msgid "Compensation and timing"
 msgstr ""
 
-#: includes/class-employer-portal.php:577
+#: includes/class-employer-portal.php:589
 #: assets/js/job-editor.js:169
 msgid "Minimum salary"
 msgstr ""
 
-#: includes/class-employer-portal.php:577
+#: includes/class-employer-portal.php:589
 #: assets/js/job-editor.js:170
 msgid "Maximum salary"
 msgstr ""
 
-#: includes/class-employer-portal.php:578
+#: includes/class-employer-portal.php:590
 #: assets/js/job-editor.js:171
 msgid "Currency"
 msgstr ""
 
-#: includes/class-employer-portal.php:579
+#: includes/class-employer-portal.php:591
 #: assets/js/job-editor.js:173
 msgid "Pay period"
 msgstr ""
 
-#: includes/class-employer-portal.php:579
+#: includes/class-employer-portal.php:591
 #: assets/js/job-editor.js:174
 msgid "Hour"
 msgstr ""
 
-#: includes/class-employer-portal.php:579
+#: includes/class-employer-portal.php:591
 #: assets/js/job-editor.js:174
 msgid "Day"
 msgstr ""
 
-#: includes/class-employer-portal.php:579
+#: includes/class-employer-portal.php:591
 #: assets/js/job-editor.js:174
 msgid "Week"
 msgstr ""
 
-#: includes/class-employer-portal.php:579
+#: includes/class-employer-portal.php:591
 #: assets/js/job-editor.js:174
 msgid "Month"
 msgstr ""
 
-#: includes/class-employer-portal.php:579
+#: includes/class-employer-portal.php:591
 #: assets/js/job-editor.js:174
 msgid "Year"
 msgstr ""
 
-#: includes/class-employer-portal.php:580
+#: includes/class-employer-portal.php:592
 #: assets/js/job-editor.js:160
 msgid "Application deadline"
 msgstr ""
 
-#: includes/class-employer-portal.php:580
+#: includes/class-employer-portal.php:592
 msgid "Applications close at the end of this date in the site timezone."
 msgstr ""
 
-#: includes/class-employer-portal.php:584
+#: includes/class-employer-portal.php:596
 msgid "Company tagline"
 msgstr ""
 
-#: includes/class-employer-portal.php:585
+#: includes/class-employer-portal.php:597
 msgid "Company website"
 msgstr ""
 
-#: includes/class-employer-portal.php:586
+#: includes/class-employer-portal.php:598
 msgid "Company logo"
 msgstr ""
 
-#: includes/class-employer-portal.php:586
+#: includes/class-employer-portal.php:598
 msgid "JPG, PNG, GIF, or WebP. Maximum 2 MB. Uploads are stored in the WordPress Media Library."
 msgstr ""
 
-#: includes/class-employer-portal.php:587
+#: includes/class-employer-portal.php:599
 msgid "Remove the current company logo from this listing"
 msgstr ""
 
-#: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:913
+#: includes/class-employer-portal.php:601
+#: includes/class-employer-portal.php:925
 #: assets/js/job-editor.js:192
 msgid "Notification email"
 msgstr ""
 
-#: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:920
+#: includes/class-employer-portal.php:601
+#: includes/class-employer-portal.php:932
 msgid "Candidate notifications from the LlamaHire form will be sent to this inbox."
 msgstr ""
 
-#: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:590
-#: includes/class-employer-portal.php:913
+#: includes/class-employer-portal.php:601
+#: includes/class-employer-portal.php:602
+#: includes/class-employer-portal.php:925
 #: assets/js/job-editor.js:188
 #: assets/js/job-editor.js:192
 msgid "Application email"
 msgstr ""
 
-#: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:920
+#: includes/class-employer-portal.php:601
+#: includes/class-employer-portal.php:932
 msgid "Candidates will apply by email to this address."
 msgstr ""
 
-#: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:911
+#: includes/class-employer-portal.php:601
+#: includes/class-employer-portal.php:923
 #: assets/js/job-editor.js:192
 msgid "Application website URL"
 msgstr ""
 
-#: includes/class-employer-portal.php:589
-#: includes/class-employer-portal.php:918
+#: includes/class-employer-portal.php:601
+#: includes/class-employer-portal.php:930
 msgid "Candidates will be sent to this website to apply."
 msgstr ""
 
-#: includes/class-employer-portal.php:590
+#: includes/class-employer-portal.php:602
 #: assets/js/job-editor.js:187
 msgid "How candidates apply"
 msgstr ""
 
-#: includes/class-employer-portal.php:590
+#: includes/class-employer-portal.php:602
 #: assets/js/job-editor.js:188
 msgid "LlamaHire application form"
 msgstr ""
 
-#: includes/class-employer-portal.php:590
+#: includes/class-employer-portal.php:602
 #: assets/js/job-editor.js:188
 msgid "Application website"
 msgstr ""
 
-#: includes/class-employer-portal.php:593
+#: includes/class-employer-portal.php:605
 msgid "Save draft"
 msgstr ""
 
-#: includes/class-employer-portal.php:593
+#: includes/class-employer-portal.php:605
 msgid "Save and preview"
 msgstr ""
 
-#: includes/class-employer-portal.php:627
+#: includes/class-employer-portal.php:639
 msgid "Your job was submitted for moderation."
 msgstr ""
 
-#: includes/class-employer-portal.php:629
+#: includes/class-employer-portal.php:641
 msgid "Your draft was saved. It is not awaiting review yet."
 msgstr ""
 
-#: includes/class-employer-portal.php:631
+#: includes/class-employer-portal.php:643
 msgid "Your listing was renewed. Its application deadline is unchanged."
 msgstr ""
 
-#: includes/class-employer-portal.php:633
+#: includes/class-employer-portal.php:645
 msgid "Your job listing was closed."
 msgstr ""
 
-#: includes/class-employer-portal.php:635
+#: includes/class-employer-portal.php:647
 msgid "Your job listing was deleted."
 msgstr ""
 
-#: includes/class-employer-portal.php:637
+#: includes/class-employer-portal.php:649
 msgid "Relisting would exceed this board’s active-listing limit. Close another active listing first."
 msgstr ""
 
-#: includes/class-employer-portal.php:641
+#: includes/class-employer-portal.php:653
 msgid "Filter your jobs"
 msgstr ""
 
 #. translators: 1: first visible job number, 2: last visible job number, 3: total matching jobs.
-#: includes/class-employer-portal.php:653
+#: includes/class-employer-portal.php:665
 #, php-format
 msgid "Showing %1$s–%2$s of %3$s jobs"
 msgstr ""
 
-#: includes/class-employer-portal.php:655
+#: includes/class-employer-portal.php:667
 msgid "No matching jobs"
 msgstr ""
 
-#: includes/class-employer-portal.php:661
-#: src/admin-applications.js:872
+#: includes/class-employer-portal.php:673
+#: src/admin-applications.js:858
 msgid "Actions"
 msgstr ""
 
-#: includes/class-employer-portal.php:675
+#: includes/class-employer-portal.php:687
 msgid "No jobs match those filters. Try another search or clear the filters."
 msgstr ""
 
-#: includes/class-employer-portal.php:675
+#: includes/class-employer-portal.php:687
 msgid "You have not created any job listings yet."
 msgstr ""
 
-#: includes/class-employer-portal.php:696
-#: includes/class-employer-portal.php:777
+#: includes/class-employer-portal.php:708
+#: includes/class-employer-portal.php:789
 #: assets/js/job-editor.js:145
 msgid "Published"
 msgstr ""
 
-#: includes/class-employer-portal.php:698
-#: includes/class-employer-portal.php:775
+#: includes/class-employer-portal.php:710
+#: includes/class-employer-portal.php:787
 msgid "Draft"
 msgstr ""
 
-#: includes/class-employer-portal.php:763
+#: includes/class-employer-portal.php:775
 msgid "My Jobs pages"
 msgstr ""
 
 #. translators: %s: formatted date.
-#: includes/class-employer-portal.php:791
+#: includes/class-employer-portal.php:803
 #, php-format
 msgid "Applications closed %s"
 msgstr ""
 
 #. translators: %s: formatted date.
-#: includes/class-employer-portal.php:791
+#: includes/class-employer-portal.php:803
 #, php-format
 msgid "Listing expired %s"
 msgstr ""
 
 #. translators: %s: formatted date.
-#: includes/class-employer-portal.php:794
+#: includes/class-employer-portal.php:806
 #, php-format
 msgid "Applications close %s"
 msgstr ""
 
 #. translators: %s: formatted date.
-#: includes/class-employer-portal.php:794
+#: includes/class-employer-portal.php:806
 #, php-format
 msgid "Listing expires %s"
 msgstr ""
 
-#: includes/class-employer-portal.php:810
+#: includes/class-employer-portal.php:822
 #: includes/class-setup.php:246
 #: includes/class-setup.php:247
 #: includes/class-setup.php:248
@@ -2463,53 +2458,53 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
-#: includes/class-employer-portal.php:814
+#: includes/class-employer-portal.php:826
 msgid "Renew"
 msgstr ""
 
-#: includes/class-employer-portal.php:817
+#: includes/class-employer-portal.php:829
 msgid "Relist"
 msgstr ""
 
-#: includes/class-employer-portal.php:819
+#: includes/class-employer-portal.php:831
 #: includes/class-jobs.php:571
 msgid "Duplicate"
 msgstr ""
 
-#: includes/class-employer-portal.php:821
+#: includes/class-employer-portal.php:833
 msgid "Close"
 msgstr ""
 
-#: includes/class-employer-portal.php:823
+#: includes/class-employer-portal.php:835
 msgid "Delete"
 msgstr ""
 
-#: includes/class-employer-portal.php:823
+#: includes/class-employer-portal.php:835
 msgid "Delete this listing?"
 msgstr ""
 
-#: includes/class-employer-portal.php:823
+#: includes/class-employer-portal.php:835
 msgid "Move this listing to the trash and remove it from My Jobs."
 msgstr ""
 
-#: includes/class-employer-portal.php:823
+#: includes/class-employer-portal.php:835
 msgid "Confirm delete"
 msgstr ""
 
 #. translators: 1: active listing count, 2: maximum active listings.
-#: includes/class-employer-portal.php:895
+#: includes/class-employer-portal.php:907
 #, php-format
 msgid "%1$d of %2$d active listings used."
 msgstr ""
 
 #. translators: %s: formatted listing-expiration date.
-#: includes/class-employer-portal.php:899
+#: includes/class-employer-portal.php:911
 #, php-format
 msgid "This listing expires on %s."
 msgstr ""
 
 #. translators: %d: default listing duration in days.
-#: includes/class-employer-portal.php:902
+#: includes/class-employer-portal.php:914
 #, php-format
 msgid "New submissions remain active for %d day after submission."
 msgid_plural "New submissions remain active for %d days after submission."
@@ -3728,35 +3723,35 @@ msgstr ""
 msgid "Choose an image from the Media Library. Use a square or landscape image with a width-to-height ratio between 0.75 and 2.5."
 msgstr ""
 
-#: includes/class-settings.php:638
+#: includes/class-settings.php:643
 msgid "No Careers page is selected."
 msgstr ""
 
-#: includes/class-settings.php:640
+#: includes/class-settings.php:645
 msgid "The selected Careers page is not published."
 msgstr ""
 
-#: includes/class-settings.php:642
+#: includes/class-settings.php:647
 msgid "Published page. Add the Jobs Directory block to display openings."
 msgstr ""
 
-#: includes/class-settings.php:644
+#: includes/class-settings.php:649
 msgid "Published page with a Jobs Directory block."
 msgstr ""
 
-#: includes/class-settings.php:646
+#: includes/class-settings.php:651
 msgid "View page"
 msgstr ""
 
-#: includes/class-settings.php:653
+#: includes/class-settings.php:658
 msgid "Required"
 msgstr ""
 
-#: includes/class-settings.php:654
+#: includes/class-settings.php:659
 msgid "Optional"
 msgstr ""
 
-#: includes/class-settings.php:655
+#: includes/class-settings.php:660
 msgid "Do not ask"
 msgstr ""
 
@@ -4141,9 +4136,9 @@ msgstr ""
 msgid "WordPress accepted this test message from LlamaHire. Receiving it confirms that the configured sender and your site's mail transport can deliver to this address."
 msgstr ""
 
-#: includes/services/class-resume-storage.php:106
-#: includes/services/class-resume-storage.php:110
-#: includes/services/class-resume-storage.php:114
+#: includes/services/class-resume-storage.php:99
+#: includes/services/class-resume-storage.php:103
+#: includes/services/class-resume-storage.php:107
 #: includes/services/class-vip-acl-resume-storage.php:141
 #: includes/services/class-vip-acl-resume-storage.php:149
 msgid "Resume not found."
@@ -4631,7 +4626,7 @@ msgid "Partial"
 msgstr ""
 
 #: src/admin-applications.js:272
-#: src/admin-applications.js:803
+#: src/admin-applications.js:789
 msgid "Email status"
 msgstr ""
 
@@ -4682,7 +4677,7 @@ msgid "Quick view for %s"
 msgstr ""
 
 #: src/admin-applications.js:548
-#: src/admin-applications.js:935
+#: src/admin-applications.js:921
 msgid "Close quick view"
 msgstr ""
 
@@ -4695,120 +4690,113 @@ msgid "Saving…"
 msgstr ""
 
 #. translators: %s: File name.
-#: src/admin-applications.js:639
-#, js-format
-msgid "View %s"
-msgstr ""
-
-#: src/admin-applications.js:643
-#: src/admin-applications.js:674
-msgid "View"
-msgstr ""
-
-#. translators: %s: File name.
-#: src/admin-applications.js:650
+#: src/admin-applications.js:636
 #, js-format
 msgid "Download %s"
 msgstr ""
 
-#: src/admin-applications.js:667
+#: src/admin-applications.js:653
 msgid "Text response"
 msgstr ""
 
-#: src/admin-applications.js:682
+#: src/admin-applications.js:660
+msgid "View"
+msgstr ""
+
+#: src/admin-applications.js:668
 msgid "No application materials were provided."
 msgstr ""
 
-#: src/admin-applications.js:699
+#: src/admin-applications.js:685
 msgid "Notes"
 msgstr ""
 
-#: src/admin-applications.js:709
+#: src/admin-applications.js:695
 msgid "Add a private note…"
 msgstr ""
 
-#: src/admin-applications.js:720
+#: src/admin-applications.js:706
 msgid "Adding…"
 msgstr ""
 
-#: src/admin-applications.js:727
+#: src/admin-applications.js:713
 msgid "Latest note"
 msgstr ""
 
-#: src/admin-applications.js:735
+#: src/admin-applications.js:721
 msgid "View all notes"
 msgstr ""
 
-#: src/admin-applications.js:759
+#: src/admin-applications.js:745
 msgid "Activity history"
 msgstr ""
 
-#: src/admin-applications.js:850
+#: src/admin-applications.js:836
 msgid "Deselect all"
 msgstr ""
 
-#: src/admin-applications.js:850
+#: src/admin-applications.js:836
 msgid "Select all"
 msgstr ""
 
-#: src/admin-applications.js:936
-#: src/admin-applications.js:1205
+#: src/admin-applications.js:922
+#: src/admin-applications.js:1191
 msgid "Quick view"
 msgstr ""
 
-#: src/admin-applications.js:973
-#: src/admin-applications.js:1281
+#: src/admin-applications.js:959
+#: src/admin-applications.js:1267
 msgid "No applications match this view."
 msgstr ""
 
-#: src/admin-applications.js:975
-#: src/admin-applications.js:1282
+#: src/admin-applications.js:961
+#: src/admin-applications.js:1268
 msgid "No applications yet."
 msgstr ""
 
-#: src/admin-applications.js:1097
+#: src/admin-applications.js:1083
 msgid "Applications could not be loaded."
 msgstr ""
 
 #. translators: 1: Number of updated candidates. 2: Destination status.
-#: src/admin-applications.js:1142
+#: src/admin-applications.js:1128
 #, js-format
 msgid "%1$d candidate moved to %2$s."
 msgid_plural "%1$d candidates moved to %2$s."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/admin-applications.js:1151
+#: src/admin-applications.js:1137
 msgid "The selected candidates were already in that status."
 msgstr ""
 
 #. translators: %s: Number of matching applications.
-#: src/admin-applications.js:1196
+#: src/admin-applications.js:1182
 #, js-format
 msgid "%s matching applications"
 msgstr ""
 
-#: src/admin-applications.js:1213
+#: src/admin-applications.js:1199
 msgid "Change status"
 msgstr ""
 
 #. translators: %d: Number of selected candidates.
-#: src/admin-applications.js:1217
+#: src/admin-applications.js:1203
 #, js-format
 msgid "Change status for %d candidate"
 msgid_plural "Change status for %d candidates"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/admin-applications.js:1242
+#: src/admin-applications.js:1228
 msgid "Export filtered CSV"
 msgstr ""
 
-#: src/admin-applications.js:1243
+#: src/admin-applications.js:1229
 msgid "Export CSV"
 msgstr ""
 
-#: src/admin-applications.js:1257
+#: src/admin-applications.js:1243
 msgid "Dismiss this notice."
 msgstr ""
 

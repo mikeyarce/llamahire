@@ -13,6 +13,8 @@
     "env:multisite:start": "wp-env --config=.wp-env.multisite.json start",
     "env:multisite:stop": "wp-env --config=.wp-env.multisite.json stop",
     "test:smoke": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/smoke.php",
+    "test:import:wpjm": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/wpjm-import.php",
+    "test:import:wpjm:playground": "node scripts/test-wpjm-playground.mjs",
     "test:uninstall:multisite": "wp-env --config=.wp-env.multisite.json run cli wp eval-file wp-content/plugins/llamahire/tests/uninstall-multisite.php",
     "test:e2e:setup": "wp-env --config=.wp-env.ci.json run cli wp eval-file wp-content/plugins/llamahire/tests/e2e/setup.php",
     "test:e2e": "playwright test",

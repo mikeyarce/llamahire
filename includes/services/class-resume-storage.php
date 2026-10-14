@@ -13,13 +13,6 @@ class Resume_Storage implements Resume_Storage_Contract {
 	const MAX_BYTES = 5242880;
 
 	/**
-	 * Requested response disposition for the current private-file stream.
-	 *
-	 * @var string
-	 */
-	private $content_disposition = 'attachment';
-
-	/**
 	 * Store one validated resume upload.
 	 *
 	 * @param array $file   One normalized $_FILES item.
@@ -115,23 +108,6 @@ class Resume_Storage implements Resume_Storage_Contract {
 		}
 
 		$this->send_contents( $contents, $row->resume_name );
-	}
-
-	/**
-	 * Preview one authorized browser-renderable resume.
-	 *
-	 * The caller must authorize the request before invoking this method. Files
-	 * that the browser cannot safely render continue to download as attachments.
-	 *
-	 * @param int $application_id Application ID.
-	 * @return \WP_Error Returns only when the resume cannot be streamed.
-	 */
-	public function preview( $application_id ) {
-		$this->content_disposition = 'inline';
-		$result                    = $this->stream( $application_id );
-		$this->content_disposition = 'attachment';
-
-		return $result;
 	}
 
 	/**
@@ -400,14 +376,10 @@ class Resume_Storage implements Resume_Storage_Contract {
 	protected function send_contents( $contents, $name ) {
 		$type        = wp_check_filetype( $name, $this->delivery_mimes() );
 		$mime        = $type['type'] ?: 'application/octet-stream';
-		$disposition = 'inline' === $this->content_disposition && 'application/pdf' === $mime ? 'inline' : 'attachment';
 		header( 'Content-Type: ' . $mime );
-		header( 'Content-Disposition: ' . $disposition . '; filename="resume.' . ( $type['ext'] ?: 'bin' ) . '"; filename*=UTF-8\'\'' . rawurlencode( $name ) );
+		header( 'Content-Disposition: attachment; filename="resume.' . ( $type['ext'] ?: 'bin' ) . '"; filename*=UTF-8\'\'' . rawurlencode( $name ) );
 		header( 'Content-Length: ' . strlen( $contents ) );
 		header( 'X-Content-Type-Options: nosniff' );
-		if ( 'inline' === $disposition ) {
-			header( "Content-Security-Policy: sandbox; default-src 'none'" );
-		}
 		header( 'Cache-Control: private, no-store, max-age=0' );
 		echo $contents; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Validated binary download contents.
 		exit;

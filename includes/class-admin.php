@@ -443,7 +443,7 @@ final class Admin {
 					<?php if ( $row->has_resume && current_user_can( Capabilities::DOWNLOAD_RESUMES ) ) : ?>
 					<div class="llamahire-application-detail__resume">
 						<div><strong><?php echo esc_html( $row->resume_name ); ?></strong><span><?php esc_html_e( 'Resume', 'llamahire' ); ?></span></div>
-						<div class="llamahire-application-detail__resume-actions"><?php if ( Applications::resume_is_previewable( $row->resume_name ) ) : ?><a class="button" href="<?php echo esc_url( Applications::resume_url( $id, true ) ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'View resume', 'llamahire' ); ?></a><?php endif; ?><a class="button" href="<?php echo esc_url( Applications::resume_url( $id ) ); ?>"><?php esc_html_e( 'Download resume', 'llamahire' ); ?></a></div>
+						<div class="llamahire-application-detail__resume-actions"><a class="button" href="<?php echo esc_url( Applications::resume_url( $id ) ); ?>"><?php esc_html_e( 'Download resume', 'llamahire' ); ?></a></div>
 					</div>
 					<?php endif; ?>
 					<h3><?php esc_html_e( 'Cover letter', 'llamahire' ); ?></h3>
