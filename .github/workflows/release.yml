@@ -10,6 +10,11 @@ on:
         description: Existing release tag to validate and preview in SVN (no commit)
         required: true
         type: string
+      listing_only:
+        description: Publish only the readme and screenshots from the selected branch
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -21,7 +26,7 @@ concurrency:
 jobs:
   release:
     name: Package and deploy ${{ github.event.release.tag_name || inputs.tag }}
-    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
+    if: (github.event_name == 'workflow_dispatch' && inputs.listing_only != true) || (github.event_name == 'release' && github.event.release.prerelease == false)
     runs-on: ubuntu-latest
     environment: wordpress.org
     steps:
@@ -129,3 +134,59 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           BUILD_DIR: dist/llamahire
           ASSETS_DIR: .wordpress-org
+
+  listing:
+    name: Update WordPress.org listing
+    if: github.event_name == 'workflow_dispatch' && inputs.listing_only == true
+    runs-on: ubuntu-latest
+    environment: wordpress.org
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Publish readme and screenshots only
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          DEPLOY_ENABLED: ${{ vars.WPORG_DEPLOY_ENABLED }}
+        run: |
+          set -euo pipefail
+          if [[ "${DEPLOY_ENABLED}" != "true" ]]; then
+            echo 'WordPress.org deployment is not enabled.'
+            exit 1
+          fi
+          VERSION="$(sed -n 's/^Stable tag:[[:space:]]*//p' readme.txt | head -n 1)"
+          if [[ ! "${VERSION}" =~ ^[0-9]+(\.[0-9]+){1,3}$ ]]; then
+            echo 'A numeric stable tag is required.'
+            exit 1
+          fi
+          SVN_DIR="${RUNNER_TEMP}/llamahire-listing"
+          svn checkout https://plugins.svn.wordpress.org/llamahire/ "${SVN_DIR}" --depth empty --non-interactive
+          cd "${SVN_DIR}"
+          svn update trunk tags assets --depth empty --non-interactive
+          svn update "tags/${VERSION}" --depth empty --non-interactive
+          svn update trunk/readme.txt "tags/${VERSION}/readme.txt" assets --set-depth files --non-interactive
+          PUBLISHED_VERSION="$(sed -n 's/^Stable tag:[[:space:]]*//p' trunk/readme.txt | head -n 1)"
+          if [[ "${PUBLISHED_VERSION}" != "${VERSION}" ]]; then
+            echo 'Listing updates must retain the currently published stable tag.'
+            exit 1
+          fi
+          cp "${GITHUB_WORKSPACE}/readme.txt" trunk/readme.txt
+          cp "${GITHUB_WORKSPACE}/readme.txt" "tags/${VERSION}/readme.txt"
+          for NUMBER in 1 2 3; do
+            SCREENSHOT="screenshot-${NUMBER}.jpg"
+            cp "${GITHUB_WORKSPACE}/.wordpress-org/${SCREENSHOT}" "assets/${SCREENSHOT}"
+            svn add --force "assets/${SCREENSHOT}"
+            svn propset svn:mime-type image/jpeg "assets/${SCREENSHOT}"
+          done
+          svn status
+          svn diff --summarize
+          if [[ -z "$(svn status)" ]]; then
+            echo 'The listing is already up to date.'
+            exit 0
+          fi
+          svn commit trunk/readme.txt "tags/${VERSION}/readme.txt" assets/screenshot-{1,2,3}.jpg \
+            --username "${SVN_USERNAME}" --password "${SVN_PASSWORD}" \
+            --non-interactive --no-auth-cache \
+            -m 'Update LlamaHire listing: WPJM migration guidance, service disclosures, and screenshots'

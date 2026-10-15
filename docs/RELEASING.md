@@ -72,3 +72,17 @@ at the same time. Publish versions in order. An already-existing SVN version
 tag is skipped by 10up's action; publish a new version to change shipped code.
 If the GitHub release was published before deployment was enabled, enable it
 and re-run that release's workflow from Actions.
+
+## Update listing text and screenshots
+
+Readme and screenshot changes do not require a new plugin version. Commit and
+push the reviewed changes, then run **Release free plugin** from that branch,
+enter the current release tag, and set **listing_only** to true. This mode is a
+live deployment, unlike the default release preview. It uses the existing
+`wordpress.org` environment credentials and requires deployment to be enabled.
+
+The listing job checks that the readme retains the published stable version,
+updates only `trunk/readme.txt`, the current stable tag's `readme.txt`, and the
+three `.wordpress-org/screenshot-N.jpg` files in SVN `assets`. It does not build,
+publish, or replace plugin runtime code or GitHub release packages. Review the
+SVN commit revision in the run output; directory caches may take time to refresh.
