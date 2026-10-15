@@ -36,7 +36,7 @@ msgstr ""
 #: includes/class-admin-workspaces.php:276
 #: includes/class-admin.php:265
 #: includes/class-admin.php:356
-#: includes/class-applications.php:301
+#: includes/class-applications.php:300
 #: includes/class-blocks.php:32
 #: includes/class-settings.php:341
 #: includes/class-settings.php:581
@@ -1158,39 +1158,39 @@ msgstr ""
 msgid "Rejected"
 msgstr ""
 
-#: includes/class-applications.php:267
+#: includes/class-applications.php:266
 msgid "You cannot access this resume."
 msgstr ""
 
-#: includes/class-applications.php:279
+#: includes/class-applications.php:278
 msgid "LlamaHire private resume storage"
 msgstr ""
 
-#: includes/class-applications.php:289
+#: includes/class-applications.php:288
 msgid "Resume storage uses WordPress VIP Access-Controlled Files, and direct requests to the private resume path are denied."
 msgstr ""
 
-#: includes/class-applications.php:290
+#: includes/class-applications.php:289
 msgid "Resume storage is writable and located outside the public WordPress web root."
 msgstr ""
 
-#: includes/class-applications.php:292
+#: includes/class-applications.php:291
 msgid "Resume storage is writable, but direct file access is not confirmed as protected."
 msgstr ""
 
-#: includes/class-applications.php:295
+#: includes/class-applications.php:294
 msgid "The VIP resume storage driver is selected, but Access-Controlled Files is not active in this environment."
 msgstr ""
 
-#: includes/class-applications.php:296
+#: includes/class-applications.php:295
 msgid "WordPress cannot write to the configured private resume directory."
 msgstr ""
 
-#: includes/class-applications.php:299
+#: includes/class-applications.php:298
 msgid "Resumes use protected private storage"
 msgstr ""
 
-#: includes/class-applications.php:299
+#: includes/class-applications.php:298
 msgid "Resume storage needs attention"
 msgstr ""
 
