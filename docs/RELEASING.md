@@ -3,6 +3,14 @@
 Publishing a GitHub release packages the free plugin, attaches the ZIP and
 checksum to the release, and deploys the same files to WordPress.org.
 
+The workflow in `.github/workflows/release.yml` uses
+[10up's WordPress.org Plugin Deploy action](https://github.com/10up/action-wordpress-plugin-deploy/tree/2.3.0),
+pinned to version `2.3.0`. It copies the verified `dist/llamahire/` package into
+SVN `trunk`, copies trunk to `tags/<version>`, and publishes `.wordpress-org/`
+artwork to SVN `assets` in a single commit. This follows the
+[WordPress.org Subversion guide](https://developer.wordpress.org/plugins/wordpress-org/how-to-use-subversion/).
+Development files and ZIP archives are never copied into SVN.
+
 For the short setup and testing command reference, see
 [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
 
@@ -21,6 +29,27 @@ After the plugin is approved in the WordPress.org Plugin Directory:
 5. Confirm the final WordPress.org listing artwork in `.wordpress-org/`.
    Those files are separate from the plugin's runtime `assets/` directory; see
    [`WORDPRESS-ORG-ASSETS.md`](WORDPRESS-ORG-ASSETS.md).
+6. Confirm the approved SVN URL is
+   `https://plugins.svn.wordpress.org/llamahire/`. If the approved slug differs,
+   update `SLUG` in the workflow before publishing.
+
+## Preview the first upload
+
+1. Merge the workflow onto GitHub's default branch so **Run workflow** appears.
+2. Push a version tag pointing at the release commit, such as `v0.1.0`, with
+   all three version fields matching. A tag push alone does not publish.
+3. In **Actions → Release free plugin → Run workflow**, select the default
+   branch and enter that existing tag.
+4. Review the checks and the final deployment step's SVN status output. The
+   manual run always uses 10up's `dry-run` mode: it prepares trunk, the version
+   tag, and listing artwork locally on the runner, but never commits to SVN
+   or attaches files to a GitHub release. It uses placeholder credentials, so
+   SVN secrets and the deployment switch are not needed for this preview.
+
+The approved public SVN repository must already exist for the preview to work.
+Environment protection rules, if configured, also apply to manual runs.
+For the initial upload, publish a non-prerelease GitHub release using the
+previewed tag after completing the one-time setup above.
 
 ## Cut a release
 
@@ -37,3 +66,9 @@ After the plugin is approved in the WordPress.org Plugin Directory:
 Draft releases do not run the workflow, and published prereleases are skipped.
 The workflow rejects non-version tags and mismatched version fields before it
 touches WordPress.org.
+
+Runs are serialized across versions so two releases cannot update SVN trunk
+at the same time. Publish versions in order. An already-existing SVN version
+tag is skipped by 10up's action; publish a new version to change shipped code.
+If the GitHub release was published before deployment was enabled, enable it
+and re-run that release's workflow from Actions.

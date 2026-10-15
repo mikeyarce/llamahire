@@ -4,24 +4,30 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to validate and preview in SVN (no commit)
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.event.release.tag_name }}
+  group: wordpress-org-release
   cancel-in-progress: false
 
 jobs:
   release:
-    name: Package and deploy ${{ github.event.release.tag_name }}
-    if: github.event.release.prerelease == false
+    name: Package and deploy ${{ github.event.release.tag_name || inputs.tag }}
+    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
     runs-on: ubuntu-latest
     environment: wordpress.org
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: refs/tags/${{ github.event.release.tag_name || inputs.tag }}
 
       - uses: actions/setup-node@v6
         with:
@@ -37,7 +43,7 @@ jobs:
       - name: Resolve and verify release version
         id: version
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: |
           VERSION="${RELEASE_TAG#v}"
           PLUGIN_VERSION="$(sed -n 's/^[[:space:]]*\* Version:[[:space:]]*//p' llamahire.php | head -n 1)"
@@ -104,17 +110,22 @@ jobs:
           exclude-checks: plugin_review_phpcs
 
       - name: Attach package to GitHub release
+        if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: gh release upload "${RELEASE_TAG}" dist/*.zip dist/*.sha256 --clobber
 
       - name: Deploy to WordPress.org
-        if: vars.WPORG_DEPLOY_ENABLED == 'true'
-        uses: 10up/action-wordpress-plugin-deploy@stable
+        if: github.event_name == 'workflow_dispatch' || vars.WPORG_DEPLOY_ENABLED == 'true'
+        uses: 10up/action-wordpress-plugin-deploy@2.3.0
+        with:
+          dry-run: ${{ github.event_name == 'workflow_dispatch' }}
         env:
-          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
-          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          # 10up requires nonempty credentials even when no SVN commit is made.
+          SVN_USERNAME: ${{ github.event_name == 'workflow_dispatch' && 'dry-run' || secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ github.event_name == 'workflow_dispatch' && 'dry-run' || secrets.SVN_PASSWORD }}
           SLUG: llamahire
           VERSION: ${{ steps.version.outputs.version }}
           BUILD_DIR: dist/llamahire
+          ASSETS_DIR: .wordpress-org
