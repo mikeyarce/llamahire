@@ -89,11 +89,11 @@ See the [migration guide](https://github.com/mikeyarce/llamahire/blob/main/docs/
 
 == Source code and support ==
 
-Plugin website: https://llamahire.com/
+[Plugin website](https://llamahire.com/)
 
-Source code and build instructions: https://github.com/mikeyarce/llamahire. The bundled admin JavaScript and CSS are built from the unminified `src/` files with `npm ci` and `npm run build`.
+[Source code and build instructions](https://github.com/mikeyarce/llamahire). The bundled admin JavaScript and CSS are built from the unminified `src/` files with `npm ci` and `npm run build`.
 
-For setup help or bug reports, use the WordPress.org support forum for this plugin after publication, or open an issue at https://github.com/mikeyarce/llamahire/issues.
+For setup help, use the [WordPress.org support forum](https://wordpress.org/support/plugin/llamahire/). To report a bug, [open an issue on GitHub](https://github.com/mikeyarce/llamahire/issues).
 
 == External services ==
 
