@@ -41,7 +41,8 @@ After the plugin is approved in the WordPress.org Plugin Directory:
 3. In **Actions → Release free plugin → Run workflow**, select the default
    branch and enter that existing tag.
 4. Review the checks and the final deployment step's SVN status output. The
-   manual run always uses 10up's `dry-run` mode: it prepares trunk, the version
+   manual run uses 10up's `dry-run` mode when `listing_only` is left unchecked:
+   it prepares trunk, the version
    tag, and listing artwork locally on the runner, but never commits to SVN
    or attaches files to a GitHub release. It uses placeholder credentials, so
    SVN secrets and the deployment switch are not needed for this preview.
